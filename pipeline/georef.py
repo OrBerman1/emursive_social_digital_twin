@@ -29,7 +29,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import pandas as pd
 from matplotlib.path import Path as MPath
-from scipy.ndimage import distance_transform_edt, map_coordinates
+from scipy.ndimage import distance_transform_edt, gaussian_filter1d, map_coordinates
 from scipy.optimize import least_squares
 
 from common import PROCESSED, RAW, ROOT, WALKS
@@ -44,6 +44,9 @@ KNOT_S = 20.0          # stage 2: drift / pace knots every 20 s
 STREET_TOL_M = 3.0     # free band around a street centreline (market streets are ~4-8 m wide; covered alleys may be unmapped)
 POS_SIG_M = 1.5       # stage 2: stall / GIS point position uncertainty (m) in the anchor sight-ray residual
 STORE_CLEAR_M = 2.0   # stage 2: stalls are obstacles; the walker passes at least this far from any store point
+ROW_WIN_M = 8.0       # stage 3: stores within +-8 m along the path define the two rows at that point
+ROW_GAP_M = 3.0       # a lateral gap >= 3 m between store points = the walkway between two rows
+HALF_STREET_M = 3.0   # one row only: keep this far from it, on the open side
 GRID_M = 0.5           # resolution of the building / street distance fields
 FPS = 5.0
 DT = 1 / FPS
@@ -198,6 +201,47 @@ def residuals(params, psi, fr, yaw, sx, sy):
     return np.concatenate([r_bear, r_dist, r_speed, r_smooth])
 
 
+def centre_between_rows(px, py, sx, sy, fld, max_shift=8.0):
+    """Stage 3: shift the path sideways to the middle of the walkway between the two store rows.
+    Rows come from the store points within +-ROW_WIN_M along the path: the widest lateral gap near the
+    walker is the walkway; with one row only, the walker keeps HALF_STREET_M from it on the side nearer
+    a street centreline. Shifts are smoothed (sigma 3 s) and never push the walker into a building."""
+    n = len(px)
+    tx, ty = np.gradient(gaussian_filter1d(px, 5)), np.gradient(gaussian_filter1d(py, 5))
+    tn = np.hypot(tx, ty).clip(1e-6); tx, ty = tx / tn, ty / tn
+    nx, ny = -ty, tx                                                          # left normal
+    target = np.full(n, np.nan)
+    for i in range(n):
+        dx, dy = sx - px[i], sy - py[i]
+        along, lat = dx * tx[i] + dy * ty[i], dx * nx[i] + dy * ny[i]
+        lat = np.sort(lat[(np.abs(along) < ROW_WIN_M) & (np.abs(lat) < 10)])
+        if len(lat) == 0:
+            continue
+        gaps = np.diff(lat)
+        cand = [(abs((lat[k] + lat[k + 1]) / 2), (lat[k] + lat[k + 1]) / 2) for k in np.where(gaps >= ROW_GAP_M)[0]]
+        if cand:                                                              # two rows: middle of the walkway
+            target[i] = min(cand)[1]
+            continue
+        row = np.median(lat)                                                  # one row: half a street off it
+        opts = [row + HALF_STREET_M, row - HALF_STREET_M]
+        st = [fld.street_at(np.r_[px[i] + o * nx[i]], np.r_[py[i] + o * ny[i]])[0] for o in opts]
+        target[i] = opts[int(np.argmin(st))]
+    ok = ~np.isnan(target)
+    if not ok.any():
+        return px, py
+    f = np.arange(n)
+    shift = np.interp(f, f[ok], target[ok])
+    shift[~ok] *= 0.0 if ok.sum() < 2 else 1.0
+    shift = np.clip(gaussian_filter1d(shift, 15), -max_shift, max_shift)              # sigma 3 s: no zig-zag
+    for _ in range(6):                                                        # back off where it would enter a building
+        qx, qy = px + shift * nx, py + shift * ny
+        bad = fld.depth_at(qx, qy) > 0
+        if not bad.any():
+            break
+        shift[gaussian_filter1d(bad.astype(float), 3) > 0.05] *= 0.6
+    return px + shift * nx, py + shift * ny
+
+
 def path2(params, psi, knots):
     """Stage 2: speed and heading correction interpolated between knots (frames)."""
     x0, y0, alpha, beta = params[:4]
@@ -276,6 +320,10 @@ def fit_walk(walk: str, anchors: list, shops: pd.DataFrame, loc: Local):
             best2 = r2
     r = best2
     px, py, dh = path2(r.x, psi, knots)
+    px2, py2 = px.copy(), py.copy()
+    ssx, ssy = loc.to_xy(shops.X.to_numpy(), shops.Y.to_numpy())
+    px, py = centre_between_rows(px, py, ssx, ssy, fld)                        # stage 3
+    shift_m = np.hypot(px - px2, py - py2)
     alpha = r.x[2]
     k = len(knots)
     ds_all = street_dist(px, py, segs)
@@ -292,6 +340,7 @@ def fit_walk(walk: str, anchors: list, shops: pd.DataFrame, loc: Local):
         "drift_deg": np.round(np.degrees(r.x[4 + k:]), 1).tolist(),
         "street_dist_m": {"median": round(float(np.median(ds_all)), 1), "p90": round(float(np.percentile(ds_all, 90)), 1),
                           "max": round(float(ds_all.max()), 1)},
+        "centring_shift_m": {"median": round(float(np.median(shift_m)), 1), "max": round(float(shift_m.max()), 1)},
         "frac_in_buildings": round(float(inb.mean()), 3), "frac_within_1m_of_a_store": round(float((dstore < 1.0).mean()), 3), "frac_in_buildings_before_map_matching": round(float(inb1.mean()), 3), "path_length_m": float(np.sum(np.hypot(np.diff(px), np.diff(py)))),
         "anchors": [{"shop": a["shop"], "name": shops.at[a["shop_idx"], "name"], "frame": a["frame"],
                      "residual_deg": round(float(e), 1), "dist_m": round(float(dd), 1), "miss_m": round(float(mm), 1)}

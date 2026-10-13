@@ -156,6 +156,13 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      2.6 / 3.3 m; paths 272 / 231 m. Consistent outliers in every variant: Melech Haavatiach (walk 1,
      ~10 m) and the GlobalID stall (walk 2, ~10 m): check those anchors. 'Pinat Habriut' is not in the
      store table.
+   - Stage 3, centring between the store rows (user feedback: the walker must walk between the stalls,
+     with stores on both sides): at each frame take the store points within +-8 m along the path; the
+     widest lateral gap >= 3 m nearest the walker is the walkway -> move to its middle; with one row only,
+     keep 3 m off it on the side nearer an OSM street centreline. Shifts smoothed (Gaussian, sigma 3 s),
+     backed off where they would enter a building. Median shift 1.5 m (walk 1) / 0.9 m (walk 2).
+     Stores within 10 m of walk 2 now split 13 left / 13 right; walk 1's south stretch has stores in the
+     table on one side only, so there the path keeps 3 m off that row.
    - IMU step energy (1 s std of |accel|, stabilize.py -> heading.json): the walker never stops in either
      walk, so a smooth pace model is adequate.
    - Store -> video: closest approach of each walk to each store (<= 22 m); view yaw = store bearing
