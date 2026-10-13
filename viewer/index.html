@@ -179,7 +179,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="lbl">Followed <em id="fCount">0</em></div>
         <div class="chips" id="fChips"></div>
         <div class="rowbtn"><button id="fView">+ Follow everyone in view</button><button id="fClear">Clear</button></div>
-        <div class="note">Click a person, then <b>Follow</b> in the card, or <b>Shift + drag</b> on the video to follow everyone in a box. Each followed person keeps one colour on the box, the motion arrow, the chip and the path on both maps. Click a chip to jump to where that person first appears.</div>
+        <div class="note">Click a person's emoji, then <b>Follow</b> in the card, or <b>Shift + drag</b> on the video to follow everyone in a box. Each followed person keeps one colour on the box, the motion arrow, the chip and the path on both maps. Click a chip to jump to where that person first appears.</div>
       </section>
       <section id="secSex">
         <div class="lbl">Perceived gender in view <em>estimated · aggregate</em></div>
@@ -359,15 +359,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
   function badge(e, r, col, bg) {
     const k = ov.width / vp.clientWidth, h = r[3] - r[1];
-    if (!$("Lid").checked || h < 14 * k) return;
+    if (!$("Lid").checked || h < 14 * k) return null;
     const fs = Math.max(13, Math.min(26, h / k * 0.22)) * k, pad = 2 * k;
     octx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
     const w = octx.measureText(e).width + pad * 2, x = r[0], y = r[1] - fs - pad * 2;
-    if (placed.some(q => x < q[2] && x + w > q[0] && y < q[3] && y + fs + pad * 2 > q[1])) return;
+    if (placed.some(q => x < q[2] && x + w > q[0] && y < q[3] && y + fs + pad * 2 > q[1])) return null;
     placed.push([x, y, x + w, y + fs + pad * 2]);
     octx.fillStyle = bg || "rgba(16,21,21,.72)"; octx.fillRect(x, y, w, fs + pad * 2);
     octx.strokeStyle = col; octx.lineWidth = 1.2 * k; octx.strokeRect(x, y, w, fs + pad * 2);
     octx.fillStyle = "#fff"; octx.textBaseline = "top"; octx.fillText(e, x + pad, y + pad); octx.textBaseline = "alphabetic";
+    return [x, y, x + w, y + fs + pad * 2];                              // click target: the card opens from the emoji
   }
   let placed = [];   // label rectangles drawn this frame (declutter: skip labels that would overlap)
   function label(t, x, y, col) {
@@ -459,11 +460,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       octx.strokeStyle = pc; octx.lineWidth = (sel ? 3 : 1.8) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
       const fol = MO.follow.get(gidOf(id));
       if (fol) { const o = 3.5 * k; octx.strokeStyle = fol; octx.lineWidth = 2.5 * k; octx.setLineDash([7 * k, 4 * k]); octx.strokeRect(r[0] - o, r[1] - o, r[2] - r[0] + 2 * o, r[3] - r[1] + 2 * o); octx.setLineDash([]); }
-      badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
+      const bb = badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
       const mNow = moAt(id, fi);
       if (mNow && moShown(id, mNow)) drawMotionArrow(r, yw, pb, mNow, fi, fol || "#f4f4f4", al);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "p", id, r, info: p });
+      S.hits.push({ kind: "p", id, r, b: bb, info: p });
       if (sel) anchor = r;
     }
     // level-1 objects (tracked + smoothed in the pipeline)
@@ -475,9 +476,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
       const selO = S.sel && S.sel.kind === "o" && S.sel.id === o[7];
       octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = (selO ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
-      badge(emojiOf(cls), r, C.obj);
+      const bb = badge(emojiOf(cls), r, C.obj);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "o", id: o[7], r, info: o });
+      S.hits.push({ kind: "o", id: o[7], r, b: bb, info: o });
       if (selO) anchor = r;
     }
     // level-2 objects
@@ -488,9 +489,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
       const selL = S.sel && S.sel.kind === "l2" && S.sel.id === o[8];
       octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = (selL ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      badge(emojiOf(cls), r, C.l2);
+      const bb = badge(emojiOf(cls), r, C.l2);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "l2", id: o[8], r, info: o });
+      S.hits.push({ kind: "l2", id: o[8], r, b: bb, info: o });
       if (selL) anchor = r;
     }
     // OCR signs: tracked + smoothed in the pipeline; interpolated, faded and length-filtered like the other layers
@@ -503,9 +504,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const selS = S.sel && S.sel.kind === "s" && S.sel.id === id;
       octx.globalAlpha = al;
       octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = (selS ? 3 : 1.5) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      if (info[3]) badge("🪧", r, C.ocr);
+      const bb = info[3] ? badge("🪧", r, C.ocr) : null;
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "s", id, r, info: sg });
+      S.hits.push({ kind: "s", id, r, b: bb, info: sg });
       if (selS) anchor = r;
     }
     // perceived gender + age, aggregate over people in view only
@@ -831,10 +832,22 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   let drag = null, scrubbing = false;
   const canvasXY = e => { const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; };
   vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard, .minimap")) return;
+    vp.style.cursor = "";
     if (e.shiftKey) { const [x, y] = canvasXY(e); MO.lasso = { x0: x, y0: y, x1: x, y1: y }; vp.setPointerCapture(e.pointerId); return; }
     drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
   vp.addEventListener("pointermove", e => { if (MO.lasso) { const [x, y] = canvasXY(e); MO.lasso.x1 = x; MO.lasso.y1 = y; return; } if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
     const s = S.fov / vp.clientWidth; S.yaw = ((drag.yaw - dx * s + 540) % 360) - 180; S.pitch = Math.max(-85, Math.min(85, drag.pitch + dy * s)); });
+  // the card opens from the emoji badge (easier to hit than a box); boxes only when emoji badges are switched off
+  function hitAt(x, y, k) {
+    const sl = 4 * k, inR = (q, s0) => q && x >= q[0] - s0 && x <= q[2] + s0 && y >= q[1] - s0 && y <= q[3] + s0;
+    const hs = S.hits.slice().reverse();
+    return $("Lid").checked ? hs.find(h => inR(h.b, sl)) : hs.find(h => inR(h.r, 0));
+  }
+  vp.addEventListener("pointermove", e => {                             // pointer cursor over a clickable emoji
+    if (drag || MO.lasso) return;
+    const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth;
+    vp.style.cursor = hitAt((e.clientX - r.left) * k, (e.clientY - r.top) * k, k) ? "pointer" : "";
+  });
   vp.addEventListener("pointerup", e => {
     if (MO.lasso) {                                                    // shift + drag: follow everyone whose box centre is inside
       const q = MO.lasso, x0 = Math.min(q.x0, q.x1), x1 = Math.max(q.x0, q.x1), y0 = Math.min(q.y0, q.y1), y1 = Math.max(q.y0, q.y1);
@@ -844,7 +857,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     vp.classList.remove("drag");
     if (drag && !drag.moved) {
       const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
-      const h = S.hits.slice().reverse().find(h => x >= h.r[0] && x <= h.r[2] && y >= h.r[1] && y <= h.r[3]);
+      const h = hitAt(x, y, k);
       S.sel = h ? (S.sel && S.sel.kind === h.kind && S.sel.id === h.id ? null : { kind: h.kind, id: h.id }) : null;
     }
     drag = null;

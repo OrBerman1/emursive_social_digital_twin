@@ -208,6 +208,8 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Re-linking on the map: track B continues track A if B starts <= 2 s after A ends, within 1 m + 0.4 m/s
      x gap of the predicted position (forward and backward), unambiguous, and perceived gender does not
      conflict. ~29 / 8 re-links.
+   - Viewer: the card opens by clicking the emoji badge (bigger, easier target; boxes are clickable only
+     when emoji badges are switched off).
    - Viewer: ground arrow at the feet (projected from the map back into the 360 view), mode None / Followed /
      All in view / Walking / Standing; follow by card button, Shift + drag box, or everyone in view; one
      colour per followed person on box, arrow, chip and map paths.
