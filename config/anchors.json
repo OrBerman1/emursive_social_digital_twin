@@ -1,0 +1,22 @@
+{
+  "_note": "Map anchors: at analysis frame F (5 fps, as shown in the viewer HUD) the stabilised view at yaw/pitch points at the store. 'shop' = Shop_Name or GlobalID from data/raw/LABAI/Shops_In_hatikva_30_7_26.xlsx. Provided by the team, 13 Oct 2026. 'Pinat Habriut' is not in the store table and is kept here but skipped.",
+  "walk1": [
+    {"shop": "Hasaluf", "frame": 104, "yaw": -8, "pitch": -4, "fov": 94},
+    {"shop": "Pinat Habriut", "frame": 128, "yaw": 0, "pitch": -4, "fov": 48},
+    {"shop": "Rosita Bar", "frame": 163, "yaw": 150, "pitch": 0, "fov": 120},
+    {"shop": "Garinei Afula", "frame": 174, "yaw": 2, "pitch": 7, "fov": 120},
+    {"shop": "Hashuk Shel Tikvah", "frame": 206, "yaw": 179, "pitch": -1, "fov": 120},
+    {"shop": "Melech Haavatiach", "frame": 233, "yaw": -3, "pitch": -6, "fov": 120},
+    {"shop": "Nekudat Lehem", "frame": 239, "yaw": 175, "pitch": 0, "fov": 120},
+    {"shop": "Pizuchei Shadi", "frame": 430, "yaw": 167, "pitch": 1, "fov": 120},
+    {"shop": "Perot Aviv", "frame": 975, "yaw": -176, "pitch": -10, "fov": 120}
+  ],
+  "walk2": [
+    {"shop": "28d0c5e2-7a38-49bc-810c-fdb8da897945", "frame": 103, "yaw": -169, "pitch": -1, "fov": 116},
+    {"shop": "Haviv merkaz hakube", "frame": 543, "yaw": 92, "pitch": -7, "fov": 66},
+    {"shop": "Yossi Cohen Katzavim", "frame": 639, "yaw": 1, "pitch": 4, "fov": 120},
+    {"shop": "Hasabih shel zion", "frame": 655, "yaw": -164, "pitch": 2, "fov": 120},
+    {"shop": "Danny Nylon", "frame": 763, "yaw": -1, "pitch": -8, "fov": 120},
+    {"shop": "Misedet nissim", "frame": 905, "yaw": -178, "pitch": 2, "fov": 120}
+  ]
+}

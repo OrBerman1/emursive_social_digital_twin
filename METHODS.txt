@@ -126,7 +126,23 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      (level 2: max(0.15, slider - 0.2)) and, with "hide tracks < 1 s", a length >= 1 s. Because
      tracks still fragment (one person can get 2+ IDs), totals are upper bounds until validated.
 
-14. GIS EXPORT AND VALIDATION  (export_overlays.py, make_validation.py, viewer\validate.html)
+15. MAP: WALKS ON THE GIS MAP WITHOUT GPS  (georef.py; config\anchors.json; viewer minimap)
+   - The videos have no GPS. The team gave anchors: at frame F the stabilised view at yaw Y looks at a
+     known store (name or GlobalID in Shops_In_hatikva_30_7_26.xlsx, WGS84 X/Y).
+   - Heading per frame = integrated, smoothed 1 kHz gyro heading (stabilize.py -> heading.json).
+   - Path = dead reckoning: p(f) = P0 + sum v*dt*[sin th, cos th], th = alpha + heading + beta
+     (camera carried at a fixed angle to the walking direction), piecewise-constant speed between anchors.
+   - Unknowns P0, alpha, beta, speeds fitted by robust least squares (scipy, soft-L1): every anchor's
+     view bearing must point at its store; soft priors: store 1.5-15 m from the camera, ~0.9 m/s pace,
+     smooth pace changes; multi-start over alpha/beta.
+   - Result: median bearing error walk 1 2.4 deg (path 271 m), walk 2 1.9 deg (226 m). Outlier anchors:
+     Melech Haavatiach (walk 1), the GlobalID stall (walk 2). 'Pinat Habriut' is not in the store table.
+   - Store -> video: closest approach of each walk to each store (<= 22 m); view yaw = store bearing
+     minus the frame's map bearing of yaw 0. 137 of 220 stores are clickable.
+   - Viewer: Leaflet 1.9.4 + OpenStreetMap tiles. Heading-up round minimap (GTA-style) with route,
+     store dots and view cone; click -> full map with all stores coloured by trade; store popup
+     "Go to video" switches walk if needed and seeks/turns to the store.
+  (export_overlays.py, make_validation.py, viewer\validate.html)
    - GeoJSON of persistent entities (track ID, frames, time, confidence); route position
      from an assumed walking pace until anchor points arrive (no GPS in the videos).
    - Hand-count page: 30 frames, your count vs the model's count (target +-15%).

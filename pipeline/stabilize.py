@@ -278,7 +278,17 @@ def run(walk: str, sigma_heading: float, force: bool) -> dict:
         "q_analysis": np.round(qa.reshape(len(qa), 9), 4).tolist(),
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "stab.json").write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    text = json.dumps(out, separators=(",", ":"))
+    sp = out_dir / "stab.json"
+    if not sp.exists() or sp.read_text(encoding="utf-8") != text:      # unchanged -> keep file (bake cache key = its hash)
+        sp.write_text(text, encoding="utf-8")
+    # smoothed heading per analysis frame (rad, IMU world frame). In the stabilised view, view yaw y points to
+    # world yaw y + heading; georef.py turns this into map bearings and a dead-reckoned camera path.
+    ia = np.clip(np.searchsorted(t_cam, (np.arange(fm["n_frames"]) / FPS_A + shift_a) * 1000), 0, len(t_cam) - 1)
+    (out_dir / "heading.json").write_text(json.dumps({
+        "walk": walk, "analysis_fps": FPS_A, "heading_rad": np.round(head_s[ia], 5).tolist(),
+        "accel_norm": np.round(np.linalg.norm(a_cam[ia], axis=1), 3).tolist(),
+    }, separators=(",", ":")), encoding="utf-8")
     return {k: v for k, v in out.items() if not k.startswith("q_")}
 
 
