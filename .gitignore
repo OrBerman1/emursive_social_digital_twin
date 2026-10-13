@@ -1,14 +1,13 @@
-# raw media and caches (see CLAUDE.md: compute once, cache everything)
-data/raw/
-data/interim/
-*.zip
-*.insv
-*.pt
-.venv/
-__pycache__/
-*.pyc
+# Data, caches and weights are NOT in git: the raw data is downloaded separately (README.md section 2),
+# setup.bat creates the folder structure and downloads the model weights.
 data/
 models/
+*.insv
 *.zip
-.venv-imu/
+*.pt
 
+# Python environments (rebuilt by setup.bat)
+.venv/
+.venv-imu/
+__pycache__/
+*.pyc

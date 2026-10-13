@@ -41,6 +41,7 @@ def main() -> None:
     step(str(HERE / "attributes.py"), *walks, "--variant", "stab", cwd=MODELS)                # cached, GPU (CLIP)
     step(str(HERE / "ocr_signs.py"), *walks, "--variant", "stab")                          # cached: docTR (GPU) + Tesseract
     step(str(HERE / "export_overlays.py"), *walks, "--variant", "stab")
+    step(str(HERE / "make_validation.py"))                                                 # hand-count sample
 
 
 if __name__ == "__main__":

@@ -1,18 +1,19 @@
 @echo off
 rem ===========================================================================
-rem  Shuk HaTikvah 360 - environment setup (Windows)
-rem  Creates:  .venv      Python 3.13 main environment (PyTorch CUDA 12.4, YOLO, CLIP, OCR)
+rem  Shuk HaTikvah 360 - environment setup (Windows). See README.md.
+rem  Creates:  data\      folder structure (the raw data is downloaded separately - README section 2)
+rem            .venv      Python 3.13 main environment (PyTorch CUDA 12.4, YOLO, CLIP, OCR)
 rem            .venv-imu  Python 3.9 helper for gyro extraction (telemetry-parser has cp39 wheels only)
 rem            models\    YOLO11x + YOLO-World weights
 rem  Safe to run again: existing environments are reused, existing files are kept.
-rem  Downloads use curl.exe (Python/git downloads can fail on certificate checks here).
+rem  Downloads use curl.exe (Python/git downloads can fail on certificate checks on some networks).
 rem ===========================================================================
 setlocal EnableExtensions
 cd /d "%~dp0"
 set "FAIL=0"
 
 echo.
-echo === 1/7  Checking required programs ===
+echo === 1/8  Checking required programs ===
 where py >nul 2>nul || (echo [MISSING] Python launcher "py" - install Python 3.13 and 3.9 from python.org & set FAIL=1)
 py -3.13 --version >nul 2>nul || (echo [MISSING] Python 3.13 - install from python.org & set FAIL=1)
 where curl.exe >nul 2>nul || (echo [MISSING] curl.exe - included with Windows 10/11 & set FAIL=1)
@@ -32,29 +33,34 @@ if "%FAIL%"=="1" (
 )
 
 echo.
-echo === 2/7  Main environment .venv (Python 3.13) ===
+echo === 2/8  Folder structure ===
+for %%D in ("data\raw\LABAI\Photos" "data\raw\LABAI\Sketches" "data\interim" "data\processed" "models") do (
+  if not exist "%%~D" (mkdir "%%~D" && echo   created %%~D) else (echo   exists  %%~D)
+)
+
+echo.
+echo === 3/8  Main environment .venv (Python 3.13) ===
 if not exist ".venv\Scripts\python.exe" py -3.13 -m venv .venv || goto :error
 ".venv\Scripts\python.exe" -m pip install --upgrade pip || goto :error
 
 echo.
-echo === 3/7  PyTorch with CUDA 12.4 (large download, ~2.5 GB) ===
+echo === 4/8  PyTorch with CUDA 12.4 (large download, ~2.5 GB) ===
 ".venv\Scripts\python.exe" -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124 || goto :error
 
 echo.
-echo === 4/7  Pipeline packages ===
+echo === 5/8  Pipeline packages ===
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt || goto :error
-if not exist models mkdir models
 if not exist "models\clip.zip" curl.exe -L -f -o "models\clip.zip" https://github.com/ultralytics/CLIP/archive/refs/heads/main.zip || goto :error
 ".venv\Scripts\python.exe" -m pip install "models\clip.zip" || goto :error
 
 echo.
-echo === 5/7  Model weights ===
+echo === 6/8  Model weights ===
 if not exist "models\yolo11x.pt" curl.exe -L -f -o "models\yolo11x.pt" https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11x.pt || goto :error
 if not exist "models\yolov8x-worldv2.pt" curl.exe -L -f -o "models\yolov8x-worldv2.pt" https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8x-worldv2.pt || goto :error
 rem CLIP ViT-B/32 + ViT-L/14 and the docTR text detector download themselves on first use.
 
 echo.
-echo === 6/7  Gyro helper .venv-imu (Python 3.9) ===
+echo === 7/8  Gyro helper .venv-imu (Python 3.9) ===
 py -3.9 --version >nul 2>nul || goto :skipimu
 if not exist ".venv-imu\Scripts\python.exe" py -3.9 -m venv .venv-imu || goto :error
 if not exist "models\telemetry_parser-0.3.0-cp39-none-win_amd64.whl" (
@@ -68,13 +74,20 @@ if not exist "models\telemetry_parser-0.3.0-cp39-none-win_amd64.whl" (
 :skipimu
 
 echo.
-echo === 7/7  Checking the installation ===
+echo === 8/8  Checking the installation and the data ===
 ".venv\Scripts\python.exe" -c "import torch, ultralytics, clip, cv2, py360convert, pytesseract, symspellpy, doctr; print('torch', torch.__version__, '| CUDA', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '(no GPU)'); print('ultralytics', ultralytics.__version__, '| opencv', cv2.__version__)" || goto :error
 if exist ".venv-imu\Scripts\python.exe" ".venv-imu\Scripts\python.exe" -c "import telemetry_parser; print('telemetry-parser OK')"
+set "DATAOK=1"
+for %%F in ("1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops with Icons.pdf" "shuk_360_frame_coding_v01.docx") do (
+  if exist "data\raw\LABAI\%%~F" (echo   [data OK]      %%~F) else (echo   [data MISSING] data\raw\LABAI\%%~F & set "DATAOK=0")
+)
 
 echo.
 echo Setup complete.
-echo   Put the raw data in data\raw\LABAI\ (1_Hatikvah St.insv, 2_Hamevasser St.insv, ...)
+if "%DATAOK%"=="0" (
+  echo   The raw data is not complete yet: download it as described in README.md, section 2,
+  echo   into data\raw\LABAI\  - the folders were created above - then run the pipeline.
+)
 echo   Run the pipeline:  .venv\Scripts\python pipeline\run_all.py
 echo   Open the viewer:   start_viewer.bat
 goto :end
