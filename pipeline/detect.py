@@ -31,6 +31,14 @@ PROMPT_SETS = {
         "wheelchair", "broom", "e-bike", "delivery box", "pallet", "display table", "plastic chair",
         "stool", "awning", "price sign", "shop sign", "flag", "hanging lamp",
     ],
+    # floor waste (waste.py). The last five are look-alikes that are NOT waste, so the open-vocabulary
+    # classifier has somewhere else to put them; waste.py drops them.
+    "waste": [
+        "litter on the ground", "crumpled paper", "paper cup", "plastic bottle", "drink can", "plastic wrapper",
+        "plastic bag on the ground", "flattened cardboard on the ground", "torn cardboard box", "garbage bag",
+        "vegetable leaves on the ground", "crushed fruit on the ground", "food waste", "napkin",
+        "shoe", "manhole cover", "drain grate", "crate of produce", "puddle",
+    ],
 }
 
 

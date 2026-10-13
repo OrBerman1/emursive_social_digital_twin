@@ -215,3 +215,98 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      colour per followed person on box, arrow, chip and map paths.
    - Limits: flat ground; position error ~0.5 m at 3 m, ~2 m at 10 m (+ route error, shared by everyone);
      noise floor ~0.3 m/s; individual directions not hand-validated beyond the spot checks above.
+
+17. PEOPLE ON SIGNS -> CATEGORY possible_rabi_sign  (depicted.py; config\depicted_review.json)
+   - Problem: the person detector (YOLO11x) also fires on pictured people: rabbi portraits, posters, adverts,
+     framed photos, menu boards. They must not be counted as people.
+   - Proposal (automatic): CLIP ViT-L/14 zero-shot on the best crops WITH context (sign frame visible):
+     "real person in a market" vs "printed picture / portrait / poster of a person" -> p_depicted; plus
+     implied body height on flat ground, feet above the horizon, closeness to detected text regions.
+     Candidates = p_depicted >= 0.3 (17 tracks walk 1, 36 walk 2).
+   - Decision (vision review, like the sign reading): contact sheets of the candidates checked by Claude ->
+     depicted / operator / real, stored in config\depicted_review.json. Why: automatic rules alone were not
+     reliable (CLIP >= 0.75 also fired on people behind glass, drivers and the operator's printed T-shirt;
+     the size rule fired on far real people). Unreviewed tracks fall back to p_depicted >= 0.9 (~75%
+     precision on the reviewed set).
+   - Recall check: 238 further tracks that sit on signs or have an implausible size were reviewed; no other
+     pictures found.
+   - Result: walk 1: 7 possible_rabi_sign + 2 operator tracks; walk 2: 15 + 5. Removed from people counts,
+     gender/age statistics, motion and map paths; shown as their own layer (yellow dotted box, picture emoji)
+     and exported to GeoJSON as class possible_rabi_sign.
+   - Side finding: ~35 more walk-1 person tracks are the camera operator (arm, T-shirt) that the operator
+     filter in tracks.py misses -> to fix next.
+
+18. FOOD ON DISPLAY  (detect.py --model yolov8x-oiv7.pt; food.py)
+   - WHERE: YOLOv8x trained on Open Images V7 (600 classes, Ultralytics release weights) on the stabilised
+     frames, food classes (conf >= 0.15), plus COCO produce already cached from YOLO11x (banana, apple, orange,
+     carrot, broccoli; conf >= 0.3). On market displays OIV7 names ~98% of its food boxes only generically
+     ("Vegetable", "Food", "Fruit"), so it is used for location only.
+   - Tracking: all food boxes tracked as one class (no label flicker) with the level-2 tracker; a track is
+     a display/stack, not single items.
+   - WHAT: CLIP ViT-L/14 zero-shot over a market vocabulary of 41 items (tomatoes, cucumbers, peppers,
+     eggplants, herbs, watermelons, bananas, citrus, dates, nuts, spices, olives, bread/pita, pastries,
+     cheese, meat, fish, eggs, prepared food, mixed fruit & vegetables, ...), averaged over the 3 widest crops.
+   - Printed food (menu boards, fruit drawings on signs): own category "Food picture (menu/sign)", shown
+     with a picture emoji and NOT counted as food on display (walk 2 is full of restaurant menu photos).
+   - Thresholds from sample checks (contact sheets): named when p >= 0.5 (~80% correct; below 0.5 ~20%,
+     so shown as "Produce (unsure)"); food picture when p >= 0.8 (7/8 correct; 0.6-0.8 were mostly real
+     stalls); "Prepared food" needs p >= 0.7 (it attracted colourful produce), else the runner-up label.
+   - Result: walk 1: 1,009 displays (504 unsure, 232 bananas, 107 mixed, 35 food pictures, potatoes,
+     tomatoes, watermelons, meat...); walk 2 (Hamevasser St): 183 (83 menu/sign pictures, 28 meat).
+   - Limits: no hand-labelled ground truth yet (planned: ~30 stall crops per walk); bananas are
+     over-represented because COCO detects them very often (one stand -> several tracks).
+
+19. WASTE ON THE FLOOR  (detect.py --prompts waste; waste.py)
+   - Candidates: YOLO-World with a waste prompt set (litter, crumpled paper, paper cup, plastic bottle, drink
+     can, plastic wrapper, plastic bag / flattened cardboard on the ground, torn cardboard box, garbage bag,
+     vegetable leaves / crushed fruit on the ground, food waste, napkin) plus look-alike prompts that are
+     dropped (shoe, manhole cover, drain grate, crate of produce, puddle); plus waste-like level-2 classes.
+     conf >= 0.1, below the horizon, small boxes.
+   - On the walkway only: SegFormer-B2 (ADE20K, nvidia/segformer-b2-finetuned-ade-512-512) segments the lower
+     band of every stabilised frame (pitch +5..-75 deg); floor = floor, road, sidewalk, earth, path, runway,
+     dirt track; masks cached per frame (reusable for walkway width / encroachment). A candidate is kept when
+     the ring around it is >= 50% floor AND the strip just under it is >= 60% floor (not a table or stall),
+     and it overlaps no person box by more than 30% (carried bags).
+   - Tracked as one class (level-2 tracker), then CLIP ViT-L/14 on up to 3 crops: 6 waste types (cardboard,
+     paper & litter, plastic bag, bottle / can, organic waste, garbage bag) vs not-waste (stock boxes, clean
+     floor, feet, drains, puddles, trolleys, carried bags, bins, tables, vehicles); waste when the waste
+     prompts sum to >= 0.5.
+   - Items at the same map spot (<= 1 m, <= 10 s apart) are merged (tracker splits); short gaps (<= 1 s)
+     inside an item are interpolated. Map position = camera position + ground distance along the bearing;
+     route position = camera chainage; density = items per 10 m.
+   - Result: walk 1: 19 items (12 cardboard, 2 plastic bags, 2 bottles/cans, 2 organic, 1 garbage bag),
+     max 3 per 10 m; walk 2: 11 items (7 cardboard, 2 paper & litter, 1 bottle/can, 1 organic).
+   - STATUS: results saved (waste_stab.json, waste.parquet) but NOT shown in the viewer (user decision 13 Oct:
+     not good enough yet). Viewer flag SHOW_WASTE = false.
+   - Visual checks (contact sheets): first version 35-40% correct (carried bags, bins, cafe tables); after
+     the person-overlap, floor-under and look-alike filters ~67% (walk 1, 14/21 before merging) and ~73%
+     (walk 2, 8/11). Remaining errors: goods for sale on the floor (detergent bottles, crates), a bag hanging
+     at a stall. Recall not measured: small litter (cigarette butts, wrappers) is below the detector's
+     resolution at 5 fps / 1024 px tiles.
+
+20. STALL MATERIALS (what the stalls are made of)  (stall_materials.py; config\stall_review.json)  - not shown yet
+   - Crops: per GIS store, the best side views (store 2-8 m away, 40-140 deg off the walking direction, so the
+     frontage is visible and the operator is behind) within +-8 s of the closest approach; 3 undistorted crops,
+     width scaled to the distance. v1 (closest-approach frame only) often showed the street or the operator.
+   - CLIP ViT-L/14 zero-shot on the survey questions (facade Open/Glass/Metal; structure steel/blocks/cement)
+     and 8 detailed materials. vs survey: facade 82.7%, structure 83.5% (99 stores) - BELOW the majority
+     baseline (always Open / steel: 93% / 97% among visible stores); detailed materials almost never fire.
+   - Vision review (Claude, 5 contact sheets): facade, structure and visible materials for 99 stores; 91 show
+     the store. Materials seen: steel frame 50, glass 28, metal roller shutter 17, fabric awning 9, plastic
+     crates 8, ceramic tiles 7, wood 7, cardboard 6, corrugated metal 2, plastic sheeting 2.
+     Agreement with the survey: facade 78%, structure 59%.
+   - Why the disagreement (checked store by store): (1) store association - stores are 2-3 m wide and densely
+     packed while the route is ~2-3 m accurate, so several stores' crops show the same dominant frontage (5
+     stores -> the glass "BAR" front, 6 -> the Pizuchei Shadi glass shop); (2) definitions - block-built butcher
+     shops with glass counters and steel shutters are coded "Open / steel" in the survey, so the survey's
+     Skeleton_Mat / Facade_Mat seem to mean something else (or are defaults).
+   - Next: associate crops to stores by shop names read on signs (OCR already reads e.g. "פיצוחי שאדי"); ask
+     Boaz for the survey definitions; or report materials per frontage segment along the route instead of
+     per GIS store.
+   - SHOWN AS LOCATIONS (user decision 13 Oct: location-based, not store-based; frontage.py): each reviewed
+     crop is placed where the camera looked (camera position at the view frame + distance along the view
+     bearing), with route chainage and side; crops of the same frontage within 3 m are merged -> 82 frontage
+     points (walk 1: 66, walk 2: 16). Viewer: 🧱 markers on both maps (popup: crop, facade, structure,
+     materials, "Go to video"), a clickable 🧱 badge in the 360 view while passing (+-3 s), layer
+     "Frontage materials (experimental)". Not tied to GIS store names.
+

@@ -302,6 +302,10 @@ def record(members, raw, to_ll, cvx, cvy, pin, flow=None):
 def run(walk: str, variant: str) -> dict:
     sfx = f"_{variant}" if variant else ""
     tr = pd.read_parquet(INTERIM / walk / f"tracks{sfx}" / "persons.parquet")
+    dp = INTERIM / walk / f"depicted{sfx}" / "depicted.parquet"            # pictures of people and the operator do not move
+    if dp.exists():
+        d = pd.read_parquet(dp)
+        tr = tr[~tr.track.isin(d.track[d.category != "person"])]
     ap = INTERIM / walk / f"attributes{sfx}" / "attributes.parquet"
     sex = dict(zip(*pd.read_parquet(ap)[["track", "sex"]].to_numpy().T)) if ap.exists() else {}
     sex = {int(k): v for k, v in sex.items()}
