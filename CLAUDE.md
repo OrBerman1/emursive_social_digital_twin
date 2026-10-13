@@ -1,4 +1,29 @@
-# CLAUDE.md — Shuk HaPishpeshim 360° Digital Twin (Hackathon)
+# CLAUDE.md — Shuk HaTikvah 360° Social Immersive Digital Twin (Hackathon)
+
+## Current state — read this first (updated 13 Oct 2026, evening)
+- **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–21: the method,
+  numbers and validation for every stage). Git: one branch per feature; current branch `design`
+  (pushed); `main` holds everything before it. Push only when the user asks, with
+  `git -c http.sslBackend=schannel push` (certificate issue on this machine).
+- **Shown in the viewer:** people (tracked, age colour, gender badge), motion arrows (camera motion
+  removed, reliability gate), people paths on the map, interactive map (GTA-style minimap + full map,
+  store dots, click store → jump), sign text (OCR), pictured people as category `possible_rabi_sign`
+  (not counted), food on display, frontage materials (location-based, experimental), objects / level 2.
+- **Built but hidden:** waste on the floor (`waste.py`; viewer flag `SHOW_WASTE = false`): ~70% precision,
+  user said not good enough. Stall materials per GIS store: not shown (store↔crop association and survey
+  definitions unresolved) — shown instead as locations (`frontage.py`).
+- **Viewers:** original `viewer/index.html` (`start_viewer.bat`, port 8000) + five design variants on the
+  shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
+  (`start_viewer_1..5_*.bat`, ports 8001–8005). The user has not chosen a direction yet.
+- **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
+  distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
+  emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
+- **Open issues:** ~35 operator tracks (arm / T-shirt) still counted as people on walk 1; match stall
+  crops to stores via shop names read on signs; ask Boaz what survey `Facade_Mat` / `Skeleton_Mat` mean;
+  anchor outliers (Melech Haavatiach, the GlobalID stall); no hand-labelled ground truth yet for food,
+  waste or motion.
+- Some sections below describe the original day-1 plan (e.g. "Tesseract only", Pannellum viewer);
+  where they conflict with this section or METHODS.txt, this section and METHODS.txt win.
 
 ## Who you are on this team
 
@@ -15,8 +40,8 @@ resource: favour working end-to-end over polished parts.
 
 ## Project in one paragraph
 
-Boaz (PhD architecture, art and anthropology) spent 18 months as "the market's artist" in Shuk
-HaPishpeshim (the Jaffa flea market). He collected drawings, interviews, photos, 360° walk-through
+Boaz (PhD architecture, art and anthropology) spent 18 months as "the market's artist" (the kickoff
+named Shuk HaPishpeshim in Jaffa; the brief and all data are **Shuk HaTikvah, Tel Aviv**). He collected drawings, interviews, photos, 360° walk-through
 videos and GIS maps of shops. His long-term vision is a layered digital twin in his illustration
 style, with layers you can toggle like a building model. A separate CS collaborator handles style
 transfer and 360° rendering. **Do not build those here.**
@@ -72,6 +97,19 @@ certificate errors, so fall back to `curl -L -o`.
 | `ocr_signs.py --variant stab` | text detection GPU + Tesseract CPU, both cached | `text_det_stab/text_lines.parquet` (docTR db_resnet50, 16 tiles, every 2nd frame), `ocr_stab/signs.parquet` (Tesseract heb+eng psm 7 normal/inverted, best of 2 crops, then HebrewFinalFixer + SpellChecker copied from C:\Projects\OCR into `pipeline/ocr/`) |
 | `export_overlays.py` | seconds | `data/processed/<walk>/overlays.json`, `observations.geojson` |
 | `make_validation.py` | seconds | `data/processed/validation/` for the hand-count page |
+
+Stages added after v0.1 (all wired into `run_all.py`; details and numbers in METHODS.txt):
+| Stage (script) | Cost | Output |
+|---|---|---|
+| `ocr_vlm.py` | Claude reads numbered contact sheets (sub-agents) | `ocr_vlm_stab/signs.parquet` — the sign text actually used (Tesseract was too weak) |
+| `georef.py` | ~1 min | walks on the map without GPS: gyro dead reckoning fitted to store anchors (`config/anchors.json`) + OSM map matching + centring between store rows → `<walk>/georef.json`, `shops.json` |
+| `person_flow.py` | ~1.5 min/walk, cached | optical flow (DIS) of feet vs ground beside them |
+| `motion.py` | seconds | people on the map + speed/direction, camera motion from static objects → `<walk>/motion_stab.json` |
+| `depicted.py` | CLIP cached | pictured people → `possible_rabi_sign` (vision review in `config/depicted_review.json`) |
+| `detect.py --model yolov8x-oiv7.pt` + `food.py` | ~13 min/walk GPU + CLIP | food displays: where (Open Images V7 + COCO), what (CLIP market vocabulary) |
+| `detect.py --prompts waste` + `waste.py` | ~13 min/walk + SegFormer floor masks | waste on the floor (hidden) |
+| `stall_materials.py` + `frontage.py` | crops + CLIP; vision review `config/stall_review.json` | frontage materials as locations → `frontage_materials.json` |
+| `viewer/engine.js` | — | shared engine of the five design variants |
 
 **Stitch:** ffmpeg `v360=input=dfisheye:output=e:ih_fov=190:iv_fov=190:roll=180` (tuned on walk 1;
 Hebrew reads correctly). The seam is visible; Insta360 Studio would give cleaner seams.
@@ -158,20 +196,13 @@ days. No fourth member.
     anchors. ExifTool is installed at
     `C:\Users\orber\AppData\Local\Programs\ExifTool\exiftool.exe` (use `-api LargeFileSupport=1 -ee3`).
   - The obsolete `.partial` video and the old `LABAI/LABAI/` copy were deleted on 12 Oct 2026.
-- **Update 12 Oct 2026:** a second download of `LABAI.zip` (5.27 GB) is also cut off, but 50 of its
-  51 files were recovered into `data/raw/LABAI/` (all CRC-checked):
-  - `1_Hatikvah St.insv`: complete, 3:28 long, 3968×1920 dual-fisheye H.264 at 29.97 fps, with the
-    Insta360 trailer present (GPS/gyro can be checked with exiftool).
-  - `Photos/` (12 files) and `Sketches/` (37 files: Boaz 1–5, plus AI-generated style images).
-  - `2_Hamevasser St.insv.partial`: 99.7% there, but the `moov` index and trailer are missing, so it
-    won't play. Re-download that one file.
-  - Windows shows the zip as "empty" because its central directory is missing. Recover entries with
-    the local-header salvage approach; don't trust Explorer.
-- The data lives in `LABAI.zip`, sent via a link from Boaz. **The local copy is truncated**: about
-  662 MB out of several GB, with no zip central directory. It holds only part of
-  `LABAI/1_Hatikvah St.insv`, about 25% of a 2.6 GB video. Its `moov` index is missing, so it won't
-  play. Re-download it, preferably file by file, before relying on it. The `1_` prefix suggests more
-  numbered walks exist.
+- **Store table with coordinates:** `data/raw/LABAI/Shops_In_hatikva_30_7_26.xlsx` (220 stores, WGS84
+  X/Y, Main_Trade, Shop_Type, Ownership, Facade_Mat, Skeleton_Mat, GlobalID). Used by `georef.py`.
+  Facade_Mat / Skeleton_Mat are near-constant (Open / steel) and their meaning is unclear (ask Boaz).
+- **Map base data:** OpenStreetMap streets + buildings, cached in `data/raw/osm/hatikva_osm.xml`
+  (downloaded by `georef.py` on first run).
+- (Historical: early zip downloads were truncated; all files were re-downloaded one by one and are
+  complete. README section 2 lists the files and how to prepare them.)
 - **`.insv` is Insta360 raw footage.** It's an MP4 container with **dual-fisheye** frames, not
   equirectangular. It must be stitched to equirectangular first (Insta360 Studio or the Insta360
   Media SDK) before any analysis or viewing.
@@ -212,10 +243,14 @@ days. No fourth member.
   labels by hand. Report results as **% of segmented facade/stall area**, not object counts.
 - **Sex classification (man / woman): in scope, team decision.** Use body-based pedestrian attribute
   recognition on person crops (faces are too small in 360° footage). Vote per track, include an
-  "uncertain" class, and run it before face blurring, storing only `{track_id, label, conf}`. Show it
-  **aggregated only**, with measured accuracy beside it, never as a label on an individual. Judges
-  will ask. **Blur faces in anything we display or commit.** Don't store face or person crops.
-- **Text on signs (OCR): Tesseract only** (team decision; no Claude OCR or post-processing for now).
+  "uncertain" class, and run it before face blurring, storing only `{track_id, label, conf}`. Planned
+  as aggregate-only; **user decision 13 Oct:** perceived gender is also shown per person as the emoji
+  badge background (blue man / pink woman / grey uncertain), labelled as an estimate. Judges will ask.
+  (Implemented with CLIP ViT-L/14 zero-shot, `attributes.py`; not yet validated.) **Blur faces in anything we display or commit.** Don't store face or person crops.
+- **Text on signs (OCR) — superseded:** Tesseract proved too weak; the user then allowed any offline
+  method. Current method: docTR text detection + Claude reading numbered contact sheets
+  (`ocr_vlm.py`, 2,244 signs, spot check 16/16). The original Tesseract plan is kept below for reference.
+- (Original plan) **Text on signs: Tesseract only** (team decision; no Claude OCR or post-processing for now).
   Mostly Hebrew, some English, and expect Arabic in Jaffa. Reuse the user's earlier project at
   `C:\Projects\OCR`:
   - copy `ocr_base.py`, `ocr_tesseract.py`, `ocr_doctr.py` (detection head only, since docTR can't
@@ -253,7 +288,9 @@ obstacle) · I interaction · L logistics event. Static entities keep their ID a
 (`|yaw − view_yaw| < hfov/2`) and aggregate. It's cheap enough to compute client-side.
 
 ### 4. Viewer
-- A web app. Use **Pannellum** or **Marzipano** for the 360° video, or three.js with an
+- **As built:** plain WebGL equirect shader + 2D overlay canvas (no Pannellum), Leaflet maps, served
+  by `pipeline/serve.py`. Original `viewer/index.html`; five redesigns on `viewer/engine.js`.
+- (Original plan) A web app. Use **Pannellum** or **Marzipano** for the 360° video, or three.js with an
   equirectangular video texture if we need custom overlays. Also show a mini-map (Leaflet) with the
   walk path and the current position and heading cone.
 - Overlays: shop labels or icons, coloured by category or ownership, plus an optional toggle for the
@@ -273,10 +310,9 @@ Pin versions in `requirements.txt`. Scripts must be runnable both on the GPU clu
 CPU, with a `--limit` flag).
 
 ## Open questions (resolve early, in this order)
-1. Do the 360° videos carry GPS or timestamps? Check the insv trailer on a **complete** file. This
-   decides the registration strategy.
-2. What GIS format and CRS is it in, and what fields (shop name, owner, category, frontage geometry)?
-3. Which camera model? (Single-file versus `_00_`/`_10_` dual-file insv, and resolution.)
+1. ~~GPS in the videos?~~ Answered: no GPS; gyro yes. Registration = store anchors + gyro + OSM map matching.
+2. ~~GIS format?~~ Answered: store table xlsx in WGS84 (no frontage geometry yet).
+3. ~~Camera?~~ Answered: Insta360 ONE RS, single-file dual-fisheye 3968×1920.
 4. Can Boaz label about 50 frames for materials, to validate the open-vocabulary output?
 5. Sex classification: what confidence threshold for "uncertain", and can Boaz label ~100 tracks to validate it?
 
