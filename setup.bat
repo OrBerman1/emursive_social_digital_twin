@@ -13,18 +13,43 @@ cd /d "%~dp0"
 set "FAIL=0"
 
 echo.
-echo === 1/8  Checking required programs ===
-where py >nul 2>nul || (echo [MISSING] Python launcher "py" - install Python 3.13 and 3.9 from python.org & set FAIL=1)
-py -3.13 --version >nul 2>nul || (echo [MISSING] Python 3.13 - install from python.org & set FAIL=1)
+echo === 1/8  Checking required programs (missing ones are installed with winget) ===
 where curl.exe >nul 2>nul || (echo [MISSING] curl.exe - included with Windows 10/11 & set FAIL=1)
+where winget >nul 2>nul
+if errorlevel 1 (
+  set "HAVE_WINGET=0"
+  echo [WARN] winget not found - missing programs cannot be installed automatically. Update "App Installer" from the Microsoft Store.
+) else (
+  set "HAVE_WINGET=1"
+)
+
+set "TESS=C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+rem --- Python 3.13 (main) and 3.9 (gyro helper) ---
+py -3.13 --version >nul 2>nul || call :winget_install Python.Python.3.13 "Python 3.13"
+py -3.9 --version >nul 2>nul  || call :winget_install Python.Python.3.9 "Python 3.9"
+rem --- ffmpeg (full build, with NVENC) ---
+where ffmpeg >nul 2>nul || call :winget_install Gyan.FFmpeg "ffmpeg"
+rem --- Tesseract ---
+if not exist "%TESS%" call :winget_install UB-Mannheim.TesseractOCR "Tesseract OCR"
+
+rem Newly installed programs are not on this window's PATH yet: reload PATH from the registry.
+call :refresh_path
+
+py -3.13 --version >nul 2>nul || (echo [MISSING] Python 3.13 - install from python.org, tick "Add to PATH" & set FAIL=1)
 where ffmpeg >nul 2>nul || (echo [MISSING] ffmpeg on PATH - install a full build from https://www.gyan.dev/ffmpeg/builds/ and add its bin folder to PATH & set FAIL=1)
-if not exist "C:\Program Files\Tesseract-OCR\tesseract.exe" (
-  echo [MISSING] Tesseract OCR - install from https://github.com/UB-Mannheim/tesseract/wiki and tick Hebrew + Arabic language data
+if not exist "%TESS%" (
+  echo [MISSING] Tesseract OCR - install from https://github.com/UB-Mannheim/tesseract/wiki
   set FAIL=1
 ) else (
-  "C:\Program Files\Tesseract-OCR\tesseract.exe" --list-langs 2>nul | findstr /x "heb" >nul || echo [WARN] Tesseract has no Hebrew data - rerun its installer and tick Hebrew
+  rem Hebrew and Arabic language data are not in the default installer: fetch them if absent.
+  for %%L in (heb ara) do if not exist "C:\Program Files\Tesseract-OCR\tessdata\%%L.traineddata" (
+    echo   downloading Tesseract %%L language data
+    curl.exe -L -f -s -o "C:\Program Files\Tesseract-OCR\tessdata\%%L.traineddata" https://github.com/tesseract-ocr/tessdata_best/raw/main/%%L.traineddata || echo [WARN] Could not write %%L.traineddata - rerun setup.bat as Administrator
+  )
+  "%TESS%" --list-langs 2>nul | findstr /x "heb" >nul || echo [WARN] Tesseract has no Hebrew data - rerun setup.bat as Administrator, or copy heb.traineddata into its tessdata folder
 )
-where nvidia-smi >nul 2>nul || echo [WARN] nvidia-smi not found - GPU stages will be very slow on CPU
+where nvidia-smi >nul 2>nul || echo [WARN] nvidia-smi not found - install the NVIDIA driver from nvidia.com; GPU stages will be very slow on CPU
 py -3.9 --version >nul 2>nul || echo [WARN] Python 3.9 not found - gyro extraction for stabilisation will be skipped
 if "%FAIL%"=="1" (
   echo.
@@ -100,3 +125,15 @@ echo [ERROR] Setup stopped at the step above. Fix the message shown and run setu
 echo.
 pause
 endlocal
+exit /b
+
+rem --- helpers (only reached through "call") ---
+:winget_install
+if "%HAVE_WINGET%"=="0" exit /b 1
+echo   installing %~2 with winget ...
+winget install --id %~1 -e --silent --accept-package-agreements --accept-source-agreements
+exit /b 0
+
+:refresh_path
+for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')"`) do set "PATH=%%P"
+exit /b 0

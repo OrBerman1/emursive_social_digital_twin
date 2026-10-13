@@ -78,7 +78,7 @@ def similarity(pred: pd.DataFrame, g: pd.DataFrame) -> np.ndarray:
     return np.maximum(iou, np.exp(-dn2) * size_ok)
 
 
-def track(dets: pd.DataFrame, sim_min: float = 0.3, max_age: int = 10, min_hits: int = 3) -> pd.DataFrame:
+def track(dets: pd.DataFrame, sim_min: float = 0.3, max_age: int = 10, min_hits: int = 3, do_stitch: bool = True) -> pd.DataFrame:
     """Frame-by-frame Hungarian assignment (IoU + scaled centre distance) with constant-velocity yaw prediction."""
     active: list[dict] = []
     next_id, out = 1, []
@@ -110,7 +110,8 @@ def track(dets: pd.DataFrame, sim_min: float = 0.3, max_age: int = 10, min_hits:
                 next_id += 1
         active = [t for t in active if frame - t["frame"] <= max_age]
     df = pd.DataFrame(out)
-    df = stitch(df)
+    if do_stitch:
+        df = stitch(df)
     hits = df.groupby("track")["frame"].transform("count")
     return df[hits >= min_hits]
 
