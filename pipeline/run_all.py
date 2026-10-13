@@ -46,7 +46,8 @@ def main() -> None:
     step(str(HERE / "food.py"), *walks, "--variant", "stab", cwd=MODELS)                      # food displays: where (OIV7+COCO), what (CLIP cached)
     step(str(HERE / "georef.py"))                                                          # cheap: walks on the map from store anchors
     step(str(HERE / "waste.py"), *walks, "--variant", "stab", cwd=MODELS)                     # floor masks + CLIP cached (needs georef); not shown
-    step(str(HERE / "stall_materials.py"), "--variant", "stab", cwd=MODELS)                   # stall crops + CLIP cached; not shown
+    step(str(HERE / "stall_materials.py"), "--variant", "stab", cwd=MODELS)                   # stall crops + CLIP cached
+    step(str(HERE / "frontage.py"), "--variant", "stab")                                   # frontage materials as locations (shown, experimental)
     step(str(HERE / "export_overlays.py"), *walks, "--variant", "stab")
     step(str(HERE / "person_flow.py"), *walks, "--variant", "stab")                        # cached: optical flow, feet vs ground (~2 min/walk)
     step(str(HERE / "motion.py"), *walks, "--variant", "stab")                             # cheap: people on the map + motion

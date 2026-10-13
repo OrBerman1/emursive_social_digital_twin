@@ -303,4 +303,10 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Next: associate crops to stores by shop names read on signs (OCR already reads e.g. "פיצוחי שאדי"); ask
      Boaz for the survey definitions; or report materials per frontage segment along the route instead of
      per GIS store.
+   - SHOWN AS LOCATIONS (user decision 13 Oct: location-based, not store-based; frontage.py): each reviewed
+     crop is placed where the camera looked (camera position at the view frame + distance along the view
+     bearing), with route chainage and side; crops of the same frontage within 3 m are merged -> 82 frontage
+     points (walk 1: 66, walk 2: 16). Viewer: 🧱 markers on both maps (popup: crop, facade, structure,
+     materials, "Go to video"), a clickable 🧱 badge in the 360 view while passing (+-3 s), layer
+     "Frontage materials (experimental)". Not tied to GIS store names.
 
