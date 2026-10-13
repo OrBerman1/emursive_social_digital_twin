@@ -132,8 +132,8 @@ pace; real coordinates follow once anchor points on the GIS map are available (t
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
 `data\processed\<walk>\georef.json` and `data\processed\shops.json`. Add anchors there and rerun it to
-improve the fit. The viewer shows a heading-up minimap (bottom right); click it for the full store map
-and click a store to jump the video there (it switches walk if needed). Map tiles come from OpenStreetMap,
+improve the fit. The viewer shows a heading-up minimap (bottom right); click it for the full store map (a red
+"you are here" marker with a view cone follows the video live) and click a store to jump the video there (it switches walk if needed). Map tiles come from OpenStreetMap,
 so the map needs internet.
 
 ## 7. Troubleshooting

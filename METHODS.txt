@@ -140,7 +140,8 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Store -> video: closest approach of each walk to each store (<= 22 m); view yaw = store bearing
      minus the frame's map bearing of yaw 0. 137 of 220 stores are clickable.
    - Viewer: Leaflet 1.9.4 + OpenStreetMap tiles. Heading-up round minimap (GTA-style) with route,
-     store dots and view cone; click -> full map with all stores coloured by trade; store popup
+     store dots and view cone; click -> full map with all stores coloured by trade and a live
+     "you are here" marker + view cone; store popup
      "Go to video" switches walk if needed and seeks/turns to the store.
   (export_overlays.py, make_validation.py, viewer\validate.html)
    - GeoJSON of persistent entities (track ID, frames, time, confidence); route position
