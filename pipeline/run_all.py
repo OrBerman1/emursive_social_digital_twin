@@ -37,9 +37,12 @@ def main() -> None:
     step(str(HERE / "bake_stab.py"), *walks)                                               # cached, GPU
     step(str(HERE / "detect.py"), *walks, "--model", "yolo11x.pt", "--frames", "frames_stab", cwd=MODELS)
     step(str(HERE / "detect.py"), *walks, "--model", "yolov8x-worldv2.pt", "--prompts", "level2", "--frames", "frames_stab", cwd=MODELS)
+    step(str(HERE / "detect.py"), *walks, "--model", "yolov8x-oiv7.pt", "--frames", "frames_stab", cwd=MODELS)          # food (Open Images V7)
     step(str(HERE / "tracks.py"), *walks, "--variant", "stab")
     step(str(HERE / "attributes.py"), *walks, "--variant", "stab", cwd=MODELS)                # cached, GPU (CLIP)
     step(str(HERE / "ocr_signs.py"), *walks, "--variant", "stab")                          # cached: docTR (GPU) + Tesseract
+    step(str(HERE / "depicted.py"), *walks, "--variant", "stab", cwd=MODELS)                  # pictured people -> possible_rabi_sign (CLIP cached)
+    step(str(HERE / "food.py"), *walks, "--variant", "stab", cwd=MODELS)                      # food displays: where (OIV7+COCO), what (CLIP cached)
     step(str(HERE / "export_overlays.py"), *walks, "--variant", "stab")
     step(str(HERE / "georef.py"))                                                          # cheap: walks on the map from store anchors
     step(str(HERE / "person_flow.py"), *walks, "--variant", "stab")                        # cached: optical flow, feet vs ground (~2 min/walk)

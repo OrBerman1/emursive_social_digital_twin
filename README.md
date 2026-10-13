@@ -136,6 +136,13 @@ against the ground beside them (`pipeline\person_flow.py`, cached). Arrows are d
 chooses who gets motion arrows; follow people with the card's **Follow** button, **Shift + drag** a box on the
 video, or **Follow everyone in view**. Followed people get one colour on their box, arrow and path on both maps.
 
+**Pictured people and food.** `pipeline\depicted.py` separates pictured people (rabbi portraits, posters,
+adverts) from real people: CLIP proposes candidates and a vision review in `config\depicted_review.json`
+decides; they become the category `possible_rabi_sign`, are not counted as people and have their own viewer
+layer. `pipeline\food.py` finds food displays (YOLOv8x Open Images V7 + COCO produce) and names them with CLIP
+from a market vocabulary; menu/sign photos of food are kept apart. The Open Images weights
+(`models\yolov8x-oiv7.pt`) are downloaded by `setup.bat`.
+
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
 `data\processed\<walk>\georef.json` and `data\processed\shops.json`. It keeps the walker on real streets

@@ -215,3 +215,43 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      colour per followed person on box, arrow, chip and map paths.
    - Limits: flat ground; position error ~0.5 m at 3 m, ~2 m at 10 m (+ route error, shared by everyone);
      noise floor ~0.3 m/s; individual directions not hand-validated beyond the spot checks above.
+
+17. PEOPLE ON SIGNS -> CATEGORY possible_rabi_sign  (depicted.py; config\depicted_review.json)
+   - Problem: the person detector (YOLO11x) also fires on pictured people: rabbi portraits, posters, adverts,
+     framed photos, menu boards. They must not be counted as people.
+   - Proposal (automatic): CLIP ViT-L/14 zero-shot on the best crops WITH context (sign frame visible):
+     "real person in a market" vs "printed picture / portrait / poster of a person" -> p_depicted; plus
+     implied body height on flat ground, feet above the horizon, closeness to detected text regions.
+     Candidates = p_depicted >= 0.3 (17 tracks walk 1, 36 walk 2).
+   - Decision (vision review, like the sign reading): contact sheets of the candidates checked by Claude ->
+     depicted / operator / real, stored in config\depicted_review.json. Why: automatic rules alone were not
+     reliable (CLIP >= 0.75 also fired on people behind glass, drivers and the operator's printed T-shirt;
+     the size rule fired on far real people). Unreviewed tracks fall back to p_depicted >= 0.9 (~75%
+     precision on the reviewed set).
+   - Recall check: 238 further tracks that sit on signs or have an implausible size were reviewed; no other
+     pictures found.
+   - Result: walk 1: 7 possible_rabi_sign + 2 operator tracks; walk 2: 15 + 5. Removed from people counts,
+     gender/age statistics, motion and map paths; shown as their own layer (yellow dotted box, picture emoji)
+     and exported to GeoJSON as class possible_rabi_sign.
+   - Side finding: ~35 more walk-1 person tracks are the camera operator (arm, T-shirt) that the operator
+     filter in tracks.py misses -> to fix next.
+
+18. FOOD ON DISPLAY  (detect.py --model yolov8x-oiv7.pt; food.py)
+   - WHERE: YOLOv8x trained on Open Images V7 (600 classes, Ultralytics release weights) on the stabilised
+     frames, food classes (conf >= 0.15), plus COCO produce already cached from YOLO11x (banana, apple, orange,
+     carrot, broccoli; conf >= 0.3). On market displays OIV7 names ~98% of its food boxes only generically
+     ("Vegetable", "Food", "Fruit"), so it is used for location only.
+   - Tracking: all food boxes tracked as one class (no label flicker) with the level-2 tracker; a track is
+     a display/stack, not single items.
+   - WHAT: CLIP ViT-L/14 zero-shot over a market vocabulary of 41 items (tomatoes, cucumbers, peppers,
+     eggplants, herbs, watermelons, bananas, citrus, dates, nuts, spices, olives, bread/pita, pastries,
+     cheese, meat, fish, eggs, prepared food, mixed fruit & vegetables, ...), averaged over the 3 widest crops.
+   - Printed food (menu boards, fruit drawings on signs): own category "Food picture (menu/sign)", shown
+     with a picture emoji and NOT counted as food on display (walk 2 is full of restaurant menu photos).
+   - Thresholds from sample checks (contact sheets): named when p >= 0.5 (~80% correct; below 0.5 ~20%,
+     so shown as "Produce (unsure)"); food picture when p >= 0.8 (7/8 correct; 0.6-0.8 were mostly real
+     stalls); "Prepared food" needs p >= 0.7 (it attracted colourful produce), else the runner-up label.
+   - Result: walk 1: 1,009 displays (504 unsure, 232 bananas, 107 mixed, 35 food pictures, potatoes,
+     tomatoes, watermelons, meat...); walk 2 (Hamevasser St): 183 (83 menu/sign pictures, 28 meat).
+   - Limits: no hand-labelled ground truth yet (planned: ~30 stall crops per walk); bananas are
+     over-represented because COCO detects them very often (one stand -> several tracks).

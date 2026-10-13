@@ -11,7 +11,7 @@
 :root {
   --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f;
   --accent: #4fb3bb; --person: #ef6f62; --obj: #e0a948; --l2: #b49be6; --waste: #d1a865; --logi: #f0a050;
-  --ocr: #6fd3c8; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #e2f7dc; --ag2: #9fe08f; --ag3: #4caf50; --ag4: #1b6e2a; --ag-u: #9aa3a1;  /* age: one green ramp, light = young -> dark = old */
+  --ocr: #6fd3c8; --dp: #f2d16b; --food: #8fd16a; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #e2f7dc; --ag2: #9fe08f; --ag3: #4caf50; --ag4: #1b6e2a; --ag-u: #9aa3a1;  /* age: one green ramp, light = young -> dark = old */
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -159,6 +159,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <dt>People in the whole 360° frame</dt><dd id="pAll">0</dd>
           <dt>Unique people so far (tracked)</dt><dd id="pUnique">0</dd>
           <dt>Unique people, whole walk</dt><dd id="pTotal">0</dd>
+          <dt>🖼️ Pictured people on signs (not counted)</dt><dd id="dpCount">0</dd>
         </dl>
       </section>
       <section id="secMotion">
@@ -199,6 +200,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="lbl">Objects in view <em>level 1 · COCO</em></div>
         <dl class="kv" id="objList"></dl>
       </section>
+      <section id="fdsec">
+        <div class="lbl">Food on display in view <em>where: Open Images V7 · what: CLIP</em></div>
+        <dl class="kv" id="fdList"></dl>
+        <div class="note">Each entry is a tracked display or stack, not single items. Found by YOLOv8x (Open Images V7) + COCO produce, named by CLIP from a market vocabulary (sample check: ~80% right when confident). 🥗 Produce (unsure) = food, item not named confidently.</div>
+      </section>
       <section id="l2sec">
         <div class="lbl">Level 2 in view <em>open vocabulary</em></div>
         <dl class="kv" id="l2List"></dl>
@@ -213,6 +219,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <label><input type="checkbox" id="Lo" checked>Level-1 objects</label>
           <label><input type="checkbox" id="Ll2" checked>Level-2 objects</label>
           <label><input type="checkbox" id="Ltx" checked>Text on signs (OCR)</label>
+          <label><input type="checkbox" id="Lfd" checked>🍅 Food on display</label>
+          <label><input type="checkbox" id="Ldp" checked>🖼️ People on signs (possible_rabi_sign)</label>
           <label><input type="checkbox" id="Lmin" checked>Hide tracks &lt; 1 s</label>
           <label><input type="checkbox" id="Lvar" checked>Stabilised video (offline)</label>
         </div>
@@ -324,7 +332,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const objCol = { person: "--person" };
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const C = { person: css("--person"), obj: css("--obj"), l2: css("--l2"), ocr: css("--ocr"), surface: css("--surface"), ink: css("--ink") };
+  const C = { food: css("--food"), dp: css("--dp"), person: css("--person"), obj: css("--obj"), l2: css("--l2"), ocr: css("--ocr"), surface: css("--surface"), ink: css("--ink") };
   function inFov(yw) { return Math.abs(((yw - S.yaw + 540) % 360) - 180) < S.fov / 2; }
   function boxRect(yw, yl, yr, pt, pb) {
     let wspan = ((yr - yl) % 360 + 360) % 360;
@@ -343,6 +351,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     "plastic bag": "🛍️", "garbage bag": "🗑️", "trash bin": "🗑️", "organic waste": "🍂", "fruit and vegetable waste": "🍂",
     "hand truck": "🛒", "trolley cart": "🛒", "wheeled shopping trolley": "🛒", walker: "🦯", wheelchair: "🦽", "mobility scooter": "🦼",
     broom: "🧹", "e-bike": "🛵", pallet: "🪵", "display table": "🪵", "plastic chair": "🪑", stool: "🪑", awning: "⛱️",
+    Apple: "🍎", Banana: "🍌", Orange: "🍊", Lemon: "🍋", Grapefruit: "🍊", Grape: "🍇", Strawberry: "🍓", Watermelon: "🍉", "Winter melon": "🍈",
+    Cantaloupe: "🍈", Mango: "🥭", Pineapple: "🍍", Peach: "🍑", Pear: "🍐", Pomegranate: "🍎", "Common fig": "🟣", Coconut: "🥥", Fruit: "🍇",
+    Tomato: "🍅", Potato: "🥔", Carrot: "🥕", Cucumber: "🥒", Zucchini: "🥒", "Bell pepper": "🫑", Broccoli: "🥦", Cabbage: "🥬", Artichoke: "🌿",
+    Radish: "🌶️", Pumpkin: "🎃", "Squash (Plant)": "🎃", "Garden Asparagus": "🌿", Vegetable: "🥬",
+    Bread: "🍞", Bagel: "🥯", "Baked goods": "🥐", Cake: "🍰", Cookie: "🍪", Muffin: "🧁", Pastry: "🥐", Croissant: "🥐", Doughnut: "🍩",
+    Pretzel: "🥨", Waffle: "🧇", Candy: "🍬", Cheese: "🧀", "Egg (Food)": "🥚", Fish: "🐟", Seafood: "🦐", Honeycomb: "🍯", Juice: "🧃",
+    Coffee: "☕", Drink: "🥤", "Fast food": "🍔", Food: "🍽️", Popcorn: "🍿", "Ice cream": "🍦", Dessert: "🍮", Sandwich: "🥪", Pizza: "🍕",
+    Hamburger: "🍔", "Hot dog": "🌭",
+    // market vocabulary of pipeline/food.py (CLIP names of the food displays)
+    Tomatoes: "🍅", Cucumbers: "🥒", "Bell peppers": "🫑", "Chili peppers": "🌶️", Eggplants: "🍆", Potatoes: "🥔", Onions: "🧅",
+    Garlic: "🧄", Carrots: "🥕", "Cabbage & lettuce": "🥬", Herbs: "🌿", Corn: "🌽", Mushrooms: "🍄", Watermelons: "🍉", Melons: "🍈",
+    Bananas: "🍌", Apples: "🍎", "Oranges & citrus": "🍊", Grapes: "🍇", Strawberries: "🍓", Mangoes: "🥭", "Peaches & plums": "🍑",
+    Pomegranates: "🔴", Pears: "🍐", "Dates & dried fruit": "🌴", "Nuts & seeds": "🥜", Spices: "🧂", "Olives & pickles": "🫒",
+    "Sweets & halva": "🍬", "Bread & pita": "🥖", "Pastries & cakes": "🥐", "Cheese & dairy": "🧀", Meat: "🥩", Eggs: "🥚",
+    "Drinks & juice": "🧃", "Prepared food": "🍲", "Packaged groceries": "🛒", "Mixed fruit & vegetables": "🧺", "Produce (unsure)": "🥗", "Food picture (menu/sign)": "🖼️",
     "price sign": "🏷️", "shop sign": "🪧", flag: "🚩", "hanging lamp": "💡", text: "🪧",
   };
   const emojiOf = cls => EMOJI[cls] || "❔";
@@ -509,6 +532,41 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       S.hits.push({ kind: "s", id, r, b: bb, info: sg });
       if (selS) anchor = r;
     }
+    // pictured people on signs / posters (category possible_rabi_sign): own layer, never counted as people
+    let dpView = 0;
+    for (const [q, al] of blend(A.dp || [], B.dp || [], 0, id => ((d.dp_tracks || {})[id] || [])[2] || 99)) {
+      const [id, , yw, yl, yr, pt, pb] = q; if (!inFov(yw)) continue;
+      if (al >= 0.5) dpView++;
+      if (!$("Ldp").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const selD = S.sel && S.sel.kind === "dp" && S.sel.id === id;
+      octx.globalAlpha = al;
+      octx.setLineDash([2 * k, 4 * k]); octx.strokeStyle = C.dp; octx.lineWidth = (selD ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      const bb = badge("🖼️", r, C.dp);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "dp", id, r, b: bb, info: q });
+      if (selD) anchor = r;
+    }
+    $("dpCount").textContent = `${dpView} in view / ${Object.keys(d.dp_tracks || {}).length}`;
+    // food on display (food.py): tracked displays/stacks, emoji per class
+    const fdc = {}, fdLen = id => (d.food_len || {})[id] || 0;
+    for (const [o, al] of blend(A.fd || [], B.fd || [], 7, fdLen)) {
+      const [cls, cf, yw, yl, yr, pt, pb] = o; if (!inFov(yw)) continue;
+      if (al >= 0.5) fdc[cls] = (fdc[cls] || 0) + 1;
+      if (!$("Lfd").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const selF = S.sel && S.sel.kind === "fd" && S.sel.id === o[7];
+      octx.globalAlpha = al; octx.strokeStyle = C.food; octx.lineWidth = (selF ? 3 : 1.4) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const bb = badge(emojiOf(cls), r, C.food);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "fd", id: o[7], r, b: bb, info: o });
+      if (selF) anchor = r;
+    }
+    const fdSig = JSON.stringify(fdc);
+    if (fdSig !== frame.fdSig) { frame.fdSig = fdSig;
+      const real = Object.entries(fdc).filter(([c]) => c !== "Food picture (menu/sign)").sort((a, b) => b[1] - a[1]);
+      $("fdList").innerHTML = (real.map(([c, n]) => `<dt>${emojiOf(c)} ${c}</dt><dd>${n}</dd>`).join("") || `<dt>no food in this direction</dt><dd></dd>`) +
+        (fdc["Food picture (menu/sign)"] ? `<dt class="muted">🖼️ food pictures on menus/signs (not counted)</dt><dd>${fdc["Food picture (menu/sign)"]}</dd>` : ""); }
     // perceived gender + age, aggregate over people in view only
     const SX = ["man", "woman", "uncertain"], SXV = { man: "--sx-m", woman: "--sx-w", uncertain: "--sx-u" };
     const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--ag-u" };
@@ -534,7 +592,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const kvs = (o, tot) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b} / ${tot[a] ?? b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
     if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc, T.o); $("l2List").innerHTML = kvs(l2c, T.l2); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
     const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
-    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView}/${T.people} people</span><span><i style="background:${C.obj}"></i>${sum(oc)}/${sum(T.o)} objects</span><span><i style="background:${C.l2}"></i>${sum(l2c)}/${sum(T.l2)} level 2</span><span><i style="background:${C.ocr}"></i>${signsInView.filter(x => x[1][3]).length}/${T.signs} signs</span>`;
+    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView}/${T.people} people</span><span><i style="background:${C.obj}"></i>${sum(oc)}/${sum(T.o)} objects</span><span><i style="background:${C.l2}"></i>${sum(l2c)}/${sum(T.l2)} level 2</span><span><i style="background:${C.ocr}"></i>${signsInView.filter(x => x[1][3]).length}/${T.signs} signs</span><span><i style="background:${C.dp}"></i>${dpView}/${Object.keys(d.dp_tracks || {}).length} 🖼️ on signs</span>`;
     const t = curTime() || 0;
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
@@ -581,6 +639,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         title = `${emojiOf(info ? info[0] : "")} ${info ? esc2(info[0]) : "object"} · O-${S.sel.id}`;
         rows = row("Confidence (now)", info ? info[1].toFixed(2) : "—") + (S.sel.kind === "l2" && info && info[7] ? row("Distance (now)", info[7].toFixed(1) + " m") : "") +
                row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Detector", lvl);
+      } else if (S.sel.kind === "fd") {
+        const n = (d.food_len || {})[S.sel.id] || 0;
+        title = `${emojiOf(info ? info[0] : "")} ${info ? esc2(info[0]) : "food"} · F-${S.sel.id}`;
+        rows = row("Group", (d.food_group || {})[info ? info[0] : ""] || "—") + row("Confidence (now)", info ? info[1].toFixed(2) : "—") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Found by", "YOLOv8x Open Images V7 + COCO") + row("Named by", "CLIP ViT-L/14, market vocabulary");
+        note = "A display or stack of this food, tracked over time; not a count of individual items.";
+      } else if (S.sel.kind === "dp") {
+        const t = (d.dp_tracks || {})[S.sel.id] || [];
+        title = `🖼️ possible_rabi_sign · P-${String(S.sel.id).padStart(4, "0")}`;
+        rows = row("Category", "pictured person (sign, poster, portrait)") + row("Seen", `frames ${t[0]}–${t[1]}`) +
+               row("Picture score (CLIP)", t[3] ?? "—") + row("Decided by", esc2(t[4] || "—"));
+        note = "Detected as a person by YOLO, but it is a picture. Not counted as a person, not in the gender/age or motion statistics.";
       } else if (S.sel.kind === "s") {
         const si = (d.signs || {})[S.sel.id] || [];
         const n = (d.sign_len || {})[S.sel.id] || 0;
