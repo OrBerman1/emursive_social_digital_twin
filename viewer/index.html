@@ -64,6 +64,28 @@ aside section:first-child { border-top: 0; }
 .layers input { accent-color: var(--accent); margin: 0; }
 .note { font-size: 12px; color: var(--muted); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* ---- map: GTA-style mini-map (bottom right of the video) + full map overlay ---- */
+.minimap { position: absolute; right: 12px; bottom: 12px; width: 200px; height: 200px; border-radius: 50%; overflow: hidden;
+  border: 3px solid rgba(229,233,229,.85); box-shadow: 0 4px 16px rgba(0,0,0,.5); cursor: pointer; z-index: 4; background: #1b2324; }
+.minimap .rot { position: absolute; left: -50px; top: -50px; width: 300px; height: 300px; transform-origin: 150px 150px; }
+.minimap .mm { width: 300px; height: 300px; }
+.minimap .me { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 500; }
+.minimap .me svg { position: absolute; left: -40px; top: -40px; }
+.minimap .north { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 501; }
+.minimap .north span { position: absolute; left: -9px; top: -100px; font: 700 12px var(--mono); color: #fff; background: #c0392b; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; }
+.minimap .hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 10px var(--mono); color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; z-index: 502; }
+.mapfull { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; }
+.mapfull .box { position: relative; width: min(1200px, 100%); height: min(85vh, 900px); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.mapfull #fullmap { position: absolute; inset: 0; }
+.mapfull .bar { position: absolute; left: 10px; top: 10px; z-index: 1001; display: flex; gap: 8px; align-items: center; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); }
+.mapfull .bar button { font: 600 12px var(--body); background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.mapfull .legend2 { position: absolute; right: 10px; bottom: 24px; z-index: 1001; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink); display: grid; gap: 3px; max-height: 50%; overflow-y: auto; }
+.mapfull .legend2 i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.leaflet-popup-content { font: 13px var(--body); }
+.leaflet-popup-content b { font-family: var(--display); }
+.leaflet-popup-content .go { margin-top: 6px; font: 600 12px var(--body); background: #4fb3bb; color: #121819; border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.leaflet-popup-content .muted { color: #777; font-size: 12px; }
+
 .bar { display: flex; height: 11px; border-radius: 3px; overflow: hidden; background: var(--line); }
 .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .legend span { display: flex; gap: 6px; align-items: center; } .legend i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
@@ -73,6 +95,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .signs .t { unicode-bidi: plaintext; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .signs .lg { font: 600 10px var(--mono); text-transform: uppercase; background: var(--ocr); color: #101515; border-radius: 3px; padding: 1px 5px; }
 .signs small { font: 11px var(--mono); color: var(--muted); }
+  .me-icon { background: none; border: none; }
+  .me-icon svg { overflow: visible; display: block; }
+  .me-cone { fill: rgba(16, 21, 21, .55); stroke: #fff; stroke-width: 2.5; paint-order: stroke; }
+  .me-dot { fill: #e5484d; stroke: #fff; stroke-width: 3.5; }
+  .me-tag { position: absolute; left: 50%; top: 62px; transform: translateX(-50%); white-space: nowrap; font: 600 11px/1.4 system-ui, sans-serif;
+            color: #fff; background: #e5484d; padding: 1px 6px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -92,6 +120,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="hud" id="hud"></div>
         <div class="counters" id="ctr"></div>
         <div class="vcard" id="vcard" hidden></div>
+        <div class="minimap" id="minimap" title="Open the full map" hidden>
+          <div class="rot" id="mmrot"><div class="mm" id="mm"></div></div>
+          <div class="me"><svg width="80" height="80" viewBox="-40 -40 80 80"><path id="mmcone" d="" fill="rgba(79,179,187,.35)" stroke="rgba(79,179,187,.9)" stroke-width="1"/><circle r="6" fill="#4fb3bb" stroke="#fff" stroke-width="2"/></svg></div>
+          <div class="north" id="mmnorth"><span>N</span></div>
+          <div class="hint">click: full map</div>
+        </div>
+
         <div class="loading" id="loading">Loading video and overlays…</div>
       </div>
       <div class="tl">
@@ -156,6 +191,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     </aside>
   </div>
 </div>
+<div class="mapfull" id="mapfull" hidden>
+  <div class="box">
+    <div id="fullmap"></div>
+    <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
+    <div class="legend2" id="maplegend"></div>
+  </div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -226,6 +270,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       let r = await fetch(`../data/processed/${walk}/overlays${v}.json`);
       if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
       S.data = await r.json();
+      if (typeof setMiniRoute === "function") setMiniRoute();
       video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
@@ -450,6 +495,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const t = curTime() || 0;
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
+    updateMini(fi);
     if (!scrubbing && duration()) $("scrub").value = Math.round(t / duration() * 1000);
     // in-view card for the selected box (any kind): all numbers live here, not on the boxes
     const vc = $("vcard");
@@ -492,11 +538,118 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       vc.style.transform = `translate(${cx}px, ${cy}px)`;
     } else vc.hidden = true;
   }
+  // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
+  const GEO = { shops: null, walks: {} };
+  const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
+                      "Bakery": "#d1a865", "Restaurant": "#e07b9b", "Drinks": "#6aa7d6", "Electronics": "#9aa3a1", "Jewelery": "#cfc06a", "Cafe": "#a0785a" };
+  const tradeCol = t => TRADE_COL[t] || "#cfd8d6";
+  let mini = null, full = null, miniRoute = null, fullMe = null;
+  async function loadGeo() {
+    try {
+      GEO.shops = (await (await fetch("../data/processed/shops.json")).json()).shops;
+      for (const w of ["walk1", "walk2"]) {
+        try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
+      }
+    } catch (e) { return; }
+    if (!window.L || !GEO.shops) return;
+    $("minimap").hidden = false;
+    mini = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+                         boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
+    for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
+    $("minimap").addEventListener("click", openFullMap);
+    setMiniRoute();
+  }
+  function setMiniRoute() {
+    if (!mini) return;
+    if (miniRoute) { miniRoute.remove(); miniRoute = null; }
+    const g = GEO.walks[S.walk]; if (!g) return;
+    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(mini);
+  }
+  let miniLast = -1;
+  let meFi = 0, meBearing = 0;
+  function updateFullMe(pan) {
+    if (!fullMe || $("mapfull").hidden) return;
+    const g = GEO.walks[S.walk]; if (!g || !g.lat[meFi]) return;
+    fullMe.setLatLng([g.lat[meFi], g.lon[meFi]]);
+    const el = fullMe.getElement(); if (!el) return;
+    const half = Math.min(60, S.fov / 2) * Math.PI / 180, R = 44;
+    const cone = el.querySelector(".me-cone");
+    cone.setAttribute("d", `M0,0 L${R * Math.sin(-half)},${-R * Math.cos(half)} A${R},${R} 0 0 1 ${R * Math.sin(half)},${-R * Math.cos(half)} Z`);
+    cone.setAttribute("transform", `rotate(${meBearing})`);
+    if (pan && !full.getBounds().pad(-0.1).contains(fullMe.getLatLng())) full.panTo(fullMe.getLatLng());
+  }
+  function updateMini(fi) {
+    if (!mini) return;
+    const g = GEO.walks[S.walk]; if (!g || !g.lat[fi]) return;
+    const bearing = (g.yaw0_bearing_deg[fi] + S.yaw + 360) % 360;                 // map bearing of the current view direction
+    meFi = fi; meBearing = bearing; updateFullMe(false);
+    const key = fi * 1000 + Math.round(bearing);
+    if (key !== miniLast) { mini.setView([g.lat[fi], g.lon[fi]], mini.getZoom(), { animate: false }); miniLast = key; }
+    // heading-up (GTA): rotate the map so the view direction points up; the cone stays fixed, north marker rotates
+    $("mmrot").style.transform = `rotate(${-bearing}deg)`;
+    const half = Math.min(60, S.fov / 2) * Math.PI / 180, R = 34;
+    $("mmcone").setAttribute("d", `M0,0 L${R * Math.sin(-half)},${-R * Math.cos(half)} A${R},${R} 0 0 1 ${R * Math.sin(half)},${-R * Math.cos(half)} Z`);
+    $("mmnorth").style.transform = `rotate(${-bearing}deg)`;
+  }
+  function openFullMap() {
+    $("mapfull").hidden = false;
+    if (!full) {
+      full = L.map("fullmap", { zoomSnap: 0.5 });
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
+      const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
+      for (const [w, g] of Object.entries(GEO.walks)) {
+        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(full)
+          .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
+      }
+      const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+      for (const sh of GEO.shops) {
+        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 }).addTo(full);
+        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Facade", sh.Facade_Mat], ["Skeleton", sh.Skeleton_Mat]]
+          .filter(x => x[1]).map(([a, b]) => `${a}: ${esc3(b)}`).join("<br>");
+        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
+                              : `<div class="muted">Not passed on the recorded walks.</div>`;
+        m.bindPopup(`<b>${esc3(sh.name)}</b><br>${info}<br>${where}`);
+        m.bindTooltip(esc3(sh.name));
+      }
+      full.on("popupopen", e => {
+        const b = e.popup.getElement().querySelector(".go"); if (!b) return;
+        b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
+      });
+      const used = Object.keys(TRADE_COL);
+      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span>`;
+      $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
+      const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
+      // "you are here": current camera position + view cone, kept live by updateMini()
+      fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
+        html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
+    }
+    // always open centred on the current camera position, at street level
+    const centre = () => {
+      full.invalidateSize();
+      const g = GEO.walks[S.walk];
+      if (g && g.lat[meFi]) full.setView([g.lat[meFi], g.lon[meFi]], 19, { animate: false });
+      updateFullMe(false);
+    };
+    centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
+  }
+  $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
+  $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
+  async function goToShop(sh) {
+    const t = sh.seen;
+    $("mapfull").hidden = true;
+    if (t.walk !== S.walk) await load(t.walk);
+    vt = t.frame / (S.data ? S.data.fps : 5);
+    if (videoOk()) video.currentTime = vt;
+    S.yaw = t.yaw; S.pitch = -3;
+  }
   requestAnimationFrame(frame);
+  loadGeo();
 
   // ---------- interaction ----------
   let drag = null, scrubbing = false;
-  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard")) return; drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
+  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard, .minimap")) return; drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
   vp.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
     const s = S.fov / vp.clientWidth; S.yaw = ((drag.yaw - dx * s + 540) % 360) - 180; S.pitch = Math.max(-85, Math.min(85, drag.pitch + dy * s)); });
   vp.addEventListener("pointerup", e => {

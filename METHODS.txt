@@ -130,3 +130,45 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - GeoJSON of persistent entities (track ID, frames, time, confidence); route position
      from an assumed walking pace until anchor points arrive (no GPS in the videos).
    - Hand-count page: 30 frames, your count vs the model's count (target +-15%).
+
+15. MAP: WALKS ON THE GIS MAP WITHOUT GPS  (georef.py; config\anchors.json; viewer minimap)
+   - The videos have no GPS. The team gave anchors: at frame F the stabilised view at yaw Y looks at a
+     known store (name or GlobalID in Shops_In_hatikva_30_7_26.xlsx, WGS84 X/Y).
+   - Heading per frame = integrated, smoothed 1 kHz gyro heading (stabilize.py -> heading.json).
+   - Path = dead reckoning: p(f) = P0 + sum v*dt*[sin th, cos th], th = alpha + heading + beta
+     (camera carried at a fixed angle to the walking direction), piecewise-constant speed between anchors.
+   - Unknowns P0, alpha, beta, speeds fitted by robust least squares (scipy, soft-L1): every anchor's
+     view bearing must point at its store; soft priors: store 1.5-15 m from the camera, ~0.9 m/s pace,
+     smooth pace changes; multi-start over alpha/beta.
+   - Stage 1 alone fitted the anchors to ~2 deg but put 50% (walk 1) / 33% (walk 2) of the path inside
+     buildings and ran through stalls. Stage 2 = map matching on OpenStreetMap (api.openstreetmap.org,
+     cached as data/raw/osm/hatikva_osm.xml; the store points lie a median 3.3 m from OSM street
+     centrelines, so OSM and the team's GIS agree):
+       * gyro-drift and pace corrections, linear between knots every 20 s (drift prior 12 deg, smooth);
+       * distance fields on a 0.5 m grid (scipy distance_transform_edt, bilinear lookup):
+         depth inside an OSM building (penalised hard), distance to a walkable street centreline
+         (free band 3 m), distance to any store point (stalls are obstacles: keep >= 2 m);
+       * anchors as sight-ray miss distance in metres (sideways miss + "store behind the camera"),
+         noise = 1.5 m stall/GIS position + 8 deg pointing. Angles are misleading for stores 2-5 m away
+         straight ahead/behind (most of the team's anchors), where 2 m sideways = 40+ deg.
+   - Result (stage 2): inside buildings walk 1 0.4% / walk 2 2.8%; median distance to a street
+     centreline 1.6 / 1.4 m; within 1 m of a store point 1.4% / 2.7%; anchor sight-ray miss median
+     2.6 / 3.3 m; paths 272 / 231 m. Consistent outliers in every variant: Melech Haavatiach (walk 1,
+     ~10 m) and the GlobalID stall (walk 2, ~10 m): check those anchors. 'Pinat Habriut' is not in the
+     store table.
+   - Stage 3, centring between the store rows (user feedback: the walker must walk between the stalls,
+     with stores on both sides): at each frame take the store points within +-8 m along the path; the
+     widest lateral gap >= 3 m nearest the walker is the walkway -> move to its middle; with one row only,
+     keep 3 m off it on the side nearer an OSM street centreline. Shifts smoothed (Gaussian, sigma 3 s),
+     backed off where they would enter a building. Median shift 1.5 m (walk 1) / 0.9 m (walk 2).
+     Stores within 10 m of walk 2 now split 13 left / 13 right; walk 1's south stretch has stores in the
+     table on one side only, so there the path keeps 3 m off that row.
+   - IMU step energy (1 s std of |accel|, stabilize.py -> heading.json): the walker never stops in either
+     walk, so a smooth pace model is adequate.
+   - Store -> video: closest approach of each walk to each store (<= 22 m); view yaw = store bearing
+     minus the frame's map bearing of yaw 0 (drift-corrected). 138 of 220 stores are clickable.
+   - Viewer: Leaflet 1.9.4 + OpenStreetMap tiles. Heading-up round minimap (GTA-style) with route,
+     store dots and view cone; click -> full map with all stores coloured by trade and a live
+     "you are here" marker + view cone; store popup
+     "Go to video" switches walk if needed and seeks/turns to the store. The full map always opens
+     centred on the current position (zoom 19).

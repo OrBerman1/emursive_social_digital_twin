@@ -46,6 +46,7 @@ The raw data is shared by the research team (Boaz) as the **LABAI** folder on On
 | `1_Hatikvah St.insv` | 2.63 GB | Walk 1, raw Insta360 ONE RS 360° video (3:28) |
 | `2_Hamevasser St.insv` | 2.56 GB | Walk 2, raw Insta360 ONE RS 360° video (3:23) |
 | `Shops with Icons.pdf` | 1.1 MB | GIS shop map (PDF export of layer `Hatikvah_Shops_30_7_26`) |
+| `Shops_In_hatikva_30_7_26.xlsx` | small | Store table with X/Y (WGS84) and attributes, used for the map |
 | `shuk_360_frame_coding_v01.docx` | 5.8 MB | The team's frame-coding scheme (9 coded frames) |
 | `Photos\*.jpg` | 12 files | Field photos (2024–2026) |
 | `Sketches\*.png` | 37 files | Boaz's drawings + style images |
@@ -127,6 +128,15 @@ you see in each, and the page compares your counts with the model's.
 `data\processed\<walk>\observations_stab.geojson`: one feature per persistent entity (ID, entity type,
 frames and times seen, confidence, model). Positions along the route currently use an assumed walking
 pace; real coordinates follow once anchor points on the GIS map are available (the videos contain no GPS).
+
+**Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
+(frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
+`data\processed\<walk>\georef.json` and `data\processed\shops.json`. It keeps the walker on real streets
+(never inside a building, never through a stall) using OpenStreetMap streets and buildings, downloaded once
+into `data\raw\osm\` on the first run (needs internet; © OpenStreetMap contributors, ODbL). Add anchors there and rerun it to
+improve the fit. The viewer shows a heading-up minimap (bottom right); click it for the full store map (a red
+"you are here" marker with a view cone follows the video live) and click a store to jump the video there (it switches walk if needed). Map tiles come from OpenStreetMap,
+so the map needs internet.
 
 ## 7. Troubleshooting
 
