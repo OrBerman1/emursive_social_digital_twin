@@ -310,3 +310,13 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      materials, "Go to video"), a clickable 🧱 badge in the 360 view while passing (+-3 s), layer
      "Frontage materials (experimental)". Not tied to GIS store names.
 
+21. VIEWER DESIGN VARIANTS  (viewer/engine.js; viewer/v1_atelier ... v5_mapfirst.html; start_viewer_1..5_*.bat)
+   - Shared engine: WebGL equirect rendering (same maths as before), data loading, per-frame entity list
+     blended between 5 fps analysis frames with the same confidence / 1 s filters, counts and walk totals by
+     unique track ID, camera position/heading on the map, ground motion arrows, drag/zoom/keys, hit testing.
+   - Design rules (UX critique 13 Oct): fixed zones that never reflow; settings separated from information;
+     a visual budget for overlays (quiet dots, focus lens, nearest-N, one mode at a time); one colour-blind-safe
+     palette (Okabe-Ito) with one hue per category; numbers and icons before text; light themes.
+   - The five pages were written in parallel by sub-agents from one brief each, with v1 as the reference;
+     each was checked in the browser (HTTP 200, console free of errors, busy scene at walk 1 0:49).
+

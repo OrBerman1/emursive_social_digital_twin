@@ -129,6 +129,21 @@ you see in each, and the page compares your counts with the model's.
 frames and times seen, confidence, model). Positions along the route currently use an assumed walking
 pace; real coordinates follow once anchor points on the GIS map are available (the videos contain no GPS).
 
+**Five alternative viewer designs** (branch `design`; the original viewer stays as it is). Each has its own
+launcher and port, so several can run side by side:
+
+| Launcher | Design | Idea |
+|---|---|---|
+| `start_viewer_1_atelier.bat` (port 8001) | Atelier | calm light editorial look; quiet dots instead of boxes, fixed insight cards, settings behind one "Layers" button |
+| `start_viewer_2_lens.bat` (port 8002) | Lens | boxes only inside a central focus circle; a 360° radar strip shows what is around you; category dock |
+| `start_viewer_3_analyst.bat` (port 8003) | Analyst | video + tabbed dashboard (People · Stalls · Movement · Map); heat timeline of people density; nearest-N boxes |
+| `start_viewer_4_story.bat` (port 8004) | Story | fullscreen; one mode at a time (People · Food · Signs · Materials · Map, keys 1–5); one-sentence caption; auto-hiding controls |
+| `start_viewer_5_mapfirst.bat` (port 8005) | Map-first | the map is the main canvas (people, stores, frontage, route); 360 video as an inset; click the route to jump |
+
+All five share `viewer/engine.js` (360 rendering, data, tracking blend, counts, map position, controls) and use
+one colour-blind-safe palette (Okabe–Ito: people blue, food green, objects orange, market items purple, signs sky
+blue, pictured people yellow, frontage vermilion).
+
 **People's paths and motion.** `pipeline\motion.py` puts every tracked person on the map (camera position +
 ground distance from their feet) and measures their walking speed and direction with the camera's own motion
 removed (`data\processed\<walk>\motion_stab.json`), combining map geometry with optical flow of the feet
