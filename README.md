@@ -129,6 +129,12 @@ you see in each, and the page compares your counts with the model's.
 frames and times seen, confidence, model). Positions along the route currently use an assumed walking
 pace; real coordinates follow once anchor points on the GIS map are available (the videos contain no GPS).
 
+**People's paths and motion.** `pipeline\motion.py` puts every tracked person on the map (camera position +
+ground distance from their feet) and measures their walking speed and direction with the camera's own motion
+removed (`data\processed\<walk>\motion_stab.json`). In the viewer, the panel's *Motion & paths* section
+chooses who gets motion arrows; follow people with the card's **Follow** button, **Shift + drag** a box on the
+video, or **Follow everyone in view**. Followed people get one colour on their box, arrow and path on both maps.
+
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
 `data\processed\<walk>\georef.json` and `data\processed\shops.json`. It keeps the walker on real streets

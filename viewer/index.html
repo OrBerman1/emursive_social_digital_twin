@@ -37,7 +37,7 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .counters { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
 .counters span { font: 500 11px var(--mono); background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; display: inline-flex; gap: 5px; align-items: center; }
 .counters i { width: 8px; height: 8px; border-radius: 50%; }
-.vcard { position: absolute; left: 0; top: 0; width: 270px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.vcard { position: absolute; left: 0; top: 0; z-index: 6; width: 270px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
 .vcard header { display: flex; gap: 6px; align-items: center; }
 .vcard b { font: 700 .95rem var(--display); flex: 1; }
 .vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 2px 6px; font-size: 14px; border-radius: 4px; }
@@ -95,6 +95,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .signs .t { unicode-bidi: plaintext; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .signs .lg { font: 600 10px var(--mono); text-transform: uppercase; background: var(--ocr); color: #101515; border-radius: 3px; padding: 1px 5px; }
 .signs small { font: 11px var(--mono); color: var(--muted); }
+  /* ---- motion & followed people ---- */
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .seg button { font: 500 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { display: inline-flex; align-items: center; border: 1.5px solid var(--c); border-radius: 20px; overflow: hidden; font: 500 11.5px var(--mono); }
+  .chip button { all: unset; cursor: pointer; padding: 2px 8px; color: var(--ink); }
+  .chip button:first-child { background: color-mix(in srgb, var(--c) 28%, transparent); }
+  .chip button:hover { background: color-mix(in srgb, var(--c) 50%, transparent); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; margin-right: 5px; }
+  .rowbtn { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rowbtn button { font: 600 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .vcard .vfollow { all: unset; cursor: pointer; text-align: center; font: 600 12px var(--body); border: 1.5px solid var(--c, var(--accent)); color: var(--ink);
+                    border-radius: 4px; padding: 5px 8px; background: color-mix(in srgb, var(--c, var(--accent)) 22%, transparent); }
+  .vcard .vfollow[disabled] { opacity: .5; cursor: default; }
   .me-icon { background: none; border: none; }
   .me-icon svg { overflow: visible; display: block; }
   .me-cone { fill: rgba(16, 21, 21, .55); stroke: #fff; stroke-width: 2.5; paint-order: stroke; }
@@ -145,6 +160,25 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <dt>Unique people so far (tracked)</dt><dd id="pUnique">0</dd>
           <dt>Unique people, whole walk</dt><dd id="pTotal">0</dd>
         </dl>
+      </section>
+      <section id="secMotion">
+        <div class="lbl">Motion &amp; paths <em>camera motion removed · ≤ 12 m</em></div>
+        <div class="seg" id="mMode" role="group" aria-label="Show motion arrows for">
+          <button data-m="none" aria-pressed="false">None</button>
+          <button data-m="followed" aria-pressed="true">Followed</button>
+          <button data-m="view" aria-pressed="false">All in view</button>
+          <button data-m="walking" aria-pressed="false">Walking</button>
+          <button data-m="standing" aria-pressed="false">Standing</button>
+        </div>
+        <dl class="kv">
+          <dt>Walking in view (≥ 0.5 m/s)</dt><dd id="mWalk">—</dd>
+          <dt>Standing in view (≤ 0.3 m/s)</dt><dd id="mStand">—</dd>
+          <dt>Walkers with / against you</dt><dd id="mDir">—</dd>
+        </dl>
+        <div class="lbl">Followed <em id="fCount">0</em></div>
+        <div class="chips" id="fChips"></div>
+        <div class="rowbtn"><button id="fView">+ Follow everyone in view</button><button id="fClear">Clear</button></div>
+        <div class="note">Click a person, then <b>Follow</b> in the card, or <b>Shift + drag</b> on the video to follow everyone in a box. Each followed person keeps one colour on the box, the motion arrow, the chip and the path on both maps. Click a chip to jump to where that person first appears.</div>
       </section>
       <section id="secSex">
         <div class="lbl">Perceived gender in view <em>estimated · aggregate</em></div>
@@ -271,6 +305,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
       S.data = await r.json();
       if (typeof setMiniRoute === "function") setMiniRoute();
+      MO.data = null; MO.follow.clear(); MO.pathSig = ""; MO.lastKey = "";
+      try { const rm = await fetch(`../data/processed/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
+      renderChips();
       video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
@@ -408,10 +445,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const trLen = id => (d.tracks[id] || [])[2], objLen = id => (d.obj_len || {})[id];
     const k = ov.width / vp.clientWidth;
     // people
-    let pView = 0, pAll = 0, anchor = null; const inViewIds = [];
+    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [];
     for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
       const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
-      if (al >= 0.5) { pAll++; S.seen.add(id); }
+      if (al >= 0.5) { pAll++; S.seen.add(id); presentIds.push(id); }
       if (!inFov(yw)) continue; if (al >= 0.5) { pView++; inViewIds.push(id); }
       if (!$("Lp").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
@@ -419,7 +456,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       octx.globalAlpha = al;
       const byAge = $("Lage").checked, ag = ageOf(id), pc = byAge ? ageCol[ag] : C.person;
       octx.strokeStyle = pc; octx.lineWidth = (sel ? 3 : 1.8) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const fol = MO.follow.get(gidOf(id));
+      if (fol) { const o = 3.5 * k; octx.strokeStyle = fol; octx.lineWidth = 2.5 * k; octx.setLineDash([7 * k, 4 * k]); octx.strokeRect(r[0] - o, r[1] - o, r[2] - r[0] + 2 * o, r[3] - r[1] + 2 * o); octx.setLineDash([]); }
       badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
+      const mNow = moAt(id, fi);
+      if (mNow && moShown(id, mNow)) drawMotionArrow(r, yw, pb, mNow, fi, fol || "#f4f4f4", al);
       octx.globalAlpha = 1;
       S.hits.push({ kind: "p", id, r, info: p });
       if (sel) anchor = r;
@@ -496,6 +537,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
     updateMini(fi);
+    MO.inView = inViewIds; MO.present = presentIds;
+    if (MO.data) {
+      let nw = 0, ns = 0, withC = 0, agC = 0; const g = GEO.walks[S.walk];
+      const cb = g && g.lat[Math.min(fi + 3, g.lat.length - 1)] != null ? Math.atan2((g.lon[Math.min(fi + 3, g.lon.length - 1)] - g.lon[Math.max(0, fi - 3)]) * Math.cos(g.lat[fi] * deg), g.lat[Math.min(fi + 3, g.lat.length - 1)] - g.lat[Math.max(0, fi - 3)]) / deg : null;
+      for (const id of inViewIds) { const m = moAt(id, fi); if (!m) continue;
+        if (m.spd >= MO.data.walk_m_s) { nw++; if (cb != null) { if (Math.abs(((m.brg - cb + 540) % 360) - 180) < 90) withC++; else agC++; } } else if (m.spd <= MO.data.stand_m_s) ns++; }
+      const nm = inViewIds.filter(id => moAt(id, fi)).length;
+      $("mWalk").textContent = `${nw} / ${nm}`; $("mStand").textContent = `${ns} / ${nm}`; $("mDir").textContent = nw ? `${withC} / ${agC}` : "—";
+      updateMapPeople(fi);
+    }
+    if (MO.lasso) { const q = MO.lasso; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = "#fff"; octx.lineWidth = 1.5 * k; octx.fillStyle = "rgba(79,179,187,.12)";
+      octx.fillRect(Math.min(q.x0, q.x1), Math.min(q.y0, q.y1), Math.abs(q.x1 - q.x0), Math.abs(q.y1 - q.y0)); octx.strokeRect(Math.min(q.x0, q.x1), Math.min(q.y0, q.y1), Math.abs(q.x1 - q.x0), Math.abs(q.y1 - q.y0)); octx.setLineDash([]); }
     if (!scrubbing && duration()) $("scrub").value = Math.round(t / duration() * 1000);
     // in-view card for the selected box (any kind): all numbers live here, not on the boxes
     const vc = $("vcard");
@@ -503,7 +556,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const h = S.hits.find(x => x.kind === S.sel.kind && x.id === S.sel.id), info = h ? h.info : null;
       const esc2 = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
       const row = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
-      let title = "", rows = "", note = "";
+      let title = "", rows = "", note = "", foot = "";
       if (S.sel.kind === "p") {
         const tr = d.tracks[S.sel.id] || [];
         title = `${$("Lage").checked ? AGE_EMOJI[tr[6] || "uncertain"] : "🧍"} Person · P-${String(S.sel.id).padStart(4, "0")}`;
@@ -512,7 +565,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                row("Max confidence", tr[3]) + row("Median distance", `${tr[4] ?? "—"} m`) +
                row("Age group (estimated)", `${AGE_EMOJI[tr[6] || "uncertain"] || ""} ${tr[6] || "uncertain"}`) +
                row("Perceived gender (estimated)", tr[5] || "uncertain");
-        note = "Persistent track ID. Age group and perceived gender are broad estimates (CLIP zero-shot, not yet validated).";
+        const mt = moTrack(S.sel.id), mn = moAt(S.sel.id, fi), fc = MO.follow.get(gidOf(S.sel.id));
+        rows += row("Speed now", mn ? `${mn.spd.toFixed(1)} m/s` : "—") +
+                row("Movement", mt ? `${mt.state}${mt.rel !== "—" ? " · " + mt.rel : ""}` : "—") +
+                row("Path on map", mt ? `${mt.len_m} m in ${mt.dur_s} s${mt.members.length > 1 ? ` · ${mt.members.length} pieces re-linked` : ""}` : "no reliable position (> 12 m)");
+        foot = mt ? `<button class="vfollow" data-id="${S.sel.id}" style="--c:${fc || "var(--accent)"}">${fc ? "● Following · click to stop" : "📍 Follow: path on map + motion arrow"}</button>`
+                  : `<button class="vfollow" disabled>Too far away for a map path</button>`;
+        note = "Age, gender: CLIP estimates, not validated. Speed, path: from foot point + camera height, camera motion removed.";
       } else if (S.sel.kind === "o" || S.sel.kind === "l2") {
         const lvl = S.sel.kind === "o" ? "Level 1 (YOLO11, COCO)" : "Level 2 (YOLO-World, text prompt)";
         const n = (d.obj_len || {})[S.sel.id] || 0;
@@ -526,7 +585,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         rows = row("Text", `<span dir="auto" style="unicode-bidi:plaintext">${esc2(si[0] || "—")}</span>`) + row("Language", si[1] || "—") +
                row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Read by", d.ocr_source === "ocr_vlm_stab" ? "vision model (Claude)" : "Tesseract");
       }
-      const html = `<header><b>${title}</b><button class="vclose" aria-label="Close">✕</button></header><dl class="kv">${rows}</dl>${note ? `<div class="note">${note}</div>` : ""}`;
+      const html = `<header><b>${title}</b><button class="vclose" aria-label="Close">✕</button></header><dl class="kv">${rows}</dl>${foot}${note ? `<div class="note">${note}</div>` : ""}`;
       if (html !== vc.dataset.html) { vc.innerHTML = html; vc.dataset.html = html; }   // rebuild only when the content changes
       vc.hidden = false;
       // place right of the box; flip to the left when it would leave the view; keep fully inside
@@ -537,6 +596,115 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const cy = Math.max(6, Math.min(H2 - ch - 6, anchor[1] / k));
       vc.style.transform = `translate(${cx}px, ${cy}px)`;
     } else vc.hidden = true;
+  }
+  // ---------------- motion & followed people (pipeline/motion.py: positions on the map, camera motion removed) ----------------
+  const FOLLOW_COLS = ["#ff4f8b", "#38c6ff", "#ffd23f", "#8cff5a", "#ff9a3c", "#c08bff", "#2fe0b8", "#ffffff"];
+  const MO = { data: null, mode: "followed", follow: new Map(), lasso: null, lastFi: -1, pathSig: "", inView: [], present: [],
+               miniPaths: null, miniNow: null, fullPaths: null, fullNow: null };
+  const pid = id => `P-${String(id).padStart(4, "0")}`;
+  const gidOf = id => (MO.data && MO.data.id2g && MO.data.id2g[id]) ?? id;      // re-linked track pieces share one person id
+  const moTrack = id => MO.data && MO.data.tracks[gidOf(id)];
+  function moAt(id, fi) {
+    const m = moTrack(id); if (!m) return null;
+    const i = fi - m.f0; if (i < 0 || i >= m.lat.length || m.lat[i] == null) return null;
+    return { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i], brg: m.brg[i] };
+  }
+  function moShown(id, m) {
+    if (!MO.data) return false;
+    if (MO.mode === "followed") return MO.follow.has(gidOf(id));
+    if (MO.mode === "view") return !!m;
+    if (MO.mode === "walking") return !!m && m.spd >= MO.data.walk_m_s;
+    if (MO.mode === "standing") return !!m && m.spd <= MO.data.stand_m_s;
+    return false;
+  }
+  function toggleFollow(id, on) {
+    id = gidOf(id);
+    if (on === undefined) on = !MO.follow.has(id);
+    if (on && !MO.follow.has(id)) {
+      const used = new Set(MO.follow.values());
+      MO.follow.set(id, FOLLOW_COLS.find(c => !used.has(c)) || FOLLOW_COLS[MO.follow.size % FOLLOW_COLS.length]);
+    } else if (!on) MO.follow.delete(id);
+    renderChips(); $("vcard").dataset.html = ""; MO.lastFi = -1;
+  }
+  function renderChips() {
+    $("fCount").textContent = MO.follow.size;
+    $("fChips").innerHTML = MO.follow.size ? [...MO.follow].map(([id, c]) =>
+      `<span class="chip" style="--c:${c}"><button data-go="${id}" title="Jump to where ${pid(id)} first appears"><i></i>${pid(id)}</button><button data-rm="${id}" aria-label="Stop following ${pid(id)}">✕</button></span>`).join("")
+      : `<span class="note">No one followed yet.</span>`;
+  }
+  function goToPerson(id) {
+    const d = S.data, tr = d && d.tracks[id]; if (!tr) return;
+    const m = moTrack(id), f = m ? m.f0 : tr[0];
+    vt = f / d.fps; if (videoOk()) video.currentTime = vt;
+    const e = (d.frames[f] || { p: [] }).p.find(x => x[0] === id); if (e) { S.yaw = e[2]; S.pitch = -8; }
+    S.sel = { kind: "p", id };
+  }
+  // ground arrow for a person, drawn from the feet in the person's walking direction (perspective-correct)
+  function drawMotionArrow(r, yw, pb, m, fi, col, al) {
+    const g = GEO.walks[S.walk], h = S.data.camera_height_m || 1.3; if (!g || pb > -1) return;
+    const k = ov.width / vp.clientWidth, foot = [(r[0] + r[2]) / 2, r[3]];
+    octx.globalAlpha = al;
+    if (m.spd < MO.data.walk_m_s) {                                     // standing / slow: a ring at the feet
+      const rad = Math.max(4, (r[2] - r[0]) * 0.18);
+      octx.lineWidth = 2.5 * k; octx.strokeStyle = "rgba(0,0,0,.6)"; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad + k, (rad + k) * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      octx.lineWidth = 1.6 * k; octx.strokeStyle = col; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad, rad * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      octx.globalAlpha = 1; return;
+    }
+    const D = h / Math.tan(-pb * deg), a = (m.brg - g.yaw0_bearing_deg[fi]) * deg, L = Math.max(0.8, Math.min(3, m.spd * 1.6));
+    const Px = D * Math.sin(yw * deg), Py = D * Math.cos(yw * deg), Qx = Px + L * Math.sin(a), Qy = Py + L * Math.cos(a);
+    const s0 = project(yw, pb), s1 = project(Math.atan2(Qx, Qy) / deg, -Math.atan(h / Math.hypot(Qx, Qy)) / deg);
+    if (!s0 || !s1) { octx.globalAlpha = 1; return; }
+    let dx = s1[0] - s0[0], dy = s1[1] - s0[1]; const n = Math.hypot(dx, dy); if (n < 3) { octx.globalAlpha = 1; return; }
+    const ex = foot[0] + dx, ey = foot[1] + dy, ux = dx / n, uy = dy / n, hl = Math.min(14 * k, n * .45);
+    const head = [[ex, ey], [ex - ux * hl - uy * hl * .55, ey - uy * hl + ux * hl * .55], [ex - ux * hl + uy * hl * .55, ey - uy * hl - ux * hl * .55]];
+    for (const [w, c] of [[5.5 * k, "rgba(0,0,0,.55)"], [2.6 * k, col]]) {
+      octx.lineWidth = w; octx.strokeStyle = c; octx.lineCap = "round";
+      octx.beginPath(); octx.moveTo(foot[0], foot[1]); octx.lineTo(ex - ux * hl * .6, ey - uy * hl * .6); octx.stroke();
+    }
+    octx.fillStyle = col; octx.strokeStyle = "rgba(0,0,0,.55)"; octx.lineWidth = 1.5 * k;
+    octx.beginPath(); octx.moveTo(...head[0]); octx.lineTo(...head[1]); octx.lineTo(...head[2]); octx.closePath(); octx.fill(); octx.stroke();
+    octx.globalAlpha = 1;
+  }
+  // map layers: full paths of followed people + current positions/arrows of the people selected by the mode
+  const llOff = (lat, lon, dx, dy) => [lat + dy / 110574, lon + dx / (111320 * Math.cos(lat * deg))];
+  function mapArrow(layer, m, col, scale, followed) {
+    const L2 = Math.max(1.2, Math.min(5, m.spd * 2.5)), b = m.brg * deg;
+    L.circleMarker([m.lat, m.lon], { radius: followed ? 6 * scale : 3.5 * scale, weight: followed ? 2.5 : 1.5, color: followed ? "#fff" : "#111", fillColor: col, fillOpacity: 1, interactive: false, pane: "people" }).addTo(layer);
+    if (m.spd < MO.data.walk_m_s) return;
+    const e = llOff(m.lat, m.lon, L2 * Math.sin(b), L2 * Math.cos(b));
+    const hl = 0.9, h1 = llOff(e[0], e[1], -hl * Math.sin(b - 0.5), -hl * Math.cos(b - 0.5)), h2 = llOff(e[0], e[1], -hl * Math.sin(b + 0.5), -hl * Math.cos(b + 0.5));
+    L.polyline([[m.lat, m.lon], e], { color: col, weight: (followed ? 3.5 : 2.5) * scale, opacity: .95, interactive: false, pane: "people" }).addTo(layer);
+    L.polyline([h1, e, h2], { color: col, weight: (followed ? 3.5 : 2.5) * scale, opacity: .95, interactive: false, pane: "people" }).addTo(layer);
+  }
+  function updateMapPeople(fi) {
+    if (!MO.data || !window.L) return;
+    const sig = `${S.walk}|${[...MO.follow].join()}`;
+    if (sig !== MO.pathSig) {                                           // followed paths: rebuild only when the set changes
+      MO.pathSig = sig;
+      for (const lay of [MO.miniPaths, MO.fullPaths]) {
+        if (!lay) continue; lay.clearLayers();
+        for (const [id, c] of MO.follow) {
+          const m = moTrack(id); if (!m) continue;
+          const segs = [[]]; m.lat.forEach((la, i) => { if (la == null) { if (segs[segs.length - 1].length) segs.push([]); } else segs[segs.length - 1].push([la, m.lon[i]]); });
+          for (const sgm of segs) if (sgm.length > 1) {
+            L.polyline(sgm, { color: "#111", weight: lay === MO.fullPaths ? 7 : 5, opacity: .45, interactive: false, pane: "people" }).addTo(lay);
+            L.polyline(sgm, { color: c, weight: lay === MO.fullPaths ? 4 : 3, opacity: .95, interactive: false, pane: "people" }).addTo(lay);
+            if (lay === MO.fullPaths)                                     // wide invisible line: hover shows who it is
+              L.polyline(sgm, { color: c, weight: 12, opacity: 0, pane: "people" }).bindTooltip(`${pid(id)} · ${m.len_m} m · ${m.state}`, { sticky: true }).addTo(lay);
+          }
+          const first = m.lat.findIndex(x => x != null);
+          L.circleMarker([m.lat[first], m.lon[first]], { radius: 3, color: c, weight: 2, fillColor: "#111", fillOpacity: 1, interactive: false, pane: "people" }).addTo(lay);
+        }
+      }
+    }
+    const key = `${fi}|${MO.mode}|${sig}|${MO.inView.join()}`;
+    if (key === MO.lastKey) return; MO.lastKey = key;
+    for (const [lay, sc] of [[MO.miniNow, 0.8], [MO.fullNow, 1]]) {
+      if (!lay) continue; lay.clearLayers();
+      const ids = MO.mode === "view" ? MO.inView : MO.mode === "followed" || MO.mode === "none" ? [] : MO.present;
+      for (const id of ids) { if (MO.follow.has(gidOf(id))) continue; const m = moAt(id, fi); if (m && moShown(id, m)) mapArrow(lay, m, "#f4f4f4", sc, false); }
+      for (const [id, c] of MO.follow) { const m = moAt(id, fi); if (m) mapArrow(lay, m, c, sc, true); }
+    }
   }
   // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
   const GEO = { shops: null, walks: {} };
@@ -557,6 +725,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                          boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
     for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
+    mini.createPane("people").style.zIndex = 650;
+    MO.miniPaths = L.layerGroup().addTo(mini); MO.miniNow = L.layerGroup().addTo(mini); MO.pathSig = "";
     $("minimap").addEventListener("click", openFullMap);
     setMiniRoute();
   }
@@ -595,8 +765,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   function openFullMap() {
     $("mapfull").hidden = false;
     if (!full) {
-      full = L.map("fullmap", { zoomSnap: 0.5 });
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19,
+      full = L.map("fullmap", { zoomSnap: 0.5, maxZoom: 22 });
+      full.createPane("people").style.zIndex = 650;                     // followed people above the "you are here" marker
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19,
         attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
       const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
       for (const [w, g] of Object.entries(GEO.walks)) {
@@ -621,6 +792,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span>`;
       $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
+      MO.fullPaths = L.layerGroup().addTo(full); MO.fullNow = L.layerGroup().addTo(full); MO.pathSig = ""; MO.lastKey = "";
       // "you are here": current camera position + view cone, kept live by updateMini()
       fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
         html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
@@ -629,7 +801,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const centre = () => {
       full.invalidateSize();
       const g = GEO.walks[S.walk];
-      if (g && g.lat[meFi]) full.setView([g.lat[meFi], g.lon[meFi]], 19, { animate: false });
+      const pts = [];
+      for (const id of MO.follow.keys()) { const m = moTrack(id); if (m) m.lat.forEach((la, i) => { if (la != null) pts.push([la, m.lon[i]]); }); }
+      if (pts.length && g && g.lat[meFi]) { pts.push([g.lat[meFi], g.lon[meFi]]); full.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 21, animate: false }); }
+      else if (g && g.lat[meFi]) full.setView([g.lat[meFi], g.lon[meFi]], 19, { animate: false });
       updateFullMe(false);
     };
     centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
@@ -649,10 +824,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
   // ---------- interaction ----------
   let drag = null, scrubbing = false;
-  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard, .minimap")) return; drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
-  vp.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+  const canvasXY = e => { const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; };
+  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard, .minimap")) return;
+    if (e.shiftKey) { const [x, y] = canvasXY(e); MO.lasso = { x0: x, y0: y, x1: x, y1: y }; vp.setPointerCapture(e.pointerId); return; }
+    drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
+  vp.addEventListener("pointermove", e => { if (MO.lasso) { const [x, y] = canvasXY(e); MO.lasso.x1 = x; MO.lasso.y1 = y; return; } if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
     const s = S.fov / vp.clientWidth; S.yaw = ((drag.yaw - dx * s + 540) % 360) - 180; S.pitch = Math.max(-85, Math.min(85, drag.pitch + dy * s)); });
   vp.addEventListener("pointerup", e => {
+    if (MO.lasso) {                                                    // shift + drag: follow everyone whose box centre is inside
+      const q = MO.lasso, x0 = Math.min(q.x0, q.x1), x1 = Math.max(q.x0, q.x1), y0 = Math.min(q.y0, q.y1), y1 = Math.max(q.y0, q.y1);
+      for (const h of S.hits) if (h.kind === "p" && moTrack(h.id)) { const cx = (h.r[0] + h.r[2]) / 2, cy = (h.r[1] + h.r[3]) / 2; if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) toggleFollow(h.id, true); }
+      MO.lasso = null; return;
+    }
     vp.classList.remove("drag");
     if (drag && !drag.moved) {
       const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
@@ -662,7 +845,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     drag = null;
   });
   // close on press (pointerdown), so a card refresh between press and release cannot swallow the click
-  $("vcard").addEventListener("pointerdown", e => { if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
+  $("vcard").addEventListener("pointerdown", e => {
+    const fb = e.target.closest(".vfollow"); if (fb) { if (!fb.disabled) toggleFollow(+fb.dataset.id); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
   vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
   vp.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") S.yaw -= 6; else if (e.key === "ArrowRight") S.yaw += 6;
@@ -672,6 +857,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   });
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
   $("play").addEventListener("click", togglePlay);
+  $("mMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; MO.mode = b.dataset.m;
+    $("mMode").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); MO.lastKey = ""; });
+  $("fChips").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.rm) toggleFollow(+b.dataset.rm, false); else if (b.dataset.go) goToPerson(+b.dataset.go); });
+  $("fView").addEventListener("click", () => { for (const id of MO.inView) if (moTrack(id)) toggleFollow(id, true); });
+  $("fClear").addEventListener("click", () => { MO.follow.clear(); renderChips(); MO.lastFi = -1; $("vcard").dataset.html = ""; });
   $("scrub").addEventListener("input", () => { scrubbing = true; vt = $("scrub").value / 1000 * duration(); if (videoOk()) video.currentTime = vt; });
   $("scrub").addEventListener("change", () => { scrubbing = false; });
   $("conf").addEventListener("input", () => { S.conf = +$("conf").value; $("confV").textContent = S.conf.toFixed(2); });

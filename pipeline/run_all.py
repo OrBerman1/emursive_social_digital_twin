@@ -42,6 +42,7 @@ def main() -> None:
     step(str(HERE / "ocr_signs.py"), *walks, "--variant", "stab")                          # cached: docTR (GPU) + Tesseract
     step(str(HERE / "export_overlays.py"), *walks, "--variant", "stab")
     step(str(HERE / "georef.py"))                                                          # cheap: walks on the map from store anchors
+    step(str(HERE / "motion.py"), *walks, "--variant", "stab")                             # cheap: people on the map + motion
     step(str(HERE / "make_validation.py"))                                                 # hand-count sample
 
 
