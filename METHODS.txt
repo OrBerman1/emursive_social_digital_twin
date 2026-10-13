@@ -1,5 +1,5 @@
 SHUK HATIKVAH 360 - METHODS USED (what algorithm / code solves each problem)
-Last updated: 13 Oct 2026 (OCR results added). Keep this file current whenever a method changes.
+Last updated: 13 Oct 2026 (VLM sign reading added). Keep this file current whenever a method changes.
 Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: viewer\index.html.
 
 1. INPUT / STITCHING  (pipeline\extract_frames.py, encode_video.py)
@@ -91,8 +91,17 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      ~6 partly, ~15 wrong. Detection (docTR) works; Tesseract recognition on painted/angled
      Hebrew does not. Also found: sign grouping too loose (neighbouring lines merged) and the
      operator's T-shirt read as a sign.
-   - PLANNED: Claude vision as the sign reader (offline, cached; user agreed the method is
-     open), per-line grouping, operator mask for text. Waiting for an API key.
+   - CURRENT READER (13 Oct, ocr_vlm.py): text lines grouped into SIGNS across frames (seen >= 2
+     times, largest line >= 18 px); one crop per sign at its best frame containing all its lines;
+     crops laid out on numbered contact sheets (16 per sheet); each sheet read by Claude (vision)
+     running as background agents inside the Claude Code session (no API key), output per crop:
+     text, language, legible yes/no, kind (shop sign / price sign / banner / packaging / other /
+     no text / operator's shirt). Merged into ocr_vlm_stab\signs.parquet; the viewer uses it.
+   - RESULT: walk 1 1,151 of 1,934 sign crops read, walk 2 1,093 of 1,817 (Tesseract: 64 / 113).
+     Mostly Hebrew, plus English, Russian, Arabic and mixed. 683 crops were the operator's T-shirt and
+     331 had no text - both removed. Independent spot check of 16 random readings: all correct or
+     correct visible fragments. Known inconsistency: readers differed on whether number-only crops
+     (prices, phones) count as legible.
 
 12. CACHING ("compute once")  (common.py: Stage)
    - Every expensive stage writes outputs + manifest.json (stage version, parameters,
@@ -102,6 +111,10 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - WebGL fragment shader renders the equirectangular video as a perspective view;
      overlays projected with the same yaw/pitch maths (pipeline\spherical.py).
    - Local server with HTTP Range + HTTP/1.1 (needed for video seeking on Windows).
+   - Counts are shown as "in view / whole walk" (e.g. 13 / 565). Whole-walk totals count UNIQUE
+     TRACK IDs that pass the same filters as the view: the track's highest confidence >= the slider
+     (level 2: max(0.15, slider - 0.2)) and, with "hide tracks < 1 s", a length >= 1 s. Because
+     tracks still fragment (one person can get 2+ IDs), totals are upper bounds until validated.
 
 14. GIS EXPORT AND VALIDATION  (export_overlays.py, make_validation.py, viewer\validate.html)
    - GeoJSON of persistent entities (track ID, frames, time, confidence); route position

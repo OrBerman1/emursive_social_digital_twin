@@ -108,18 +108,21 @@ def merge(walk: str, variant: str) -> dict:
     for r in best.itertuples():
         rd = reads.get(r.sign_id, {})
         text = (rd.get("text") or "").strip()
-        legible = bool(rd.get("legible")) and bool(text)
+        kind = rd.get("kind", "unread" if not rd else "other_text")
+        legible = bool(rd.get("legible")) and bool(text) and kind not in ("no_text", "operator_shirt")
         rows.append({"track": int(r.track), "sign_id": r.sign_id, "frame_first": int(r.frame_first), "frame_last": int(r.frame_last),
                      "n_det": int(r.n_lines), "best_frame": int(r.frame), "max_px_h": float(r.px_h),
                      "yaw": r.yaw, "yaw_l": r.yaw_l, "yaw_r": r.yaw_r, "pitch_top": r.pitch_top, "pitch_bot": r.pitch_bot,
                      "raw": text, "text": text, "conf": 90.0 if legible else 0.0, "lang": rd.get("lang", "none") if legible else "none",
-                     "readable": legible, "fixes": "", "engine": "VLM (Claude) reading crop sheets"})
+                     "readable": legible, "fixes": "", "kind": kind, "engine": "VLM (Claude) reading crop sheets"})
     signs = pd.DataFrame(rows)
     signs.to_parquet(out / "signs.parquet", index=False)
+    drop = set(signs.loc[signs.kind.isin(["no_text", "operator_shirt"]), "track"])   # not signs: hide their boxes
     boxes = pd.read_parquet(out / "line_boxes.parquet").drop(columns=["sign_id"])
+    boxes = boxes[~boxes.track.isin(drop)]
     boxes.to_parquet(out / "sign_boxes.parquet", index=False)
     return {"walk": walk + variant, "lines": len(signs), "read": int(signs.readable.sum()), "sheets_missing": len(missing),
-            "lang": signs[signs.readable].lang.value_counts().to_dict()}
+            "lang": signs[signs.readable].lang.value_counts().to_dict(), "kind": signs.kind.value_counts().to_dict()}
 
 
 def main() -> None:

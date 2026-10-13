@@ -23,7 +23,7 @@ if errorlevel 1 (
   set "HAVE_WINGET=1"
 )
 
-set "TESS=C:\Program Files\Tesseract-OCR\tesseract.exe"
+call :find_tess
 
 rem --- Python 3.13 (main) and 3.9 (gyro helper) ---
 py -3.13 --version >nul 2>nul || call :winget_install Python.Python.3.13 "Python 3.13"
@@ -31,21 +31,22 @@ py -3.9 --version >nul 2>nul  || call :winget_install Python.Python.3.9 "Python 
 rem --- ffmpeg (full build, with NVENC) ---
 where ffmpeg >nul 2>nul || call :winget_install Gyan.FFmpeg "ffmpeg"
 rem --- Tesseract ---
-if not exist "%TESS%" call :winget_install UB-Mannheim.TesseractOCR "Tesseract OCR"
+if not defined TESS call :winget_install UB-Mannheim.TesseractOCR "Tesseract OCR"
 
 rem Newly installed programs are not on this window's PATH yet: reload PATH from the registry.
 call :refresh_path
+call :find_tess
 
 py -3.13 --version >nul 2>nul || (echo [MISSING] Python 3.13 - install from python.org, tick "Add to PATH" & set FAIL=1)
 where ffmpeg >nul 2>nul || (echo [MISSING] ffmpeg on PATH - install a full build from https://www.gyan.dev/ffmpeg/builds/ and add its bin folder to PATH & set FAIL=1)
-if not exist "%TESS%" (
+if not defined TESS (
   echo [MISSING] Tesseract OCR - install from https://github.com/UB-Mannheim/tesseract/wiki
   set FAIL=1
 ) else (
   rem Hebrew and Arabic language data are not in the default installer: fetch them if absent.
-  for %%L in (heb ara) do if not exist "C:\Program Files\Tesseract-OCR\tessdata\%%L.traineddata" (
+  for %%L in (heb ara) do if not exist "%TESSDATA%\%%L.traineddata" (
     echo   downloading Tesseract %%L language data
-    curl.exe -L -f -s -o "C:\Program Files\Tesseract-OCR\tessdata\%%L.traineddata" https://github.com/tesseract-ocr/tessdata_best/raw/main/%%L.traineddata || echo [WARN] Could not write %%L.traineddata - rerun setup.bat as Administrator
+    curl.exe -L -f -s -o "%TESSDATA%\%%L.traineddata" https://github.com/tesseract-ocr/tessdata_best/raw/main/%%L.traineddata || echo [WARN] Could not write %%L.traineddata - rerun setup.bat as Administrator
   )
   "%TESS%" --list-langs 2>nul | findstr /x "heb" >nul || echo [WARN] Tesseract has no Hebrew data - rerun setup.bat as Administrator, or copy heb.traineddata into its tessdata folder
 )
@@ -132,6 +133,14 @@ rem --- helpers (only reached through "call") ---
 if "%HAVE_WINGET%"=="0" exit /b 1
 echo   installing %~2 with winget ...
 winget install --id %~1 -e --silent --accept-package-agreements --accept-source-agreements
+exit /b 0
+
+:find_tess
+rem Locate tesseract.exe: PATH, then the usual install folders (per-machine, 32-bit, per-user).
+set "TESS="
+for /f "delims=" %%T in ('where tesseract 2^>nul') do if not defined TESS set "TESS=%%T"
+for %%T in ("%ProgramFiles%\Tesseract-OCR\tesseract.exe" "%ProgramFiles(x86)%\Tesseract-OCR\tesseract.exe" "%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe") do if not defined TESS if exist %%T set "TESS=%%~T"
+if defined TESS for %%T in ("%TESS%") do set "TESSDATA=%%~dpTtessdata"
 exit /b 0
 
 :refresh_path

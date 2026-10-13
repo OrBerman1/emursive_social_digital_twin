@@ -28,7 +28,9 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
         l2 = pd.read_parquet(tdir / f"{level2}.parquet")
     attr_p = INTERIM / walk / f"attributes{variant}" / "attributes.parquet"
     attrs = pd.read_parquet(attr_p).set_index("track") if attr_p.exists() else None
-    ocr_dir = INTERIM / walk / f"ocr{variant}"
+    ocr_dir = INTERIM / walk / f"ocr_vlm{variant}"                      # vision-model readings if available ...
+    if not (ocr_dir / "signs.parquet").exists():
+        ocr_dir = INTERIM / walk / f"ocr{variant}"                      # ... else the Tesseract result
     signs = pd.read_parquet(ocr_dir / "signs.parquet") if (ocr_dir / "signs.parquet").exists() else None
     sign_boxes = pd.read_parquet(ocr_dir / "sign_boxes.parquet") if (ocr_dir / "sign_boxes.parquet").exists() else None
     n_frames = json.loads((INTERIM / walk / ("frames" + variant) / "manifest.json").read_text(encoding="utf-8"))["n_frames"]
@@ -64,7 +66,7 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
                    "o": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "track"],
                    "l2": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "dist_m", "track"],
                    "s": ["sign", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot"]},
-        "tracks_fields": ["first", "last", "n", "conf", "dist", "sex", "age"], "signs_fields": ["text", "lang", "conf", "readable", "raw"],
+        "tracks_fields": ["first", "last", "n", "conf", "dist", "sex", "age"], "signs_fields": ["text", "lang", "conf", "readable", "raw"], "ocr_source": ocr_dir.name,
         "tracks": {int(t.track): [int(t.first), int(t.last), int(t.n), R(t.conf, 2), R(t.dist),
                                    *( [attrs.at[t.track, "sex"], attrs.at[t.track, "age"]] if attrs is not None and t.track in attrs.index else ["uncertain", "uncertain"])]
                    for t in tracks.itertuples()},

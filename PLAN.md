@@ -107,6 +107,77 @@ Development of the analysis layers follows these levels **from easiest to hardes
   - Next: use the stabilised frame inside the tracker (camera-motion compensation) to cut fragmentation; level-2 class cleanup (lamps/flags as separate "legibility" layer); validation counts.
 - **12 Oct 2026, v0.3, offline stabilisation:** render-time stabilisation shook badly (timing mismatch in the browser) and was removed. Stabilisation is now **baked into the video and frames** (`bake_stab.py`, high-frequency shake −87%, horizon level; side-by-side `compare_stab_walk1.mp4` approved by the user). Detection L1+L2, tracking and smoothing were **rerun on the stabilised frames**. Tracking improved: walk 1 has 675 tracks instead of 916 (median length 18 frames instead of 14), walk 2 has 284 instead of 354. The camera-height estimate on levelled frames is 1.37 m (walk 1) / 1.20 m (walk 2), more trustworthy than the tilted-frame values. The viewer defaults to the stabilised variant; the original remains as a switchable fallback.
 - **13 Oct 2026, v0.4:** perceived gender + age group per track (CLIP ViT-L/14 zero-shot on isolated crops; walk 1: 387 man / 83 woman / 194 uncertain, aggregate only, not yet validated); operator filter in camera directions also on stabilised frames. OCR built (docTR text detection + Tesseract heb+eng + user's final-letter fixer/spellcheck), but recognition is weak (spot check ~3/24 fully correct), so a Claude-vision reader is next (needs an API key). Viewer: default confidence 0.6, speed ×0.25–×2, gender/age panel, OCR layer, `METHODS.txt` added.
+- **13 Oct 2026, v0.5, sign reading by vision model:** Tesseract was too weak, so signs are now read by Claude vision (background agents in the session, no API key) from one crop per sign on numbered contact sheets. 2,244 signs read (walk 1 1,151 / walk 2 1,093) instead of 177; spot check 16/16 correct. Operator's T-shirt (683 crops) and no-text crops removed. Viewer counts now show in-view / whole-walk totals by unique track ID (e.g. 13 / 565).
+
+## [Next] Food, floor waste, stall materials, emoji labels, age on boxes (planned 13 Oct 2026; not implemented)
+All three detection items are offline, cached stages on the stabilised frames, following the existing pattern
+(`detect.py`-style tiles → raw detections at low conf → tracking + smoothing → export → viewer layer).
+
+### A. Food on display (level 2 → a "Produce & food" layer)
+| Option | What | Fit |
+|---|---|---|
+| **1. Open Images V7 YOLOv8x** (`yolov8x-oiv7.pt`, Ultralytics, 600 classes) | Checked in the installed config: **Apple, Artichoke, Banana, Bell pepper, Broccoli, Cabbage, Cantaloupe, Carrot, Common fig, Cucumber, Grape, Grapefruit, Lemon, Mango, Orange, Peach, Pear, Pineapple, Pomegranate, Potato, Pumpkin, Radish, Strawberry, Tomato, Watermelon, Zucchini, Vegetable, Fruit**, plus **Bread, Bagel, Baked goods, Cake, Cookie, Muffin, Pastry, Candy, Cheese, Egg (Food), Fish, Seafood, Honeycomb, Juice, Coffee, Drink, Fast food, Food** | **Recommended first.** Same runner as level 1; ~11 min/walk GPU. Also gives Box, Plastic bag, Tin can, Waste container, Shelf, Table, Tent (useful for B and C). Box mAP is modest (36.3 for the whole model), so validate per class |
+| 2. Already in our cache | YOLO11x (COCO) found banana, apple, orange, carrot, broccoli (25k banana boxes on walk 1) | Free: just expose them as a layer now |
+| 3. YOLO-World prompts | Market items OIV7 lacks: "eggplant", "herbs bunch", "dates", "nuts and seeds", "spices in sacks", "olives", "pita bread", "raw meat", "whole fish on ice" | Add to the level-2 prompt set; check on samples |
+| 4. Vision model on stall crops (level 3) | "Which goods does this stall sell?" per GIS frontage | Gives the **trade type** per stall, matching the GIS legend (Fruit/Vegetables, Butcher, Fish Monger, Bakery, Spices, Nuts…). Reuse the contact-sheet reading method from OCR |
+
+- **Unit of analysis:** count produce as **display areas per frontage** (dominant goods + share), not individual fruits. Hundreds of oranges in one stack mean nothing as a count.
+- **Validation:** Boaz/team label ~30 stall crops with their goods; check top-3 agreement.
+
+### B. Waste on the floor (level 2, "Materials & waste" layer)
+| Option | What | Fit |
+|---|---|---|
+| **1. Ground restriction + existing detections** | Keep only waste boxes whose bottom is on the walkway. Pitch below the horizon, and inside the floor mask from semantic segmentation (SegFormer/OneFormer on ADE20K: classes floor, road, sidewalk) | **Required for any option:** separates waste on the floor from goods on stalls |
+| 2. Our YOLO-World prompts (already cached) | cardboard box, flattened cardboard, plastic bag, organic waste, fruit and vegetable waste, packaging, garbage bag, trash bin | Already computed; re-filter with option 1 |
+| 3. TACO-trained litter models | [CatSat/yolov11-litter-materials](https://huggingface.co/CatSat/yolov11-litter-materials) (YOLOv11-seg; 60 TACO classes → plastic / metal / glass / paper / other; mask mAP50-95 0.19); [turhancan97/yolov8-segment-trash-detection](https://huggingface.co/turhancan97/yolov8-segment-trash-detection) (YOLOv8-seg, TACO + TrashNet, MIT; pickle file flagged as unsafe → load only after inspection); [jeremy-rico/litter-detection](https://github.com/jeremy-rico/litter-detection) (YOLOv8 on TACO) | TACO is small (1,500 images) and photographed close up, so expect weak recall on 360 frames. Use as a second opinion; ensemble with option 2 |
+| 4. OIV7 classes | Plastic bag, Box, Tin can, Waste container | Comes free with A1 |
+| 5. Organic waste | Squashed produce and leaves on the floor: hard for every model | Open-vocabulary detection ("crushed vegetables on the ground", "lettuce leaves on the floor") inside the floor mask, plus a vision-model check on the crops |
+
+- **Output:** waste objects with a ground position and approximate area (m²), and **waste density per 10 m of route**. This feeds the brief's question "where do waste, logistics and social activity overlap".
+- **Validation:** ~50 floor crops labelled waste/clean by type. Reading time of day from the footage matters too: waste builds up through the day.
+
+### C. What the stalls are made of (level 3, per GIS frontage)
+| Option | What | Fit |
+|---|---|---|
+| **1. Vision model on frontage crops** | Fixed label set: corrugated metal, painted render, steel frame, wood/timber, canvas/fabric awning, plastic sheeting, crates as display, glass, ceramic tile, composite panel. The vocabulary is taken from the team's coding scheme (`facade_materials`, `structural_skeleton_indicators`, `surface_condition`) | **Recommended.** The same contact-sheet workflow as OCR, no API key. Output: multi-label + dominant material per stall + confidence |
+| 2. Apple **DMS** dense material segmentation | Pretrained model, 46 materials (metal, wood, fabric, plastic, cardboard, glass, ceramic, concrete…); [paper](https://arxiv.org/pdf/2207.10614): 0.42 mean IoU | Pixel-level shares per frontage ("62% metal, 22% fabric"). Non-commercial licence; weights from github.com/apple/ml-dms-dataset |
+| 3. MINC (Materials in Context, 23 categories) | Classic patch classifier ([paper](https://ar5iv.labs.arxiv.org/html/1412.0623)) | Older; fallback/cross-check |
+| 4. CLIP linear probe | ~20–30 labelled frontage crops per material | Cheap cross-check of option 1 |
+
+- **Depends on:** GIS frontage geometry (vector export requested from Boaz) to crop each stall consistently. Until then, use frontage crops around the detected stall areas.
+- **Validation:** compare with the 9 coded frames' `facade_materials`, plus ~30 labelled frontages.
+
+### D. Viewer: emoji instead of text tags on boxes
+- **Change:** each box gets a **small emoji badge** at its top-left instead of the text label. The full label (class, ID, confidence, distance) moves to the **hover tooltip and click card**. A legend lists emoji → class. This cuts clutter, which is the main readability problem now.
+- **Rendering:** canvas `fillText` with the system emoji font ("Segoe UI Emoji" on Windows). Badge size scales with box size and is hidden below a minimum box height. Fall back to a 2-letter code if a glyph is missing.
+- **Proposed mapping** (to review with the team):
+
+| Classes | Emoji |
+|---|---|
+| person | 🧍 (base), age variants: see E |
+| bicycle / e-bike / motorcycle / car / truck / bus | 🚲 / 🛵 / 🏍️ / 🚗 / 🚚 / 🚌 |
+| chair, plastic chair, stool, bench | 🪑 |
+| handbag / backpack / suitcase / umbrella | 👜 / 🎒 / 🧳 / ☂️ |
+| wheeled shopping trolley, trolley cart, hand truck | 🛒 |
+| walker / wheelchair / mobility scooter | 🦯 / 🦽 / 🦼 |
+| cardboard box, flattened cardboard, packaging, delivery box, plastic crate, stack of crates | 📦 |
+| plastic bag / garbage bag | 🛍️ / 🗑️ |
+| trash bin, waste container | 🗑️ |
+| organic waste, fruit and vegetable waste | 🍂 |
+| broom | 🧹 |
+| pallet, display table | 🪵 |
+| flag / hanging lamp / awning | 🚩 / 💡 / ⛱️ |
+| price sign / shop sign / OCR text | 🏷️ / 🪧 / 🪧 |
+| food (OIV7/COCO) | 🍎 apple · 🍌 banana · 🍊 orange · 🍋 lemon · 🍇 grape · 🍓 strawberry · 🍅 tomato · 🥔 potato · 🥕 carrot · 🥒 cucumber · 🎃 pumpkin · 🍉 watermelon · 🍐 pear · 🍑 peach · 🍍 pineapple · 🥭 mango · 🫑 bell pepper · 🥬 cabbage · 🥦 broccoli · 🍈 cantaloupe · 🍞 bread · 🥯 bagel · 🧁 muffin/pastry · 🍰 cake · 🍪 cookie · 🍬 candy · 🧀 cheese · 🥚 egg · 🐟 fish · 🦐 seafood · 🍯 honeycomb · 🧃 juice · ☕ coffee · 🥤 drink · 🍔 fast food · 🧺 fruit/vegetable/food (generic) |
+
+### E. Viewer: age group shown on each person's box
+- **Change:** **box colour = age group**, with a legend in the panel. Optionally, the person emoji varies by age: 🧒 child · 🧑 young adult 18–35 · 🧔 middle adult 36–60 · 🧓 older adult 61+ · 👤 uncertain. Colour palette (colour-blind safe, distinct from the other layers): child violet, young adult green, middle adult blue, older adult orange, uncertain grey.
+- **Policy note (decision changed by the user, 13 Oct):** age was previously shown only in aggregate. It now appears per person as a **broad, estimated group**. Keep it out of exports at the individual level beyond the anonymous track ID. **Sex stays aggregate-only** (not requested on boxes). Mention it in the ethics/privacy slide, with the "uncertain" share and validation status.
+
+### Materials / links for A–E
+- Weights: `yolov8x-oiv7.pt` ([Ultralytics Open Images V7 docs](https://docs.ultralytics.com/datasets/detect/open-images-v7)); TACO litter models (links in B); Apple DMS (github.com/apple/ml-dms-dataset); SegFormer/OneFormer ADE20K via Hugging Face `transformers` for the floor mask.
+- Datasets for validation/fine-tuning: TACO ([paper](https://arxiv.org/abs/2003.06975)), ZeroWaste, DMS, MINC.
+- Effort (estimate): A1 + B1/B2 ≈ 2–3 h including GPU time; C via the vision-model workflow ≈ 2 h once frontages are defined; D + E (viewer only) ≈ 1–1.5 h.
 
 ## Compute once, cache everything (team decision, 12 Oct 2026)
 The data is fixed, so every **expensive** stage runs once, writes its output to disk, and is **skipped on later runs** unless its input, model or parameters change. **Cheap** downstream stages rerun from the cache in seconds.

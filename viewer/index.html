@@ -54,6 +54,8 @@ aside section:first-child { border-top: 0; }
 .big { display: flex; align-items: baseline; gap: 10px; }
 .big b { font: 700 2.3rem/1 var(--display); font-variant-numeric: tabular-nums; }
 .big span { color: var(--muted); font-size: 12.5px; }
+.big b.tot { font-size: 1.35rem; color: var(--muted); font-weight: 600; }
+.big b.tot span { font-size: inherit; color: inherit; }
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; margin: 0; font-variant-numeric: tabular-nums; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); text-align: right; }
 .layers { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -101,7 +103,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <aside>
       <section>
         <div class="lbl">People in view <em id="frameLbl"></em></div>
-        <div class="big"><b id="pView">0</b><span id="pSub"></span></div>
+        <div class="big"><b id="pView">0</b><b class="tot">/ <span id="pTot">0</span></b><span id="pSub"></span></div>
         <dl class="kv">
           <dt>People in the whole 360° frame</dt><dd id="pAll">0</dd>
           <dt>Unique people so far (tracked)</dt><dd id="pUnique">0</dd>
@@ -120,7 +122,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       <section>
         <div class="lbl">Text in view <em id="txCount"></em></div>
         <ul class="signs" id="txList"></ul>
-        <div class="note">Tesseract 5 (heb+eng) on detected sign crops, then final-letter fix + spellcheck. <b>Low accuracy</b> (spot check: ~3 of 24 confident reads fully correct); a vision-model reader is planned.</div>
+        <div class="note">Text found by docTR detection; each sign read by a vision-language model (Claude) from its best crop. Spot check: 16/16 correct or correct fragments. Cut-off signs are recorded as the visible fragment.</div>
       </section>
       <section>
         <div class="lbl">Objects in view <em>level 1 · COCO</em></div>
@@ -255,6 +257,27 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     placed.push(r);
     octx.fillStyle = col; octx.fillRect(x, y - th, tw, th); octx.fillStyle = "#101515"; octx.fillText(t, x + pad, y - th * 0.27);
   }
+  // Totals for the whole walk = unique track IDs that pass the same filters as the view
+  // (max confidence >= slider; level 2 uses max(0.15, slider - 0.2); length >= 1 s if "hide tracks < 1 s").
+  let totKey = "", totVal = null;
+  function totals(d, minLen) {
+    const key = `${S.walk}|${S.data && S.data.variant}|${S.conf}|${minLen}`;
+    if (key === totKey) return totVal;
+    const best = { p: new Map(), o: new Map(), l2: new Map() };
+    for (const F of d.frames) {
+      for (const e of F.p) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
+      for (const e of F.o) { const b = best.o.get(e[7]); best.o.set(e[7], [e[0], Math.max(b ? b[1] : 0, e[1])]); }
+      for (const e of F.l2) { const b = best.l2.get(e[8]); best.l2.set(e[8], [e[0], Math.max(b ? b[1] : 0, e[1])]); }
+    }
+    const lenP = id => (d.tracks[id] || [])[2] || 0, lenO = id => (d.obj_len || {})[id] || 0;
+    let people = 0;
+    for (const [id, c] of best.p) if (c >= S.conf && lenP(id) >= minLen) people++;
+    const byCls = (m, thr) => { const out = {}; for (const [id, [cls, c]] of m) if (c >= thr && lenO(id) >= minLen) out[cls] = (out[cls] || 0) + 1; return out; };
+    const signs = Object.values(d.signs || {}).filter(x => x[3]).length;
+    totVal = { people, o: byCls(best.o, S.conf), l2: byCls(best.l2, Math.max(0.15, S.conf - 0.2)), signs };
+    totKey = key;
+    return totVal;
+  }
   function frame() {
     requestAnimationFrame(frame);
     const now = performance.now(), dt = (now - lastNow) / 1000; lastNow = now;
@@ -276,6 +299,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const fr = Math.max(0, curTime() * d.fps), f0 = Math.min(d.n_frames - 1, Math.floor(fr)), f1 = Math.min(d.n_frames - 1, f0 + 1), a = fr - f0;
     const fi = Math.min(d.n_frames - 1, Math.round(fr)), E = { p: [], o: [], l2: [] }, A = d.frames[f0] || E, B = d.frames[f1] || E;
     const minLen = $("Lmin").checked ? 5 : 0;
+    const T = totals(d, minLen);
     const lerpA = (x, y) => x + (((y - x + 540) % 360) - 180) * a;
     const qa = null, qb = null;
     function toStab(e, r) {
@@ -364,16 +388,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (txSig !== frame.txSig) {
       frame.txSig = txSig;
       const rd = signsInView.filter(x => x[1][3]);
-      $("txCount").textContent = `${signsInView.length} signs · ${rd.length} read`;
+      $("txCount").textContent = `${rd.length} / ${T.signs} read · ${signsInView.length} detected in view`;
       $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small>${Math.round(i[2])}</small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
     }
     // panel
-    $("pView").textContent = pView; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size;
+    $("pView").textContent = pView; $("pTot").textContent = T.people; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size; $("pTotal").textContent = T.people;
     $("pSub").textContent = `within ${Math.round(S.fov)}° view`;
     $("frameLbl").textContent = `frame ${fi}`;
-    const kvs = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
-    if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc); $("l2List").innerHTML = kvs(l2c); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
-    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView} people</span><span><i style="background:${C.obj}"></i>${Object.values(oc).reduce((a, b) => a + b, 0)} objects</span><span><i style="background:${C.l2}"></i>${Object.values(l2c).reduce((a, b) => a + b, 0)} level 2</span>`;
+    const kvs = (o, tot) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b} / ${tot[a] ?? b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
+    if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc, T.o); $("l2List").innerHTML = kvs(l2c, T.l2); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
+    const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
+    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView}/${T.people} people</span><span><i style="background:${C.obj}"></i>${sum(oc)}/${sum(T.o)} objects</span><span><i style="background:${C.l2}"></i>${sum(l2c)}/${sum(T.l2)} level 2</span><span><i style="background:${C.ocr}"></i>${signsInView.filter(x => x[1][3]).length}/${T.signs} signs</span>`;
     const t = curTime() || 0;
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
