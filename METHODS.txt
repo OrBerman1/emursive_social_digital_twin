@@ -173,28 +173,43 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      "Go to video" switches walk if needed and seeks/turns to the store. The full map always opens
      centred on the current position (zoom 19).
 
-16. PEOPLE ON THE MAP + MOTION ("OPTICAL FLOW" OF PEOPLE)  (motion.py; viewer "Motion & paths")
-   - Raw pixel optical flow is dominated by the moving camera, so motion is measured on the map instead:
-     person position = camera position (georef.py) + ground distance along the map bearing of the person's
-     feet (bearing = yaw0_bearing + yaw_foot; distance = camera height / tan(foot depression angle), flat
-     ground). Map coordinates are fixed to the ground, so the camera's own motion is removed
-     (ego-motion-compensated motion).
-   - Only positions 1-12 m from the camera are used (beyond ~12 m one pixel of foot error is metres).
-   - Re-linking on the map: the image tracker splits people at occlusions. Track B continues track A if B
-     starts <= 2 s after A ends, within 1 m + 0.4 m/s x gap of where A was heading (forward and backward
-     prediction), the match is unambiguous (runner-up >= 0.3 m worse) and perceived gender does not
-     conflict. Walk 1: 28 re-links, walk 2: 6 (deliberately conservative).
-   - Per person: Gaussian smoothing of position (sigma 1 s), gaps <= 2 s bridged; velocity from the
-     derivative of a sigma 1.5 s smoothed position. walking >= 0.5 m/s, standing <= 0.3 m/s.
-   - Sanity check: people classed standing have a median speed of 0.05-0.09 m/s (near zero, as it should be
-     once the camera motion is removed); people classed walking 0.8 m/s (a slow market pace). Walk 1: 387 people with a map position (205 walking, 115 standing, 67 slow); median
-     followed time 6.6 s. Walk 2: 118 (70 standing, 32 walking).
-   - Viewer: arrow on the ground at each person's feet in the walking direction (projected from the map
-     back into the 360 view, perspective-correct; length ~ speed), ring at the feet = standing. Who gets
-     arrows: None / Followed / All in view / Walking / Standing. Follow people by the card button,
-     Shift + drag box on the video, or "follow everyone in view"; each followed person keeps one colour
-     on box, arrow, chip and map path (minimap + full map). Panel: walking / standing in view, walkers
-     with / against the camera's direction.
-   - Limits: flat-ground assumption; position error ~0.5 m at 3 m, ~2 m at 10 m, plus ~2-3 m route error
-     (shared by everyone in the frame, so relative motion is better than absolute position); a person is
-     only known while visible and within 12 m.
+16. PEOPLE ON THE MAP + MOTION ("OPTICAL FLOW" OF PEOPLE)  (person_flow.py, motion.py; viewer "Motion & paths")
+   - Position: camera position (georef.py) + ground distance along the map bearing of the person's feet
+     (bearing = yaw0_bearing + yaw_foot; distance = camera height / tan(foot depression), flat ground),
+     1-12 m from the camera only.
+   - v0.7 was wrong (user: "the directions are not true"). Diagnosis with STATIC ground objects (parked
+     motorcycles, chairs, crates, tables, bins, stools) run through the same pipeline, which must read 0 m/s:
+       * the map-fit camera speed was up to ~2x too fast and ~15 deg off locally: subtracting it made people
+         walking towards the camera look standing and static things look walking (static median 0.75 m/s);
+       * Gaussian smoothing mirrors the data at track ends: short tracks came out at ~0 m/s;
+       * tracker ID switches (e.g. onto the operator) jumped positions.
+   - Fixes:
+       * camera ego-motion measured in the video: each static object implies camera velocity =
+         -(its velocity relative to the camera); per frame the geometric median over static objects within
+         +-2.4 s (map-fit velocity where there are too few). Same distance scale as the people.
+       * local linear fit (Gaussian weights, sigma 1 s position / 1.5 s velocity) instead of smoothing;
+       * tracks cut at impossible jumps (> 1 m + 3 m/s), longest piece kept;
+       * second, independent estimate from dense optical flow (person_flow.py, cached): DIS flow between
+         consecutive stabilised frames; feet motion (tracked box) minus the median flow of the ground right
+         beside the feet (same distance, so it moves like a static point there: camera translation, rotation
+         residuals and horizon tilt cancel); converted to m/s with the distance at the feet; 2 s rolling median.
+       * velocity = average of both. Arrow only when 0.35-2.5 m/s and both estimates point the same way
+         (within 60 deg); otherwise a ring (standing) or a dashed ring with "?" (moving, direction uncertain).
+   - Validation:
+       * static objects held out from the ego-motion estimate: median apparent speed 0.75 m/s (v0.7) ->
+         0.33 geometry / 0.42 flow / 0.29 averaged; 25% would still be classed walking, hence the agreement
+         gate for arrows.
+       * the two estimates agree within 45 deg for 80% of clearly moving people (peak at 0 deg: no sign error);
+         radial components correlate 0.71, lateral 0.36.
+       * visual check walk 1 t=48-49 s: a shopper approaching the camera moves ~0.3-0.5 m in 0.8 s relative to
+         a crate and a paper on the ground (0.4-0.6 m/s); pipeline 0.4 m/s. Standing man -> ring; man with a
+         walker -> arrow towards the camera.
+       * reliable direction available for 58% (walk 1) / 69% (walk 2) of moving frames.
+   - Re-linking on the map: track B continues track A if B starts <= 2 s after A ends, within 1 m + 0.4 m/s
+     x gap of the predicted position (forward and backward), unambiguous, and perceived gender does not
+     conflict. ~29 / 8 re-links.
+   - Viewer: ground arrow at the feet (projected from the map back into the 360 view), mode None / Followed /
+     All in view / Walking / Standing; follow by card button, Shift + drag box, or everyone in view; one
+     colour per followed person on box, arrow, chip and map paths.
+   - Limits: flat ground; position error ~0.5 m at 3 m, ~2 m at 10 m (+ route error, shared by everyone);
+     noise floor ~0.3 m/s; individual directions not hand-validated beyond the spot checks above.

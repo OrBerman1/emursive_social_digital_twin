@@ -131,7 +131,8 @@ pace; real coordinates follow once anchor points on the GIS map are available (t
 
 **People's paths and motion.** `pipeline\motion.py` puts every tracked person on the map (camera position +
 ground distance from their feet) and measures their walking speed and direction with the camera's own motion
-removed (`data\processed\<walk>\motion_stab.json`). In the viewer, the panel's *Motion & paths* section
+removed (`data\processed\<walk>\motion_stab.json`), combining map geometry with optical flow of the feet
+against the ground beside them (`pipeline\person_flow.py`, cached). Arrows are drawn only where both agree. In the viewer, the panel's *Motion & paths* section
 chooses who gets motion arrows; follow people with the card's **Follow** button, **Shift + drag** a box on the
 video, or **Follow everyone in view**. Followed people get one colour on their box, arrow and path on both maps.
 

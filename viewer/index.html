@@ -163,6 +163,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       </section>
       <section id="secMotion">
         <div class="lbl">Motion &amp; paths <em>camera motion removed · ≤ 12 m</em></div>
+        <div class="note">Arrow = walking direction (two independent methods agree). Solid ring = standing. Dashed ring with ? = moving, direction uncertain.</div>
         <div class="seg" id="mMode" role="group" aria-label="Show motion arrows for">
           <button data-m="none" aria-pressed="false">None</button>
           <button data-m="followed" aria-pressed="true">Followed</button>
@@ -568,6 +569,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         const mt = moTrack(S.sel.id), mn = moAt(S.sel.id, fi), fc = MO.follow.get(gidOf(S.sel.id));
         rows += row("Speed now", mn ? `${mn.spd.toFixed(1)} m/s` : "—") +
                 row("Movement", mt ? `${mt.state}${mt.rel !== "—" ? " · " + mt.rel : ""}` : "—") +
+                row("Direction now", mn ? (mn.ok ? "reliable" : mn.spd < 0.35 ? "standing" : "uncertain") : "—") +
                 row("Path on map", mt ? `${mt.len_m} m in ${mt.dur_s} s${mt.members.length > 1 ? ` · ${mt.members.length} pieces re-linked` : ""}` : "no reliable position (> 12 m)");
         foot = mt ? `<button class="vfollow" data-id="${S.sel.id}" style="--c:${fc || "var(--accent)"}">${fc ? "● Following · click to stop" : "📍 Follow: path on map + motion arrow"}</button>`
                   : `<button class="vfollow" disabled>Too far away for a map path</button>`;
@@ -607,7 +609,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   function moAt(id, fi) {
     const m = moTrack(id); if (!m) return null;
     const i = fi - m.f0; if (i < 0 || i >= m.lat.length || m.lat[i] == null) return null;
-    return { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i], brg: m.brg[i] };
+    return { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i], brg: m.brg[i], ok: m.ok ? m.ok[i] === 1 : m.spd[i] >= 0.5 };
   }
   function moShown(id, m) {
     if (!MO.data) return false;
@@ -644,10 +646,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const g = GEO.walks[S.walk], h = S.data.camera_height_m || 1.3; if (!g || pb > -1) return;
     const k = ov.width / vp.clientWidth, foot = [(r[0] + r[2]) / 2, r[3]];
     octx.globalAlpha = al;
-    if (m.spd < MO.data.walk_m_s) {                                     // standing / slow: a ring at the feet
-      const rad = Math.max(4, (r[2] - r[0]) * 0.18);
+    if (!m.ok) {                                                        // no reliable direction: ring at the feet
+      const rad = Math.max(4, (r[2] - r[0]) * 0.18), unsure = m.spd >= 0.35;   // standing = solid ring; moving but direction unsure = dashed "?"
       octx.lineWidth = 2.5 * k; octx.strokeStyle = "rgba(0,0,0,.6)"; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad + k, (rad + k) * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      if (unsure) octx.setLineDash([3 * k, 3 * k]);
       octx.lineWidth = 1.6 * k; octx.strokeStyle = col; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad, rad * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      octx.setLineDash([]);
+      if (unsure) { octx.font = `700 ${11 * k}px "IBM Plex Mono", monospace`; octx.fillStyle = col; octx.fillText("?", foot[0] + rad + 2 * k, foot[1] + 4 * k); }
       octx.globalAlpha = 1; return;
     }
     const D = h / Math.tan(-pb * deg), a = (m.brg - g.yaw0_bearing_deg[fi]) * deg, L = Math.max(0.8, Math.min(3, m.spd * 1.6));
@@ -670,7 +675,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   function mapArrow(layer, m, col, scale, followed) {
     const L2 = Math.max(1.2, Math.min(5, m.spd * 2.5)), b = m.brg * deg;
     L.circleMarker([m.lat, m.lon], { radius: followed ? 6 * scale : 3.5 * scale, weight: followed ? 2.5 : 1.5, color: followed ? "#fff" : "#111", fillColor: col, fillOpacity: 1, interactive: false, pane: "people" }).addTo(layer);
-    if (m.spd < MO.data.walk_m_s) return;
+    if (!m.ok) return;                                                  // arrows only where the direction is reliable
     const e = llOff(m.lat, m.lon, L2 * Math.sin(b), L2 * Math.cos(b));
     const hl = 0.9, h1 = llOff(e[0], e[1], -hl * Math.sin(b - 0.5), -hl * Math.cos(b - 0.5)), h2 = llOff(e[0], e[1], -hl * Math.sin(b + 0.5), -hl * Math.cos(b + 0.5));
     L.polyline([[m.lat, m.lon], e], { color: col, weight: (followed ? 3.5 : 2.5) * scale, opacity: .95, interactive: false, pane: "people" }).addTo(layer);
