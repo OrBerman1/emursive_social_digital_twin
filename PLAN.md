@@ -148,6 +148,7 @@ All three detection items are offline, cached stages on the stabilised frames, f
 - **Validation:** compare with the 9 coded frames' `facade_materials`, plus ~30 labelled frontages.
 
 ### D. Viewer: emoji instead of text tags on boxes
+- **Status 13 Oct 2026: DONE** (emoji badges on all box types; numbers and sign text moved to the click card; card flips to stay inside the view).
 - **Change:** each box gets a **small emoji badge** at its top-left instead of the text label. The full label (class, ID, confidence, distance) moves to the **hover tooltip and click card**. A legend lists emoji → class. This cuts clutter, which is the main readability problem now.
 - **Rendering:** canvas `fillText` with the system emoji font ("Segoe UI Emoji" on Windows). Badge size scales with box size and is hidden below a minimum box height. Fall back to a 2-letter code if a glyph is missing.
 - **Proposed mapping** (to review with the team):
@@ -171,6 +172,7 @@ All three detection items are offline, cached stages on the stabilised frames, f
 | food (OIV7/COCO) | 🍎 apple · 🍌 banana · 🍊 orange · 🍋 lemon · 🍇 grape · 🍓 strawberry · 🍅 tomato · 🥔 potato · 🥕 carrot · 🥒 cucumber · 🎃 pumpkin · 🍉 watermelon · 🍐 pear · 🍑 peach · 🍍 pineapple · 🥭 mango · 🫑 bell pepper · 🥬 cabbage · 🥦 broccoli · 🍈 cantaloupe · 🍞 bread · 🥯 bagel · 🧁 muffin/pastry · 🍰 cake · 🍪 cookie · 🍬 candy · 🧀 cheese · 🥚 egg · 🐟 fish · 🦐 seafood · 🍯 honeycomb · 🧃 juice · ☕ coffee · 🥤 drink · 🍔 fast food · 🧺 fruit/vegetable/food (generic) |
 
 ### E. Viewer: age group shown on each person's box
+- **Status 13 Oct 2026: DONE.** Box colour = age group on a single green ramp (light → dark with age; grey = uncertain), same colours in the panel's age graph; age emoji badge; age group in the person card; switch "Colour people by age". Update 13 Oct (user decision): perceived gender is now also shown per person as the emoji badge background (blue man / pink woman / grey uncertain), with switch "Gender on emoji badge"; mention on the ethics slide together with validation status.
 - **Change:** **box colour = age group**, with a legend in the panel. Optionally, the person emoji varies by age: 🧒 child · 🧑 young adult 18–35 · 🧔 middle adult 36–60 · 🧓 older adult 61+ · 👤 uncertain. Colour palette (colour-blind safe, distinct from the other layers): child violet, young adult green, middle adult blue, older adult orange, uncertain grey.
 - **Policy note (decision changed by the user, 13 Oct):** age was previously shown only in aggregate. It now appears per person as a **broad, estimated group**. Keep it out of exports at the individual level beyond the anonymous track ID. **Sex stays aggregate-only** (not requested on boxes). Mention it in the ethics/privacy slide, with the "uncertain" share and validation status.
 

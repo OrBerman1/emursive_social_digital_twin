@@ -46,11 +46,15 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
         for r in l2.itertuples():
             frames[int(r.frame)]["l2"].append([r.cls, R(r.conf, 2), *box(r), R(getattr(r, "dist_m", None)), int(r.track)])
 
+    sign_len = {}
     if sign_boxes is not None:
-        for r in sign_boxes.itertuples():          # text detection ran on every 2nd frame: show on both
-            for f in (int(r.frame), int(r.frame) + 1):
+        smoothed = "interp" in sign_boxes.columns        # tracked + gap-filled + smoothed (ocr_vlm merge)
+        for r in sign_boxes.itertuples():
+            fs = (int(r.frame),) if smoothed else (int(r.frame), int(r.frame) + 1)   # old Tesseract output: every 2nd frame
+            for f in fs:
                 if f < n_frames:
-                    frames[f]["s"].append([int(r.track), *box(r)])
+                    frames[f]["s"].append([int(r.track), 1, *box(r)])                 # [sign, conf, yaw, yaw_l, yaw_r, pitch_top, pitch_bot]
+        sign_len = {int(k): int(v) for k, v in sign_boxes.groupby("track").size().items()}
     tracks = (persons.groupby("track")
               .agg(first=("frame", "min"), last=("frame", "max"), n=("frame", "count"), conf=("conf", "max"),
                    dist=("dist_m", "median"))
@@ -59,13 +63,13 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
     if l2 is not None:
         obj_len.update({int(k): int(v) for k, v in l2.groupby("track").size().items()})
     out = {
-        "walk": walk, "obj_len": obj_len, "variant": variant or "raw",
+        "walk": walk, "obj_len": obj_len, "sign_len": sign_len, "variant": variant or "raw",
         "video": "video_stab/equirect.mp4" if variant else "video/equirect.mp4", "frames_dir": "frames" + variant, "fps": FPS_ANALYSIS, "n_frames": n_frames, "pace_m_s": pace,
         "camera_height_m": summary["camera_height_used_m"],
         "fields": {"p": ["track", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "dist_m"],
                    "o": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "track"],
                    "l2": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "dist_m", "track"],
-                   "s": ["sign", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot"]},
+                   "s": ["sign", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot"]},
         "tracks_fields": ["first", "last", "n", "conf", "dist", "sex", "age"], "signs_fields": ["text", "lang", "conf", "readable", "raw"], "ocr_source": ocr_dir.name,
         "tracks": {int(t.track): [int(t.first), int(t.last), int(t.n), R(t.conf, 2), R(t.dist),
                                    *( [attrs.at[t.track, "sex"], attrs.at[t.track, "age"]] if attrs is not None and t.track in attrs.index else ["uncertain", "uncertain"])]

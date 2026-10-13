@@ -120,6 +120,10 @@ def merge(walk: str, variant: str) -> dict:
     drop = set(signs.loc[signs.kind.isin(["no_text", "operator_shirt"]), "track"])   # not signs: hide their boxes
     boxes = pd.read_parquet(out / "line_boxes.parquet").drop(columns=["sign_id"])
     boxes = boxes[~boxes.track.isin(drop)]
+    # same treatment as people/objects: one box per sign per frame, gaps <= 1 s filled, zero-phase smoothing
+    from tracks import smooth_tracks
+    boxes = boxes.sort_values("px_h", ascending=False).drop_duplicates(["track", "frame"])
+    boxes = smooth_tracks(boxes.assign(cls="text", conf=1.0), max_gap=5, sigma_pos=1.5, sigma_size=3.0)
     boxes.to_parquet(out / "sign_boxes.parquet", index=False)
     return {"walk": walk + variant, "lines": len(signs), "read": int(signs.readable.sum()), "sheets_missing": len(missing),
             "lang": signs[signs.readable].lang.value_counts().to_dict(), "kind": signs.kind.value_counts().to_dict()}

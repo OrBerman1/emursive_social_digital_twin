@@ -97,6 +97,9 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      running as background agents inside the Claude Code session (no API key), output per crop:
      text, language, legible yes/no, kind (shop sign / price sign / banner / packaging / other /
      no text / operator's shirt). Merged into ocr_vlm_stab\signs.parquet; the viewer uses it.
+   - Sign boxes are tracked and smoothed like people/objects: one box per sign per frame,
+     gaps <= 1 s filled (covers the every-2nd-frame text detection), zero-phase smoothing; the
+     viewer interpolates, fades and applies the 1 s minimum-length filter to signs too.
    - RESULT: walk 1 1,151 of 1,934 sign crops read, walk 2 1,093 of 1,817 (Tesseract: 64 / 113).
      Mostly Hebrew, plus English, Russian, Arabic and mixed. 683 crops were the operator's T-shirt and
      331 had no text - both removed. Independent spot check of 16 random readings: all correct or
@@ -111,6 +114,13 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - WebGL fragment shader renders the equirectangular video as a perspective view;
      overlays projected with the same yaw/pitch maths (pipeline\spherical.py).
    - Local server with HTTP Range + HTTP/1.1 (needed for video seeking on Windows).
+   - Boxes carry an EMOJI badge per class (e.g. person, trolley, crate, bin, sign) instead of text;
+     track ID, confidence, distance, time seen and sign text are in the card that opens on click.
+   - People boxes are coloured by estimated age group on ONE green ramp (light = child/young,
+     dark = older adult; grey = uncertain) with a matching emoji; the panel's age graph uses the
+     same colours. Perceived gender is shown per person as the emoji badge background
+     (blue = man, pink = woman, grey = uncertain; user decision 13 Oct). Both estimates are
+     unvalidated; visible errors exist (e.g. a man seen from behind labelled woman).
    - Counts are shown as "in view / whole walk" (e.g. 13 / 565). Whole-walk totals count UNIQUE
      TRACK IDs that pass the same filters as the view: the track's highest confidence >= the slider
      (level 2: max(0.15, slider - 0.2)) and, with "hide tracks < 1 s", a length >= 1 s. Because

@@ -11,7 +11,7 @@
 :root {
   --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f;
   --accent: #4fb3bb; --person: #ef6f62; --obj: #e0a948; --l2: #b49be6; --waste: #d1a865; --logi: #f0a050;
-  --ocr: #6fd3c8; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #b597d1; --ag2: #6fbf8a; --ag3: #6aa7d6; --ag4: #e0a35a;
+  --ocr: #6fd3c8; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #e2f7dc; --ag2: #9fe08f; --ag3: #4caf50; --ag4: #1b6e2a; --ag-u: #9aa3a1;  /* age: one green ramp, light = young -> dark = old */
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -37,10 +37,11 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .counters { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
 .counters span { font: 500 11px var(--mono); background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; display: inline-flex; gap: 5px; align-items: center; }
 .counters i { width: 8px; height: 8px; border-radius: 50%; }
-.vcard { position: absolute; left: 0; top: 0; width: 240px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.vcard { position: absolute; left: 0; top: 0; width: 270px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
 .vcard header { display: flex; gap: 6px; align-items: center; }
 .vcard b { font: 700 .95rem var(--display); flex: 1; }
-.vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 0 4px; }
+.vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 2px 6px; font-size: 14px; border-radius: 4px; }
+.vcard button:hover { color: var(--ink); background: var(--line); }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
 .tl { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
 .tl input { flex: 1; min-width: 0; accent-color: var(--accent); }
@@ -114,10 +115,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="lbl">Perceived gender in view <em>estimated · aggregate</em></div>
         <div class="bar" id="sxBar"></div>
         <div class="legend" id="sxLeg"></div>
-        <div class="lbl">Age groups in view <em>estimated</em></div>
+        <div class="lbl">Age groups in view <em>estimated · = box colours</em></div>
         <div class="bar" id="agBar"></div>
         <div class="legend" id="agLeg"></div>
-        <div class="note">Per tracked person from body appearance (CLIP zero-shot, voted over its best crops); never shown on individuals. Not yet validated against hand labels.</div>
+        <div class="note">Per tracked person from body appearance (CLIP zero-shot, voted over its best crops). On boxes: emoji background blue = man, pink = woman, grey = uncertain. Not yet validated against hand labels.</div>
       </section>
       <section>
         <div class="lbl">Text in view <em id="txCount"></em></div>
@@ -136,7 +137,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="lbl">Layers</div>
         <div class="layers">
           <label><input type="checkbox" id="Lp" checked>People</label>
-          <label><input type="checkbox" id="Lid" checked>IDs &amp; distance</label>
+          <label><input type="checkbox" id="Lid" checked>Emoji badges</label>
+          <label><input type="checkbox" id="Lage" checked>Colour people by age</label>
+          <label><input type="checkbox" id="Lsex" checked>Gender on emoji badge</label>
           <label><input type="checkbox" id="Lo" checked>Level-1 objects</label>
           <label><input type="checkbox" id="Ll2" checked>Level-2 objects</label>
           <label><input type="checkbox" id="Ltx" checked>Text on signs (OCR)</label>
@@ -248,6 +251,41 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const xs = ok.map(p => p[0]), ys = ok.map(p => p[1]);
     return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
   }
+  // one emoji per class instead of a text label; numbers go to the card that opens on click
+  const EMOJI = {
+    person: "🧍", bicycle: "🚲", motorcycle: "🏍️", car: "🚗", truck: "🚚", bus: "🚌", chair: "🪑", bench: "🪑",
+    umbrella: "☂️", handbag: "👜", backpack: "🎒", suitcase: "🧳", "potted plant": "🪴", "dining table": "🪵",
+    banana: "🍌", apple: "🍎", orange: "🍊", carrot: "🥕", broccoli: "🥦", bottle: "🧴",
+    "plastic crate": "📦", "stack of crates": "📦", "cardboard box": "📦", "flattened cardboard": "📦", packaging: "📦", "delivery box": "📦",
+    "plastic bag": "🛍️", "garbage bag": "🗑️", "trash bin": "🗑️", "organic waste": "🍂", "fruit and vegetable waste": "🍂",
+    "hand truck": "🛒", "trolley cart": "🛒", "wheeled shopping trolley": "🛒", walker: "🦯", wheelchair: "🦽", "mobility scooter": "🦼",
+    broom: "🧹", "e-bike": "🛵", pallet: "🪵", "display table": "🪵", "plastic chair": "🪑", stool: "🪑", awning: "⛱️",
+    "price sign": "🏷️", "shop sign": "🪧", flag: "🚩", "hanging lamp": "💡", text: "🪧",
+  };
+  const emojiOf = cls => EMOJI[cls] || "❔";
+  // perceived age group per person (team coding scheme): box colour + age emoji (user decision 13 Oct)
+  const AGE_EMOJI = { "child": "🧒", "young adult 18-35": "🧑", "middle adult 36-60": "🧔", "older adult 61+": "🧓", "uncertain": "👤" };
+  const AGE_VAR = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--ag-u" };
+  const ageCol = {};
+  for (const [g, v] of Object.entries(AGE_VAR)) ageCol[g] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const ageOf = id => ((S.data && S.data.tracks[id]) || [])[6] || "uncertain";
+  const SEX_BG = {};
+  for (const [g, v] of Object.entries({ man: "--sx-m", woman: "--sx-w", uncertain: "--ag-u" }))
+    SEX_BG[g] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const sexBg = id => SEX_BG[((S.data && S.data.tracks[id]) || [])[5] || "uncertain"] || SEX_BG.uncertain;
+
+  function badge(e, r, col, bg) {
+    const k = ov.width / vp.clientWidth, h = r[3] - r[1];
+    if (!$("Lid").checked || h < 14 * k) return;
+    const fs = Math.max(13, Math.min(26, h / k * 0.22)) * k, pad = 2 * k;
+    octx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    const w = octx.measureText(e).width + pad * 2, x = r[0], y = r[1] - fs - pad * 2;
+    if (placed.some(q => x < q[2] && x + w > q[0] && y < q[3] && y + fs + pad * 2 > q[1])) return;
+    placed.push([x, y, x + w, y + fs + pad * 2]);
+    octx.fillStyle = bg || "rgba(16,21,21,.72)"; octx.fillRect(x, y, w, fs + pad * 2);
+    octx.strokeStyle = col; octx.lineWidth = 1.2 * k; octx.strokeRect(x, y, w, fs + pad * 2);
+    octx.fillStyle = "#fff"; octx.textBaseline = "top"; octx.fillText(e, x + pad, y + pad); octx.textBaseline = "alphabetic";
+  }
   let placed = [];   // label rectangles drawn this frame (declutter: skip labels that would overlap)
   function label(t, x, y, col) {
     const k = ov.width / vp.clientWidth;
@@ -273,7 +311,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     let people = 0;
     for (const [id, c] of best.p) if (c >= S.conf && lenP(id) >= minLen) people++;
     const byCls = (m, thr) => { const out = {}; for (const [id, [cls, c]] of m) if (c >= thr && lenO(id) >= minLen) out[cls] = (out[cls] || 0) + 1; return out; };
-    const signs = Object.values(d.signs || {}).filter(x => x[3]).length;
+    const signs = Object.entries(d.signs || {}).filter(([id, x]) => x[3] && (((d.sign_len || {})[id] ?? 99) >= minLen)).length;
     totVal = { people, o: byCls(best.o, S.conf), l2: byCls(best.l2, Math.max(0.15, S.conf - 0.2)), signs };
     totKey = key;
     return totVal;
@@ -334,8 +372,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
       const sel = S.sel && S.sel.kind === "p" && S.sel.id === id;
       octx.globalAlpha = al;
-      octx.strokeStyle = C.person; octx.lineWidth = (sel ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
-      if ($("Lid").checked && r[3] - r[1] > 40 * k) label(`P-${String(id).padStart(4, "0")} ${cf.toFixed(2)}${dist ? " · " + dist.toFixed(1) + " m" : ""}`, r[0], r[1], C.person);
+      const byAge = $("Lage").checked, ag = ageOf(id), pc = byAge ? ageCol[ag] : C.person;
+      octx.strokeStyle = pc; octx.lineWidth = (sel ? 3 : 1.8) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
       octx.globalAlpha = 1;
       S.hits.push({ kind: "p", id, r, info: p });
       if (sel) anchor = r;
@@ -347,10 +386,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (al >= 0.5) oc[cls] = (oc[cls] || 0) + 1;
       if (!$("Lo").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
-      if (r[3] - r[1] > 25 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[1], C.obj);
+      const selO = S.sel && S.sel.kind === "o" && S.sel.id === o[7];
+      octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = (selO ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      badge(emojiOf(cls), r, C.obj);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "o", id: cls, r, info: o });
+      S.hits.push({ kind: "o", id: o[7], r, info: o });
+      if (selO) anchor = r;
     }
     // level-2 objects
     for (const [o, al] of blend(A.l2, B.l2, 8, objLen)) {
@@ -358,29 +399,36 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (al >= 0.5) l2c[cls] = (l2c[cls] || 0) + 1;
       if (!$("Ll2").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      if (r[3] - r[1] > 20 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[3] + 15 * k, C.l2);
+      const selL = S.sel && S.sel.kind === "l2" && S.sel.id === o[8];
+      octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = (selL ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      badge(emojiOf(cls), r, C.l2);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "l2", id: cls, r, info: o });
+      S.hits.push({ kind: "l2", id: o[8], r, info: o });
+      if (selL) anchor = r;
     }
-    // OCR signs (stabilised frame, static between detections)
-    const signsInView = [];
-    for (const sg of ((d.frames[fi] || {}).s || [])) {
-      const [id, yw, yl, yr, pt, pb] = sg, info = (d.signs || {})[id]; if (!info || !inFov(yw)) continue;
-      signsInView.push([id, info]);
+    // OCR signs: tracked + smoothed in the pipeline; interpolated, faded and length-filtered like the other layers
+    const signsInView = [], sgLen = id => (d.sign_len || {})[id] ?? 99;
+    for (const [sg, al] of blend(A.s || [], B.s || [], 0, sgLen)) {
+      const [id, , yw, yl, yr, pt, pb] = sg, info = (d.signs || {})[id]; if (!info || !inFov(yw)) continue;
+      if (al >= 0.5) signsInView.push([id, info]);
       if (!$("Ltx").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = 1.5 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      if (info[3]) label(`${info[0]} · ${info[1]} ${Math.round(info[2])}`, r[0], r[3] + 15 * k, C.ocr);
+      const selS = S.sel && S.sel.kind === "s" && S.sel.id === id;
+      octx.globalAlpha = al;
+      octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = (selS ? 3 : 1.5) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      if (info[3]) badge("🪧", r, C.ocr);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "s", id, r, info: sg });
+      if (selS) anchor = r;
     }
     // perceived gender + age, aggregate over people in view only
     const SX = ["man", "woman", "uncertain"], SXV = { man: "--sx-m", woman: "--sx-w", uncertain: "--sx-u" };
-    const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--sx-u" };
+    const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--ag-u" };
     const sxc = Object.fromEntries(SX.map(x => [x, 0])), agc = Object.fromEntries(AG.map(x => [x, 0]));
     for (const id of inViewIds) { const t = d.tracks[id] || []; sxc[t[5] || "uncertain"] = (sxc[t[5] || "uncertain"] || 0) + 1; agc[t[6] || "uncertain"] = (agc[t[6] || "uncertain"] || 0) + 1; }
     const nIn = inViewIds.length || 1;
     const bar = (keys, c, v) => keys.map(x => `<div style="width:${(c[x] / nIn * 100).toFixed(1)}%;background:var(${v[x]})"></div>`).join("");
-    const leg = (keys, c, v) => keys.map(x => `<span><i style="background:var(${v[x]})"></i>${x}<b>${Math.round(c[x] / nIn * 100)}%</b></span>`).join("");
+    const leg = (keys, c, v) => keys.map(x => `<span><i style="background:var(${v[x]})"></i>${AGE_EMOJI[x] && keys.includes("child") ? AGE_EMOJI[x] + " " : ""}${x}<b>${Math.round(c[x] / nIn * 100)}%</b></span>`).join("");
     const sxSig = JSON.stringify([sxc, agc]);
     if (sxSig !== frame.sxSig) { frame.sxSig = sxSig; $("sxBar").innerHTML = bar(SX, sxc, SXV); $("sxLeg").innerHTML = leg(SX, sxc, SXV); $("agBar").innerHTML = bar(AG, agc, AGV); $("agLeg").innerHTML = leg(AG, agc, AGV); }
     const esc = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
@@ -389,7 +437,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       frame.txSig = txSig;
       const rd = signsInView.filter(x => x[1][3]);
       $("txCount").textContent = `${rd.length} / ${T.signs} read · ${signsInView.length} detected in view`;
-      $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small>${Math.round(i[2])}</small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
+      $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small></small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
     }
     // panel
     $("pView").textContent = pView; $("pTot").textContent = T.people; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size; $("pTotal").textContent = T.people;
@@ -403,14 +451,45 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
     if (!scrubbing && duration()) $("scrub").value = Math.round(t / duration() * 1000);
-    // in-view card follows the selected person
+    // in-view card for the selected box (any kind): all numbers live here, not on the boxes
     const vc = $("vcard");
-    if (S.sel && S.sel.kind === "p" && anchor) {
-      const tr = d.tracks[S.sel.id] || [];
-      vc.innerHTML = `<header><b>P-${String(S.sel.id).padStart(4, "0")}</b><button aria-label="Close">✕</button></header><dl class="kv"><dt>Seen</dt><dd>frames ${tr[0]}–${tr[1]}</dd><dt>Duration</dt><dd>${((tr[1] - tr[0]) / d.fps).toFixed(1)} s</dd><dt>Max confidence</dt><dd>${tr[3]}</dd><dt>Median distance</dt><dd>${tr[4] ?? "—"} m</dd></dl><div class="note">Persistent track ID from the cached detections.</div>`;
+    if (S.sel && anchor) {
+      const h = S.hits.find(x => x.kind === S.sel.kind && x.id === S.sel.id), info = h ? h.info : null;
+      const esc2 = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+      const row = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
+      let title = "", rows = "", note = "";
+      if (S.sel.kind === "p") {
+        const tr = d.tracks[S.sel.id] || [];
+        title = `${$("Lage").checked ? AGE_EMOJI[tr[6] || "uncertain"] : "🧍"} Person · P-${String(S.sel.id).padStart(4, "0")}`;
+        rows = row("Confidence (now)", info ? info[1].toFixed(2) : "—") + row("Distance (now)", info && info[7] ? info[7].toFixed(1) + " m" : "—") +
+               row("Seen", `frames ${tr[0]}–${tr[1]}`) + row("Duration", `${((tr[1] - tr[0]) / d.fps).toFixed(1)} s`) +
+               row("Max confidence", tr[3]) + row("Median distance", `${tr[4] ?? "—"} m`) +
+               row("Age group (estimated)", `${AGE_EMOJI[tr[6] || "uncertain"] || ""} ${tr[6] || "uncertain"}`) +
+               row("Perceived gender (estimated)", tr[5] || "uncertain");
+        note = "Persistent track ID. Age group and perceived gender are broad estimates (CLIP zero-shot, not yet validated).";
+      } else if (S.sel.kind === "o" || S.sel.kind === "l2") {
+        const lvl = S.sel.kind === "o" ? "Level 1 (YOLO11, COCO)" : "Level 2 (YOLO-World, text prompt)";
+        const n = (d.obj_len || {})[S.sel.id] || 0;
+        title = `${emojiOf(info ? info[0] : "")} ${info ? esc2(info[0]) : "object"} · O-${S.sel.id}`;
+        rows = row("Confidence (now)", info ? info[1].toFixed(2) : "—") + (S.sel.kind === "l2" && info && info[7] ? row("Distance (now)", info[7].toFixed(1) + " m") : "") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Detector", lvl);
+      } else if (S.sel.kind === "s") {
+        const si = (d.signs || {})[S.sel.id] || [];
+        const n = (d.sign_len || {})[S.sel.id] || 0;
+        title = `🪧 Sign · T-${S.sel.id}`;
+        rows = row("Text", `<span dir="auto" style="unicode-bidi:plaintext">${esc2(si[0] || "—")}</span>`) + row("Language", si[1] || "—") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Read by", d.ocr_source === "ocr_vlm_stab" ? "vision model (Claude)" : "Tesseract");
+      }
+      const html = `<header><b>${title}</b><button class="vclose" aria-label="Close">✕</button></header><dl class="kv">${rows}</dl>${note ? `<div class="note">${note}</div>` : ""}`;
+      if (html !== vc.dataset.html) { vc.innerHTML = html; vc.dataset.html = html; }   // rebuild only when the content changes
       vc.hidden = false;
-      const cx = anchor[2] / k + 12, cy = anchor[1] / k;
-      vc.style.transform = `translate(${Math.min(vp.clientWidth - 250, Math.max(6, cx))}px, ${Math.min(vp.clientHeight - 140, Math.max(6, cy))}px)`;
+      // place right of the box; flip to the left when it would leave the view; keep fully inside
+      const cw = vc.offsetWidth || 270, ch = vc.offsetHeight || 160, W2 = vp.clientWidth, H2 = vp.clientHeight;
+      let cx = anchor[2] / k + 12;
+      if (cx + cw > W2 - 6) cx = anchor[0] / k - cw - 12;
+      cx = Math.max(6, Math.min(W2 - cw - 6, cx));
+      const cy = Math.max(6, Math.min(H2 - ch - 6, anchor[1] / k));
+      vc.style.transform = `translate(${cx}px, ${cy}px)`;
     } else vc.hidden = true;
   }
   requestAnimationFrame(frame);
@@ -425,11 +504,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (drag && !drag.moved) {
       const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
       const h = S.hits.slice().reverse().find(h => x >= h.r[0] && x <= h.r[2] && y >= h.r[1] && y <= h.r[3]);
-      S.sel = h && h.kind === "p" ? (S.sel && S.sel.id === h.id ? null : { kind: "p", id: h.id }) : null;
+      S.sel = h ? (S.sel && S.sel.kind === h.kind && S.sel.id === h.id ? null : { kind: h.kind, id: h.id }) : null;
     }
     drag = null;
   });
-  $("vcard").addEventListener("click", e => { if (e.target.closest("button")) S.sel = null; });
+  // close on press (pointerdown), so a card refresh between press and release cannot swallow the click
+  $("vcard").addEventListener("pointerdown", e => { if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
   vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
   vp.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") S.yaw -= 6; else if (e.key === "ArrowRight") S.yaw += 6;
