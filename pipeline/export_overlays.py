@@ -46,7 +46,12 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
     summary = json.loads((tdir / "summary.json").read_text(encoding="utf-8"))
 
     box = lambda r: [R(r.yaw), R(r.yaw_l), R(r.yaw_r), R(r.pitch_top), R(r.pitch_bot)]
-    frames = [{"p": [], "o": [], "l2": [], "s": [], "dp": [], "fd": []} for _ in range(n_frames)]
+    frames = [{"p": [], "o": [], "l2": [], "s": [], "dp": [], "fd": [], "w": []} for _ in range(n_frames)]
+    waste_p = tdir / "waste.parquet"                                    # waste on the floor (waste.py)
+    waste = pd.read_parquet(waste_p) if waste_p.exists() else None
+    if waste is not None:
+        for r in waste.itertuples():
+            frames[int(r.frame)]["w"].append([r.type, R(r.p_waste, 2), *box(r), int(r.track)])
     food_p = tdir / "food.parquet"                                      # food on display (food.py, Open Images V7)
     food = pd.read_parquet(food_p) if food_p.exists() else None
     if food is not None:
@@ -87,7 +92,9 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
                    "l2": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "dist_m", "track"],
                    "s": ["sign", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot"],
                    "dp": ["track", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot"],
-                   "fd": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "track"]},
+                   "fd": ["cls", "conf", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "track"],
+                   "w": ["type", "p_waste", "yaw", "yaw_l", "yaw_r", "pitch_top", "pitch_bot", "track"]},
+        "waste_len": ({int(k): int(v) for k, v in waste.groupby("track").size().items()} if waste is not None else {}),
         "food_len": ({int(k): int(v) for k, v in food.groupby("track").size().items()} if food is not None else {}),
         "food_group": ({c: g for c, g in zip(food.cls, food.group)} if food is not None else {}),
         "dp_fields": ["first", "last", "n", "p_depicted", "reason"],

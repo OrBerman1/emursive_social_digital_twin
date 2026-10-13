@@ -143,6 +143,11 @@ layer. `pipeline\food.py` finds food displays (YOLOv8x Open Images V7 + COCO pro
 from a market vocabulary; menu/sign photos of food are kept apart. The Open Images weights
 (`models\yolov8x-oiv7.pt`) are downloaded by `setup.bat`.
 
+**Waste on the floor.** `pipeline\waste.py` keeps open-vocabulary waste detections only where the ground around
+and under them is walkway floor (SegFormer, downloaded by `setup.bat` into `models\segformer-b2-ade\`), checks
+each item with CLIP, and writes items with map position and waste per 10 m of route
+(`data\processed\<walk>\waste_stab.json`). In the viewer: magenta boxes, a panel section, dots on both maps.
+
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
 `data\processed\<walk>\georef.json` and `data\processed\shops.json`. It keeps the walker on real streets

@@ -255,3 +255,29 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      tomatoes, watermelons, meat...); walk 2 (Hamevasser St): 183 (83 menu/sign pictures, 28 meat).
    - Limits: no hand-labelled ground truth yet (planned: ~30 stall crops per walk); bananas are
      over-represented because COCO detects them very often (one stand -> several tracks).
+
+19. WASTE ON THE FLOOR  (detect.py --prompts waste; waste.py)
+   - Candidates: YOLO-World with a waste prompt set (litter, crumpled paper, paper cup, plastic bottle, drink
+     can, plastic wrapper, plastic bag / flattened cardboard on the ground, torn cardboard box, garbage bag,
+     vegetable leaves / crushed fruit on the ground, food waste, napkin) plus look-alike prompts that are
+     dropped (shoe, manhole cover, drain grate, crate of produce, puddle); plus waste-like level-2 classes.
+     conf >= 0.1, below the horizon, small boxes.
+   - On the walkway only: SegFormer-B2 (ADE20K, nvidia/segformer-b2-finetuned-ade-512-512) segments the lower
+     band of every stabilised frame (pitch +5..-75 deg); floor = floor, road, sidewalk, earth, path, runway,
+     dirt track; masks cached per frame (reusable for walkway width / encroachment). A candidate is kept when
+     the ring around it is >= 50% floor AND the strip just under it is >= 60% floor (not a table or stall),
+     and it overlaps no person box by more than 30% (carried bags).
+   - Tracked as one class (level-2 tracker), then CLIP ViT-L/14 on up to 3 crops: 6 waste types (cardboard,
+     paper & litter, plastic bag, bottle / can, organic waste, garbage bag) vs not-waste (stock boxes, clean
+     floor, feet, drains, puddles, trolleys, carried bags, bins, tables, vehicles); waste when the waste
+     prompts sum to >= 0.5.
+   - Items at the same map spot (<= 1 m, <= 10 s apart) are merged (tracker splits); short gaps (<= 1 s)
+     inside an item are interpolated. Map position = camera position + ground distance along the bearing;
+     route position = camera chainage; density = items per 10 m.
+   - Result: walk 1: 19 items (12 cardboard, 2 plastic bags, 2 bottles/cans, 2 organic, 1 garbage bag),
+     max 3 per 10 m; walk 2: 11 items (7 cardboard, 2 paper & litter, 1 bottle/can, 1 organic).
+   - Visual checks (contact sheets): first version 35-40% correct (carried bags, bins, cafe tables); after
+     the person-overlap, floor-under and look-alike filters ~67% (walk 1, 14/21 before merging) and ~73%
+     (walk 2, 8/11). Remaining errors: goods for sale on the floor (detergent bottles, crates), a bag hanging
+     at a stall. Recall not measured: small litter (cigarette butts, wrappers) is below the detector's
+     resolution at 5 fps / 1024 px tiles.
