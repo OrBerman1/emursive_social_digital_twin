@@ -154,6 +154,16 @@ def integrate(t_ms, w_cam, a_cam, gain=2e-4):
     return Rot.from_quat(out)
 
 
+def step_energy(t_ms, a_cam, win_s: float = 1.0) -> np.ndarray:
+    """Walking intensity per IMU sample: std of |accel| over a centred 1 s window (footsteps ~2 Hz; ~0 when standing)."""
+    n = np.linalg.norm(a_cam, axis=1)
+    k = max(1, int(round(win_s * 1000 / np.median(np.diff(t_ms)))))
+    c1 = np.concatenate([[0], np.cumsum(n)]); c2 = np.concatenate([[0], np.cumsum(n * n)])
+    i0 = np.clip(np.arange(len(n)) - k // 2, 0, len(n)); i1 = np.clip(i0 + k, 0, len(n)); m = (i1 - i0).clip(1)
+    mean = (c1[i1] - c1[i0]) / m
+    return np.sqrt(np.maximum((c2[i1] - c2[i0]) / m - mean ** 2, 0))
+
+
 def gauss(x, sigma):
     r = int(3 * sigma)
     k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma) ** 2)
@@ -288,6 +298,7 @@ def run(walk: str, sigma_heading: float, force: bool) -> dict:
     (out_dir / "heading.json").write_text(json.dumps({
         "walk": walk, "analysis_fps": FPS_A, "heading_rad": np.round(head_s[ia], 5).tolist(),
         "accel_norm": np.round(np.linalg.norm(a_cam[ia], axis=1), 3).tolist(),
+        "step_energy": np.round(step_energy(t_cam, a_cam)[ia], 4).tolist(),
     }, separators=(",", ":")), encoding="utf-8")
     return {k: v for k, v in out.items() if not k.startswith("q_")}
 

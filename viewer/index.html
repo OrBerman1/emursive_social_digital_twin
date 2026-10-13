@@ -625,8 +625,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
         html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
     }
-    miniLast = -1; updateFullMe(true);
-    setTimeout(() => full.invalidateSize(), 50);
+    // always open centred on the current camera position, at street level
+    const centre = () => {
+      full.invalidateSize();
+      const g = GEO.walks[S.walk];
+      if (g && g.lat[meFi]) full.setView([g.lat[meFi], g.lon[meFi]], 19, { animate: false });
+      updateFullMe(false);
+    };
+    centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
   }
   $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
   $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
