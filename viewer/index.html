@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuk HaTikvah 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: real-data viewer. 360 video (WebGL) with an overlay canvas, side panel, timeline below. */
+:root {
+  --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f;
+  --accent: #4fb3bb; --person: #ef6f62; --obj: #e0a948; --l2: #b49be6; --waste: #d1a865; --logi: #f0a050;
+  --ocr: #6fd3c8; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #b597d1; --ag2: #6fbf8a; --ag3: #6aa7d6; --ag4: #e0a35a;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--body); }
+.wrap { max-width: 1500px; margin: 0 auto; padding: 14px 16px 22px; display: grid; gap: 12px; }
+header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+h1 { font: 700 1.45rem var(--display); margin: 0; }
+h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-size: 1rem; }
+.walks { display: flex; gap: 4px; }
+.walks button, .tl button { font: 600 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.walks button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 12px; align-items: start; }
+@media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.vp { position: relative; aspect-ratio: 16 / 9; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #000; cursor: grab; touch-action: none; }
+.vp.drag { cursor: grabbing; }
+.vp canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hud { position: absolute; left: 10px; top: 10px; font: 11px/1.5 var(--mono); background: rgba(18,24,25,.82); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; pointer-events: none; }
+.counters { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
+.counters span { font: 500 11px var(--mono); background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; display: inline-flex; gap: 5px; align-items: center; }
+.counters i { width: 8px; height: 8px; border-radius: 50%; }
+.vcard { position: absolute; left: 0; top: 0; width: 240px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.vcard header { display: flex; gap: 6px; align-items: center; }
+.vcard b { font: 700 .95rem var(--display); flex: 1; }
+.vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 0 4px; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
+.tl { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
+.tl input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.tl .meta { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tl select { font: 12px var(--mono); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 4px; margin-left: 4px; }
+aside { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+aside section { padding: 12px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+aside section:first-child { border-top: 0; }
+.lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.lbl em { font: 400 11px var(--mono); text-transform: none; letter-spacing: 0; font-style: normal; }
+.big { display: flex; align-items: baseline; gap: 10px; }
+.big b { font: 700 2.3rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.big span { color: var(--muted); font-size: 12.5px; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; margin: 0; font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); text-align: right; }
+.layers { display: flex; flex-wrap: wrap; gap: 6px; }
+.layers label { font: 500 12.5px var(--body); border: 1px solid var(--line); border-radius: 20px; padding: 4px 11px 4px 8px; display: inline-flex; gap: 7px; align-items: center; cursor: pointer; user-select: none; }
+.layers input { accent-color: var(--accent); margin: 0; }
+.note { font-size: 12px; color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar { display: flex; height: 11px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.legend span { display: flex; gap: 6px; align-items: center; } .legend i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.legend b { font: 500 12px var(--mono); margin-left: auto; }
+.signs { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; max-height: 190px; overflow-y: auto; font-size: 13px; }
+.signs li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.signs .t { unicode-bidi: plaintext; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.signs .lg { font: 600 10px var(--mono); text-transform: uppercase; background: var(--ocr); color: #101515; border-radius: 3px; padding: 1px 5px; }
+.signs small { font: 11px var(--mono); color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Shuk HaTikvah 360° <span>· real footage, levels 1–2 v0.1</span></h1>
+    <div class="walks" role="group" aria-label="Walk">
+      <button data-walk="walk1" aria-pressed="true">Walk 1 · Hatikvah St</button>
+      <button data-walk="walk2" aria-pressed="false">Walk 2 · Hamevasser St</button>
+    </div>
+  </header>
+  <div class="main">
+    <div style="display:grid;gap:10px;min-width:0">
+      <div class="vp" id="vp" tabindex="0" aria-label="360 degree video. Drag or use arrow keys to look around.">
+        <canvas id="gl"></canvas>
+        <canvas id="ov"></canvas>
+        <div class="hud" id="hud"></div>
+        <div class="counters" id="ctr"></div>
+        <div class="vcard" id="vcard" hidden></div>
+        <div class="loading" id="loading">Loading video and overlays…</div>
+      </div>
+      <div class="tl">
+        <button id="play">Play</button>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position">
+        <div class="meta" id="tmeta">0:00 / 0:00</div>
+        <label class="meta" for="speed">Speed <select id="speed" autocomplete="off"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="0.75">×0.75</option><option value="1" selected>×1</option><option value="1.25">×1.25</option><option value="1.5">×1.5</option><option value="1.75">×1.75</option><option value="2">×2</option></select></label>
+      </div>
+    </div>
+    <aside>
+      <section>
+        <div class="lbl">People in view <em id="frameLbl"></em></div>
+        <div class="big"><b id="pView">0</b><span id="pSub"></span></div>
+        <dl class="kv">
+          <dt>People in the whole 360° frame</dt><dd id="pAll">0</dd>
+          <dt>Unique people so far (tracked)</dt><dd id="pUnique">0</dd>
+          <dt>Unique people, whole walk</dt><dd id="pTotal">0</dd>
+        </dl>
+      </section>
+      <section id="secSex">
+        <div class="lbl">Perceived gender in view <em>estimated · aggregate</em></div>
+        <div class="bar" id="sxBar"></div>
+        <div class="legend" id="sxLeg"></div>
+        <div class="lbl">Age groups in view <em>estimated</em></div>
+        <div class="bar" id="agBar"></div>
+        <div class="legend" id="agLeg"></div>
+        <div class="note">Per tracked person from body appearance (CLIP zero-shot, voted over its best crops); never shown on individuals. Not yet validated against hand labels.</div>
+      </section>
+      <section>
+        <div class="lbl">Text in view <em id="txCount"></em></div>
+        <ul class="signs" id="txList"></ul>
+        <div class="note">Tesseract 5 (heb+eng) on detected sign crops, then final-letter fix + spellcheck. <b>Low accuracy</b> (spot check: ~3 of 24 confident reads fully correct); a vision-model reader is planned.</div>
+      </section>
+      <section>
+        <div class="lbl">Objects in view <em>level 1 · COCO</em></div>
+        <dl class="kv" id="objList"></dl>
+      </section>
+      <section id="l2sec">
+        <div class="lbl">Level 2 in view <em>open vocabulary</em></div>
+        <dl class="kv" id="l2List"></dl>
+      </section>
+      <section>
+        <div class="lbl">Layers</div>
+        <div class="layers">
+          <label><input type="checkbox" id="Lp" checked>People</label>
+          <label><input type="checkbox" id="Lid" checked>IDs &amp; distance</label>
+          <label><input type="checkbox" id="Lo" checked>Level-1 objects</label>
+          <label><input type="checkbox" id="Ll2" checked>Level-2 objects</label>
+          <label><input type="checkbox" id="Ltx" checked>Text on signs (OCR)</label>
+          <label><input type="checkbox" id="Lmin" checked>Hide tracks &lt; 1 s</label>
+          <label><input type="checkbox" id="Lvar" checked>Stabilised video (offline)</label>
+        </div>
+        <label class="note">Min. confidence <input type="range" id="conf" min="0.2" max="0.9" step="0.05" value="0.6" autocomplete="off"> <span id="confV">0.60</span></label>
+      </section>
+      <section>
+        <div class="lbl">Pipeline</div>
+        <dl class="kv" id="pipe"></dl>
+        <div class="note">Detections run once and are cached; this page reads <code>data/processed/&lt;walk&gt;/overlays.json</code>.</div>
+      </section>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const vp = $("vp"), gl = $("gl").getContext("webgl", { antialias: false }), ov = $("ov"), octx = ov.getContext("2d");
+  const video = document.createElement("video");
+  video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = true; video.preload = "auto";
+  video.hidden = true; document.body.appendChild(video);   // detached videos may never start loading in Chrome
+  const S = { speed: 1, stab: null, yaw: 0, pitch: -5, fov: 90, walk: "walk1", data: null, hits: [], sel: null, seen: new Set(), conf: 0.6 };
+  // Fallback when the video can't play (not loaded yet, background tab): show the cached analysis frame
+  // for the current time. Overlays then align exactly with the frame they were computed on.
+  const still = new Image(); let stillFi = -1, stillReady = false, stillBusy = false, vt = 0, playing = false, lastNow = performance.now();
+  still.onload = () => { stillReady = true; stillBusy = false; }; still.onerror = () => { stillBusy = false; };
+  const videoOk = () => video.readyState >= 2;
+  const curTime = () => videoOk() ? video.currentTime : vt;
+  const duration = () => (video.duration && isFinite(video.duration)) ? video.duration : (S.data ? S.data.n_frames / S.data.fps : 0);
+  const deg = Math.PI / 180;
+
+  // ---------- WebGL: equirect video rendered with the same yaw/pitch maths as pipeline/spherical.py ----------
+  const vs = `attribute vec2 p; varying vec2 v; void main(){ v = p; gl_Position = vec4(p, 0., 1.); }`;
+  const fs = `precision highp float; varying vec2 v; uniform sampler2D tex; uniform float yaw, pitch, tx, ty; uniform mat3 Q;
+    const float PI = 3.141592653589793;
+    void main(){
+      vec3 d = vec3(v.x * tx, v.y * ty, 1.0);
+      float cp = cos(pitch), sp = sin(pitch), cw = cos(yaw), sw = sin(yaw);
+      float y1 = d.y * cp + d.z * sp, z1 = -d.y * sp + d.z * cp;
+      float x2 = d.x * cw + z1 * sw,  z2 = -d.x * sw + z1 * cw;
+      vec3 c = Q * vec3(x2, y1, z2);                 // stabilised view ray -> camera frame of this video frame
+      float lon = atan(c.x, c.z), lat = atan(c.y, length(vec2(c.x, c.z)));
+      gl_FragColor = texture2D(tex, vec2(lon / (2.0 * PI) + 0.5, 0.5 - lat / PI));
+    }`;
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog); gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  const U = n => gl.getUniformLocation(prog, n), uYaw = U("yaw"), uPitch = U("pitch"), uTx = U("tx"), uTy = U("ty"), uQ = U("Q");
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const colMajor = r => [r[0], r[3], r[6], r[1], r[4], r[7], r[2], r[5], r[8]];
+  let shownFi = 0;   // analysis frame currently shown in still-frame mode
+
+  // project (yaw, pitch) in degrees to overlay pixels; null if behind the camera
+  function project(yw, pt) {
+    const W = ov.width, H = ov.height, tx = Math.tan(S.fov * deg / 2), ty = tx * H / W;
+    const a = yw * deg, b = pt * deg;
+    let x = Math.cos(b) * Math.sin(a), y = Math.sin(b), z = Math.cos(b) * Math.cos(a);
+    const w = S.yaw * deg, p = S.pitch * deg;
+    const x1 = x * Math.cos(w) - z * Math.sin(w), z1 = x * Math.sin(w) + z * Math.cos(w);
+    const y0 = y * Math.cos(p) - z1 * Math.sin(p), z0 = y * Math.sin(p) + z1 * Math.cos(p);
+    if (z0 <= 0.05) return null;
+    return [(x1 / z0 / tx + 1) * W / 2, (1 - y0 / z0 / ty) * H / 2];
+  }
+  function resize() {
+    const r = vp.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+    for (const c of [$("gl"), ov]) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+    gl.viewport(0, 0, $("gl").width, $("gl").height);
+  }
+  new ResizeObserver(resize).observe(vp);
+
+  // ---------- data ----------
+  async function load(walk) {
+    const sameWalk = S.walk === walk;
+    S.walk = walk; S.data = null; S.sel = null; S.seen.clear(); $("vcard").hidden = true; $("loading").hidden = false;
+    document.querySelectorAll(".walks button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.walk === walk)));
+    const keepT = curTime();
+    try {
+      const v = $("Lvar").checked ? "_stab" : "";
+      let r = await fetch(`../data/processed/${walk}/overlays${v}.json`);
+      if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
+      S.data = await r.json();
+      video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
+      vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
+      video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
+      const tr = S.data.tracks;
+      $("pTotal").textContent = Object.keys(tr).length;
+      $("pipe").innerHTML = [["Analysed frames", `${S.data.n_frames} @ ${S.data.fps} fps`], ["Camera height (estimated)", `${S.data.camera_height_m} m`], ["Route position basis", `pace ${S.data.pace_m_s} m/s`], ["Level 2", S.data.frames.some(f => f.l2.length) ? "loaded" : "not run yet"]]
+        .map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("");
+    } catch (e) { $("loading").textContent = "Could not load overlays.json. Run the pipeline and serve the project with pipeline/serve.py."; }
+    video.addEventListener("loadeddata", () => { $("loading").hidden = true; }, { once: true });
+  }
+
+  // ---------- render loop ----------
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const objCol = { person: "--person" };
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const C = { person: css("--person"), obj: css("--obj"), l2: css("--l2"), ocr: css("--ocr"), surface: css("--surface"), ink: css("--ink") };
+  function inFov(yw) { return Math.abs(((yw - S.yaw + 540) % 360) - 180) < S.fov / 2; }
+  function boxRect(yw, yl, yr, pt, pb) {
+    let wspan = ((yr - yl) % 360 + 360) % 360;
+    const pts = [];
+    for (let k = 0; k <= 4; k++) { const yy = yl + wspan * k / 4; pts.push(project(yy, pt), project(yy, pb)); }
+    const ok = pts.filter(Boolean); if (ok.length < 6) return null;
+    const xs = ok.map(p => p[0]), ys = ok.map(p => p[1]);
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  }
+  let placed = [];   // label rectangles drawn this frame (declutter: skip labels that would overlap)
+  function label(t, x, y, col) {
+    const k = ov.width / vp.clientWidth;
+    octx.font = `500 ${12 * k}px IBM Plex Mono, monospace`;
+    const pad = 3 * k, tw = octx.measureText(t).width + pad * 2, th = 15 * k, r = [x, y - th, x + tw, y];
+    if (placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
+    placed.push(r);
+    octx.fillStyle = col; octx.fillRect(x, y - th, tw, th); octx.fillStyle = "#101515"; octx.fillText(t, x + pad, y - th * 0.27);
+  }
+  function frame() {
+    requestAnimationFrame(frame);
+    const now = performance.now(), dt = (now - lastNow) / 1000; lastNow = now;
+    if (videoOk()) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video); vt = video.currentTime; }
+    else if (S.data) {
+      if (playing) { vt += dt * S.speed; if (vt >= duration()) vt = 0; }
+      const want = Math.min(S.data.n_frames - 1, Math.round(vt * S.data.fps));
+      if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `../data/interim/${S.walk}/${S.data.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
+      if (stillReady) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, still); stillReady = false; shownFi = stillFi; still.dataset.up = "1"; $("loading").hidden = true; }
+    }
+    const W = ov.width, H = ov.height, tx = Math.tan(S.fov * deg / 2);
+    gl.uniformMatrix3fv(uQ, false, I3);   // stabilisation is baked into the video (offline), not applied here
+    gl.uniform1f(uYaw, S.yaw * deg); gl.uniform1f(uPitch, S.pitch * deg); gl.uniform1f(uTx, tx); gl.uniform1f(uTy, tx * H / W);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    octx.clearRect(0, 0, W, H); S.hits = []; placed = [];
+    const d = S.data; if (!d) return;
+    // smooth playback: blend the two analysis frames around the current time, per track ID;
+    // tracks appearing/disappearing fade in/out; tracks shorter than 1 s (likely false positives) are hidden
+    const fr = Math.max(0, curTime() * d.fps), f0 = Math.min(d.n_frames - 1, Math.floor(fr)), f1 = Math.min(d.n_frames - 1, f0 + 1), a = fr - f0;
+    const fi = Math.min(d.n_frames - 1, Math.round(fr)), E = { p: [], o: [], l2: [] }, A = d.frames[f0] || E, B = d.frames[f1] || E;
+    const minLen = $("Lmin").checked ? 5 : 0;
+    const lerpA = (x, y) => x + (((y - x + 540) % 360) - 180) * a;
+    const qa = null, qb = null;
+    function toStab(e, r) {
+      if (!r) return e;
+      const f = (yw, pt) => { const a = yw * deg, b = pt * deg, x = Math.cos(b) * Math.sin(a), y = Math.sin(b), z = Math.cos(b) * Math.cos(a);
+        const X = r[0] * x + r[3] * y + r[6] * z, Y = r[1] * x + r[4] * y + r[7] * z, Z = r[2] * x + r[5] * y + r[8] * z;
+        return [Math.atan2(X, Z) / deg, Math.asin(Math.max(-1, Math.min(1, Y))) / deg]; };
+      const pm = (e[5] + e[6]) / 2, c = f(e[2], pm), t = f(e[2], e[5]), b = f(e[2], e[6]), l = f(e[3], pm), rr = f(e[4], pm), m = e.slice();
+      m[2] = c[0]; m[3] = l[0]; m[4] = rr[0]; m[5] = t[1]; m[6] = b[1]; return m;
+    }
+    function blend(la0, lb0, idIdx, lenOf) {
+      const la = la0.map(e => toStab(e, qa)), lb = lb0.map(e => toStab(e, qb));
+      const mb = new Map(lb.map(e => [e[idIdx], e])), ma = new Map(la.map(e => [e[idIdx], e])), out = [];
+      for (const e of la) {
+        if ((lenOf(e[idIdx]) || 0) < minLen) continue;
+        const n = mb.get(e[idIdx]);
+        if (n) { const m = e.slice(); for (const j of [2, 3, 4]) m[j] = lerpA(e[j], n[j]); for (const j of [5, 6]) m[j] = e[j] + (n[j] - e[j]) * a; out.push([m, 1]); }
+        else out.push([e, 1 - a]);
+      }
+      for (const e of lb) if (!ma.has(e[idIdx]) && (lenOf(e[idIdx]) || 0) >= minLen) out.push([e, a]);
+      return out;
+    }
+    const trLen = id => (d.tracks[id] || [])[2], objLen = id => (d.obj_len || {})[id];
+    const k = ov.width / vp.clientWidth;
+    // people
+    let pView = 0, pAll = 0, anchor = null; const inViewIds = [];
+    for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
+      const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
+      if (al >= 0.5) { pAll++; S.seen.add(id); }
+      if (!inFov(yw)) continue; if (al >= 0.5) { pView++; inViewIds.push(id); }
+      if (!$("Lp").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const sel = S.sel && S.sel.kind === "p" && S.sel.id === id;
+      octx.globalAlpha = al;
+      octx.strokeStyle = C.person; octx.lineWidth = (sel ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      if ($("Lid").checked && r[3] - r[1] > 40 * k) label(`P-${String(id).padStart(4, "0")} ${cf.toFixed(2)}${dist ? " · " + dist.toFixed(1) + " m" : ""}`, r[0], r[1], C.person);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "p", id, r, info: p });
+      if (sel) anchor = r;
+    }
+    // level-1 objects (tracked + smoothed in the pipeline)
+    const oc = {}, l2c = {};
+    for (const [o, al] of blend(A.o, B.o, 7, objLen)) {
+      const [cls, cf, yw, yl, yr, pt, pb] = o; if (cf < S.conf || !inFov(yw)) continue;
+      if (al >= 0.5) oc[cls] = (oc[cls] || 0) + 1;
+      if (!$("Lo").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      if (r[3] - r[1] > 25 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[1], C.obj);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "o", id: cls, r, info: o });
+    }
+    // level-2 objects
+    for (const [o, al] of blend(A.l2, B.l2, 8, objLen)) {
+      const [cls, cf, yw, yl, yr, pt, pb] = o; if (cf < Math.max(0.15, S.conf - 0.2) || !inFov(yw)) continue;
+      if (al >= 0.5) l2c[cls] = (l2c[cls] || 0) + 1;
+      if (!$("Ll2").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      if (r[3] - r[1] > 20 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[3] + 15 * k, C.l2);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "l2", id: cls, r, info: o });
+    }
+    // OCR signs (stabilised frame, static between detections)
+    const signsInView = [];
+    for (const sg of ((d.frames[fi] || {}).s || [])) {
+      const [id, yw, yl, yr, pt, pb] = sg, info = (d.signs || {})[id]; if (!info || !inFov(yw)) continue;
+      signsInView.push([id, info]);
+      if (!$("Ltx").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = 1.5 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      if (info[3]) label(`${info[0]} · ${info[1]} ${Math.round(info[2])}`, r[0], r[3] + 15 * k, C.ocr);
+    }
+    // perceived gender + age, aggregate over people in view only
+    const SX = ["man", "woman", "uncertain"], SXV = { man: "--sx-m", woman: "--sx-w", uncertain: "--sx-u" };
+    const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--sx-u" };
+    const sxc = Object.fromEntries(SX.map(x => [x, 0])), agc = Object.fromEntries(AG.map(x => [x, 0]));
+    for (const id of inViewIds) { const t = d.tracks[id] || []; sxc[t[5] || "uncertain"] = (sxc[t[5] || "uncertain"] || 0) + 1; agc[t[6] || "uncertain"] = (agc[t[6] || "uncertain"] || 0) + 1; }
+    const nIn = inViewIds.length || 1;
+    const bar = (keys, c, v) => keys.map(x => `<div style="width:${(c[x] / nIn * 100).toFixed(1)}%;background:var(${v[x]})"></div>`).join("");
+    const leg = (keys, c, v) => keys.map(x => `<span><i style="background:var(${v[x]})"></i>${x}<b>${Math.round(c[x] / nIn * 100)}%</b></span>`).join("");
+    const sxSig = JSON.stringify([sxc, agc]);
+    if (sxSig !== frame.sxSig) { frame.sxSig = sxSig; $("sxBar").innerHTML = bar(SX, sxc, SXV); $("sxLeg").innerHTML = leg(SX, sxc, SXV); $("agBar").innerHTML = bar(AG, agc, AGV); $("agLeg").innerHTML = leg(AG, agc, AGV); }
+    const esc = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+    const txSig = signsInView.map(x => x[0]).join();
+    if (txSig !== frame.txSig) {
+      frame.txSig = txSig;
+      const rd = signsInView.filter(x => x[1][3]);
+      $("txCount").textContent = `${signsInView.length} signs · ${rd.length} read`;
+      $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small>${Math.round(i[2])}</small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
+    }
+    // panel
+    $("pView").textContent = pView; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size;
+    $("pSub").textContent = `within ${Math.round(S.fov)}° view`;
+    $("frameLbl").textContent = `frame ${fi}`;
+    const kvs = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
+    if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc); $("l2List").innerHTML = kvs(l2c); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
+    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView} people</span><span><i style="background:${C.obj}"></i>${Object.values(oc).reduce((a, b) => a + b, 0)} objects</span><span><i style="background:${C.l2}"></i>${Object.values(l2c).reduce((a, b) => a + b, 0)} level 2</span>`;
+    const t = curTime() || 0;
+    $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
+    $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
+    if (!scrubbing && duration()) $("scrub").value = Math.round(t / duration() * 1000);
+    // in-view card follows the selected person
+    const vc = $("vcard");
+    if (S.sel && S.sel.kind === "p" && anchor) {
+      const tr = d.tracks[S.sel.id] || [];
+      vc.innerHTML = `<header><b>P-${String(S.sel.id).padStart(4, "0")}</b><button aria-label="Close">✕</button></header><dl class="kv"><dt>Seen</dt><dd>frames ${tr[0]}–${tr[1]}</dd><dt>Duration</dt><dd>${((tr[1] - tr[0]) / d.fps).toFixed(1)} s</dd><dt>Max confidence</dt><dd>${tr[3]}</dd><dt>Median distance</dt><dd>${tr[4] ?? "—"} m</dd></dl><div class="note">Persistent track ID from the cached detections.</div>`;
+      vc.hidden = false;
+      const cx = anchor[2] / k + 12, cy = anchor[1] / k;
+      vc.style.transform = `translate(${Math.min(vp.clientWidth - 250, Math.max(6, cx))}px, ${Math.min(vp.clientHeight - 140, Math.max(6, cy))}px)`;
+    } else vc.hidden = true;
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- interaction ----------
+  let drag = null, scrubbing = false;
+  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard")) return; drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
+  vp.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    const s = S.fov / vp.clientWidth; S.yaw = ((drag.yaw - dx * s + 540) % 360) - 180; S.pitch = Math.max(-85, Math.min(85, drag.pitch + dy * s)); });
+  vp.addEventListener("pointerup", e => {
+    vp.classList.remove("drag");
+    if (drag && !drag.moved) {
+      const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
+      const h = S.hits.slice().reverse().find(h => x >= h.r[0] && x <= h.r[2] && y >= h.r[1] && y <= h.r[3]);
+      S.sel = h && h.kind === "p" ? (S.sel && S.sel.id === h.id ? null : { kind: "p", id: h.id }) : null;
+    }
+    drag = null;
+  });
+  $("vcard").addEventListener("click", e => { if (e.target.closest("button")) S.sel = null; });
+  vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
+  vp.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") S.yaw -= 6; else if (e.key === "ArrowRight") S.yaw += 6;
+    else if (e.key === "ArrowUp") S.pitch = Math.min(85, S.pitch + 4); else if (e.key === "ArrowDown") S.pitch = Math.max(-85, S.pitch - 4);
+    else if (e.key === " ") { togglePlay(); } else return;
+    e.preventDefault();
+  });
+  function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
+  $("play").addEventListener("click", togglePlay);
+  $("scrub").addEventListener("input", () => { scrubbing = true; vt = $("scrub").value / 1000 * duration(); if (videoOk()) video.currentTime = vt; });
+  $("scrub").addEventListener("change", () => { scrubbing = false; });
+  $("conf").addEventListener("input", () => { S.conf = +$("conf").value; $("confV").textContent = S.conf.toFixed(2); });
+  $("conf").value = S.conf; $("confV").textContent = S.conf.toFixed(2);          // default 0.60, even if the browser restores old form values
+  const setSpeed = v => { S.speed = v; video.playbackRate = v; $("speed").value = String(v); };
+  $("speed").addEventListener("change", () => setSpeed(+$("speed").value));
+  video.addEventListener("loadedmetadata", () => { video.playbackRate = S.speed; });
+  setSpeed(1);
+  document.querySelectorAll(".walks button").forEach(b => b.addEventListener("click", () => load(b.dataset.walk)));
+  $("Lvar").addEventListener("change", () => load(S.walk));
+  load("walk1");
+})();
+</script>
+</body>
+</html>

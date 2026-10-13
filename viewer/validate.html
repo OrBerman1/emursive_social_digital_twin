@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>People Count Check</title>
+<style>
+:root { --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f; --accent: #4fb3bb; --bad: #ef6f62; --ok: #6fbf8a; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+h1 { margin: 0; font-size: 1.4rem; }
+.sum { position: sticky; top: 0; z-index: 2; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; }
+.sum b { font: 600 1.3rem ui-monospace, Consolas, monospace; }
+.sum span { color: var(--muted); font-size: 12px; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.item img { width: 100%; display: block; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 8px 12px; font-size: 13px; }
+.row input { width: 80px; font: 600 15px ui-monospace, Consolas, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; }
+.row input:focus-visible { outline: 2px solid var(--accent); }
+.err.ok { color: var(--ok); } .err.bad { color: var(--bad); }
+.muted { color: var(--muted); }
+button { font: 600 13px inherit; background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 7px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>People count check</h1>
+  <p class="muted">Count every person you can see in each full 360° frame (ignore the camera operator). The model's count is hidden until you enter yours. Your counts are saved in this browser.</p>
+  <div class="sum" id="sum"></div>
+  <div id="list"></div>
+  <div><button id="copy">Copy results as JSON</button> <span id="st" class="muted"></span></div>
+</div>
+<script>
+(async () => {
+  const data = await (await fetch("../data/processed/validation/sample.json")).json();
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem("shuk-count") || "{}"); } catch (e) {}
+  const key = it => `${it.walk}:${it.frame}`;
+  const list = document.getElementById("list");
+  list.innerHTML = data.items.map((it, i) => `<div class="item"><img loading="lazy" src="../data/processed/validation/${it.image}" alt="${it.walk} frame ${it.frame}">
+    <div class="row"><b>${i + 1}/${data.items.length}</b><span class="muted">${it.walk} · frame ${it.frame} · ${it.t} s</span>
+    <label>Your count <input type="number" min="0" id="c${i}" value="${saved[key(it)] ?? ""}"></label>
+    <span id="m${i}" class="muted"></span></div></div>`).join("");
+  function update() {
+    const rows = [];
+    data.items.forEach((it, i) => {
+      const v = document.getElementById("c" + i).value, m = document.getElementById("m" + i);
+      if (v === "") { m.textContent = ""; return; }
+      const h = +v; saved[key(it)] = h; const e = it.model_count - h;
+      m.innerHTML = `model ${it.model_count} · <span class="err ${Math.abs(e) <= Math.max(1, 0.15 * h) ? "ok" : "bad"}">${e >= 0 ? "+" : ""}${e}</span>`;
+      rows.push({ h, m: it.model_count });
+    });
+    try { localStorage.setItem("shuk-count", JSON.stringify(saved)); } catch (e) {}
+    const n = rows.length, H = rows.reduce((a, r) => a + r.h, 0), M = rows.reduce((a, r) => a + r.m, 0);
+    const mae = n ? rows.reduce((a, r) => a + Math.abs(r.m - r.h), 0) / n : 0;
+    document.getElementById("sum").innerHTML = `<div><b>${n}/${data.items.length}</b> <span>frames counted</span></div><div><b>${n ? ((M - H) / Math.max(H, 1) * 100).toFixed(0) : "–"}%</b> <span>total model vs you (target ±15%)</span></div><div><b>${n ? mae.toFixed(1) : "–"}</b> <span>mean absolute error per frame</span></div><div><span>model threshold ${data.conf}</span></div>`;
+    return { n, human_total: H, model_total: M, mae, rows: data.items.map(it => ({ ...it, human: saved[key(it)] ?? null })) };
+  }
+  list.addEventListener("input", update); update();
+  document.getElementById("copy").addEventListener("click", () => {
+    const t = JSON.stringify(update(), null, 1);
+    navigator.clipboard.writeText(t).then(() => { document.getElementById("st").textContent = "Copied."; }, () => { document.getElementById("st").textContent = "Copy blocked; results are saved in this browser."; });
+  });
+})();
+</script>
+</body>
+</html>

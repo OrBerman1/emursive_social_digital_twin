@@ -1,0 +1,1248 @@
+<title>Shuk 360 Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Rubik:wght@500;700&family=Noto+Sans+Arabic:wght@600&display=swap">
+<style>
+/* Layout: an operator console. The 360° scene fills the main area, the side panel is a field notebook
+   that updates with heading, the walk timeline runs underneath. Palette: Jaffa limestone, sea teal, sign ochre. */
+:root {
+  --bg: #e9ebe6;
+  --surface: #f6f7f3;
+  --ink: #1d2729;
+  --muted: #5d6a69;
+  --line: #c9cec6;
+  --accent: #1c6b73;      /* sea teal: interactive, view cone */
+  --tag: #b8812a;         /* ochre: GIS shop tags */
+  --person: #c2463a;      /* detections */
+  --sky: #dfe6e4;
+  --stone: #d8cfbd;
+  --pave: #bdb6a6;
+  --opening: #3a3631;
+  --m-cardboard: #b98b56;
+  --m-canvas: #e3dccb;
+  --m-metal: #7f8b92;
+  --m-plastic: #4f8fb0;
+  --m-wood: #8a5a35;
+  --sx-m: #3f6e8c;
+  --sx-w: #a8577e;
+  --sx-u: #b4bab3;
+  --ocr: #6a4c9c;         /* text detections */
+  --l-he: #2f6f9f;
+  --l-en: #c27b2c;
+  --l-ar: #3f8a5a;
+  --l-mx: #8c6aa8;
+  --logi: #c9661a;        /* logistics / operations */
+  --waste: #8a6a2e;
+  --org: #6d8a2e;
+  --spatial: #2f63c9;
+  --inter: #a03d8c;       /* interactions, stops */
+  --sign: "Rubik", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141a1b; --surface: #1c2425; --ink: #e4e8e4; --muted: #95a29f; --line: #33403f;
+  --accent: #4fb3bb; --tag: #e0a948; --person: #ef6f62;
+  --sky: #27323a; --stone: #6e6656; --pave: #4b4840; --opening: #121212;
+  --m-cardboard: #a97d4b; --m-canvas: #b9b2a2; --m-metal: #7d8a91; --m-plastic: #4a86a6; --m-wood: #7a4f2f;
+  --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f;
+  --ocr: #b49be6; --l-he: #6aa7d6; --l-en: #e0a35a; --l-ar: #6fbf8a; --l-mx: #b597d1;
+  --logi: #f0a050; --waste: #d1a865; --org: #9cbc5a; --spatial: #84a9f2; --inter: #df8ccf;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #141a1b; --surface: #1c2425; --ink: #e4e8e4; --muted: #95a29f; --line: #33403f;
+  --accent: #4fb3bb; --tag: #e0a948; --person: #ef6f62;
+  --sky: #27323a; --stone: #6e6656; --pave: #4b4840; --opening: #121212;
+  --m-cardboard: #a97d4b; --m-canvas: #b9b2a2; --m-metal: #7d8a91; --m-plastic: #4a86a6; --m-wood: #7a4f2f;
+  --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f;
+  --ocr: #b49be6; --l-he: #6aa7d6; --l-en: #e0a35a; --l-ar: #6fbf8a; --l-mx: #b597d1;
+  --logi: #f0a050; --waste: #d1a865; --org: #9cbc5a; --spatial: #84a9f2; --inter: #df8ccf;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1380px; margin: 0 auto; padding: 18px 20px 28px; display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; justify-content: space-between; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 span { color: var(--muted); font-weight: 500; }
+.note { font-size: 0.8rem; color: var(--muted); border: 1px dashed var(--line); padding: 3px 9px; border-radius: 4px; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: grid; gap: 10px; min-width: 0; }
+.viewport { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--sky); aspect-ratio: 16 / 9; max-width: 100%; touch-action: none; cursor: grab; }
+.viewport.dragging { cursor: grabbing; }
+canvas#scene { display: block; width: 100%; height: 100%; }
+.hud { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 11px; background: color-mix(in srgb, var(--surface) 86%, transparent); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; line-height: 1.5; pointer-events: none; }
+.compass { position: absolute; right: 10px; top: 10px; width: 54px; height: 54px; pointer-events: none; }
+.hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: 12px; color: var(--muted); background: color-mix(in srgb, var(--surface) 86%, transparent); padding: 3px 10px; border-radius: 20px; pointer-events: none; white-space: nowrap; }
+.show { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .show { grid-template-columns: minmax(0, 1fr); } }
+.show fieldset { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 6px 10px 10px; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.show legend { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; padding: 0 4px; }
+.show label { font: 500 12.5px var(--body); border: 1px solid var(--line); border-radius: 20px; padding: 4px 11px 4px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; user-select: none; }
+.show input { position: absolute; opacity: 0; pointer-events: none; }
+.show label i { width: 11px; height: 11px; border-radius: 2px; border: 1.5px solid var(--sw); background: transparent; }
+.show label:has(input:checked) i { background: var(--sw); }
+.show label:has(input:not(:checked)) { color: var(--muted); }
+.show label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.show label:has(input:disabled) { opacity: 0.45; cursor: default; }
+.chip { font: 500 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 5px 12px 5px 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.chip i { width: 10px; height: 10px; border-radius: 2px; background: var(--sw); opacity: 0.25; border: 1px solid var(--sw); }
+.chip[aria-pressed="true"] i { opacity: 1; }
+.chip[aria-pressed="false"] { color: var(--muted); }
+.chip:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.timeline { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
+.play { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); cursor: pointer; font-size: 13px; flex: none; }
+#scrub { flex: 1; min-width: 0; accent-color: var(--accent); }
+.tl-meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+aside { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; display: grid; min-width: 0; }
+aside section { padding: 12px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+aside section:first-child { border-top: 0; }
+.lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.lbl em { font-style: normal; font-family: var(--mono); letter-spacing: 0; text-transform: none; font-weight: 400; }
+.big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.big b { font-family: var(--display); font-size: 2.4rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.big span { color: var(--muted); font-size: 12.5px; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); text-align: right; }
+.bar { display: flex; height: 12px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bar div { height: 100%; transition: width .25s; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.legend span { display: flex; gap: 6px; align-items: center; }
+.legend i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.legend b { font-family: var(--mono); font-weight: 500; margin-left: auto; }
+.shops { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 150px; overflow-y: auto; }
+.shops li button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 12.5px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.shops li button:hover, .shops li button[aria-current="true"] { background: color-mix(in srgb, var(--tag) 16%, transparent); }
+.shops li button:focus-visible { outline: 2px solid var(--accent); }
+.shops small { font-family: var(--mono); color: var(--muted); }
+.card { border: 1px solid var(--tag); border-radius: 5px; padding: 9px 10px; display: grid; gap: 4px; font-size: 12.5px; }
+.card h3 { margin: 0; font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
+.card p { margin: 0; color: var(--muted); }
+.ethic { font-size: 12px; color: var(--muted); }
+.signs .txt { font-family: var(--sign); font-weight: 500; unicode-bidi: plaintext; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signs li button { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+.signs li button:hover, .signs li button[aria-current="true"] { background: color-mix(in srgb, var(--ocr) 16%, transparent); }
+.lang { font: 600 10px var(--mono); text-transform: uppercase; color: var(--surface); background: var(--lc); border-radius: 3px; padding: 1px 5px; }
+.card.ocr { border-color: var(--ocr); }
+.card .bidi { font-family: var(--sign); unicode-bidi: plaintext; }
+.card del { color: var(--person); text-decoration-thickness: 1px; }
+.fixes { margin: 2px 0 0; padding-left: 16px; color: var(--muted); }
+#minimap { width: 100%; height: auto; display: block; }
+.pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+@media (max-width: 700px) { .pipeline { grid-template-columns: minmax(0, 1fr); } }
+.pipeline div { border-top: 2px solid var(--line); padding-top: 8px; font-size: 12.5px; color: var(--muted); min-width: 0; }
+.pipeline b { display: block; color: var(--ink); font-family: var(--display); font-size: 0.95rem; margin-bottom: 2px; }
+/* [Brief] immersive viewer additions */
+.hdr-r { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn { font: 600 12.5px var(--body); background: var(--accent); color: var(--surface); border: 0; border-radius: 4px; padding: 6px 11px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.main.immersive { grid-template-columns: minmax(0, 1fr); }
+.main.immersive aside { display: none; }
+.modesw { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 20px; padding: 2px; z-index: 4; }
+.modesw button { all: unset; font: 600 12px var(--body); padding: 4px 12px; border-radius: 16px; cursor: pointer; color: var(--muted); }
+.modesw button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.modesw button:focus-visible { outline: 2px solid var(--accent); }
+@media (max-width: 700px) { .hud { top: 48px; } .hint { display: none; } }
+.hint { left: auto; right: 10px; transform: none; }
+.counters { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; max-width: 62%; pointer-events: none; }
+.counters span { font: 500 11px var(--mono); background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 5px; }
+.counters i { width: 8px; height: 8px; border-radius: 50%; }
+.vcard { position: absolute; left: 0; top: 0; width: 260px; max-width: calc(100% - 16px); background: var(--surface); border: 1px solid var(--kc, var(--accent)); border-radius: 6px; padding: 8px 10px 10px; font-size: 12px; display: grid; gap: 6px; z-index: 5; box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 18%, transparent); cursor: default; }
+.vcard header { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.vcard header b { font-family: var(--display); font-size: 0.98rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; unicode-bidi: plaintext; }
+.vcard .kind { font: 600 10px var(--mono); text-transform: uppercase; color: var(--surface); background: var(--kc); border-radius: 3px; padding: 1px 6px; flex: none; }
+.vcard .x { all: unset; cursor: pointer; color: var(--muted); padding: 0 4px; font-size: 13px; }
+.vcard .x:focus-visible { outline: 2px solid var(--accent); }
+.vcard p { margin: 0; color: var(--muted); font-size: 11.5px; }
+.vcard .kv { font-size: 11.5px; }
+.vcard .kv dd { max-width: 150px; overflow-wrap: anywhere; unicode-bidi: plaintext; }
+.step { all: unset; font: 500 11.5px var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--ink); white-space: nowrap; }
+.step:focus-visible { outline: 2px solid var(--accent); }
+.rqlist { display: grid; gap: 10px; }
+.rq p { margin: 0 0 4px; font-size: 12.5px; }
+.rqv { display: grid; grid-template-columns: 92px minmax(0, 1fr) 46px; gap: 3px 8px; align-items: center; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.rqv span { color: var(--muted); }
+.rqv .trk { height: 7px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.rqv .trk i { display: block; height: 100%; background: var(--accent); }
+.rqv b { font-family: var(--mono); font-weight: 500; text-align: right; }
+.rq small { color: var(--muted); font-size: 11px; }
+.cells { display: flex; gap: 2px; }
+.cells i { flex: 1; height: 12px; border-radius: 2px; background: var(--line); }
+.cells i.on { background: var(--inter); }
+#gPrev { width: 100%; height: 96px; font: 10.5px var(--mono); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; resize: vertical; padding: 6px; }
+.gstatus { font-size: 11.5px; color: var(--muted); min-height: 1em; }
+@media (prefers-reduced-motion: reduce) { .bar div { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Shuk HaTikvah · Social Immersive Digital Twin <span>· Walk 1, Hatikvah St</span></h1>
+    <div class="hdr-r">
+      <div class="note">Mockup: synthetic scene, example shops and numbers</div>
+      <button class="btn ghost" id="immBtn" aria-pressed="false">Immersive view</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="stage">
+      <div class="viewport" id="vp">
+        <canvas id="scene" aria-label="360 degree market street view. Drag to look around."></canvas>
+        <div class="hud" id="hud"></div>
+        <svg class="compass" viewBox="-30 -30 60 60" aria-hidden="true">
+          <circle r="26" fill="var(--surface)" stroke="var(--line)"/>
+          <g id="needle"><path d="M0,-21 L5,0 L0,4 L-5,0Z" fill="var(--accent)"/><text y="-12" text-anchor="middle" font-size="7" fill="var(--surface)" font-family="IBM Plex Mono">N</text></g>
+        </svg>
+        <div class="hint">Drag or ← → to look · ↑ ↓ to move · click anything labelled</div>
+        <div class="modesw" id="modesw" role="group" aria-label="Representation">
+          <button data-mode="photo" aria-pressed="false">Photo</button>
+          <button data-mode="digital" aria-pressed="false">Digital</button>
+          <button data-mode="illus" aria-pressed="true">Illustrated</button>
+        </div>
+        <div class="counters" id="ctr"></div>
+        <div class="vcard" id="vcard" hidden></div>
+      </div>
+      <div class="show">
+        <fieldset>
+          <legend>Show in the scene</legend>
+          <label style="--sw: var(--person)"><input type="checkbox" id="L-people" checked><i></i>People &amp; interactions</label>
+          <label style="--sw: var(--person)"><input type="checkbox" id="L-ids" checked><i></i>Track ID, role and confidence</label>
+          <label style="--sw: var(--l-ar)"><input type="checkbox" id="L-shops" checked><i></i>Shops (stall form, spill-out)</label>
+          <label style="--sw: var(--waste)"><input type="checkbox" id="L-mat" checked><i></i>Materials &amp; waste</label>
+          <label style="--sw: var(--logi)"><input type="checkbox" id="L-logi" checked><i></i>Logistics &amp; operations</label>
+          <label style="--sw: var(--spatial)"><input type="checkbox" id="L-spatial"><i></i>Spatial (flows, thresholds, seating)</label>
+          <label style="--sw: var(--ocr)"><input type="checkbox" id="L-ocr" checked><i></i>Text on signs (OCR)</label>
+          <label style="--sw: var(--tag)"><input type="checkbox" id="L-gis" checked><i></i>GIS shop tags</label>
+          <label style="--sw: var(--accent)"><input type="checkbox" id="L-field" checked><i></i>Researcher drawings &amp; photos</label>
+        </fieldset>
+        <fieldset>
+          <legend>Show in the panel</legend>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-pPanel" checked><i></i>People count</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-rolePanel" checked><i></i>Roles &amp; age groups</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-sxPanel" checked><i></i>Men / women split</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-matPanel" checked><i></i>Materials share</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-ocrPanel" checked><i></i>Text in view</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-shopPanel" checked><i></i>Shops in view</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-mapPanel" checked><i></i>Mini-map</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-rqPanel" checked><i></i>Research questions</label>
+          <label style="--sw: var(--ink)"><input type="checkbox" id="L-gisPanel" checked><i></i>GIS export</label>
+        </fieldset>
+      </div>
+      <div class="timeline">
+        <button class="play" id="play" aria-label="Pause">❚❚</button>
+        <button class="step" id="stepB" aria-label="Move back 2 metres">◀ 2 m</button>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Position along the walk">
+        <button class="step" id="stepF" aria-label="Move forward 2 metres">2 m ▶</button>
+        <div class="tl-meta" id="tlmeta"></div>
+      </div>
+      <div class="pipeline">
+        <div><b>1 · Fuse and register</b>Pose per frame from GPS or Boaz's anchor frames. Shop tags are placed by bearing from the camera to each GIS frontage.</div>
+        <div><b>2 · Analyse frames offline</b>YOLO11 + ByteTrack on cubemap tiles for people. Open-vocabulary segmentation for awning materials. Text detection + Tesseract OCR for Hebrew, English and Arabic signs.</div>
+        <div><b>3 · Demo viewer</b>Plays the 360° video back with precomputed JSON. The panel aggregates only what is inside the current field of view.</div>
+        <div><b>4 · AI/VLM observation</b>A VLM labels detected entities: role, interaction type, stall form, permeability, logistics activity. Structured JSON with confidence.</div>
+        <div><b>5 · GIS-ready data</b>Every entity keeps a persistent ID, chainage, frame span and confidence, and exports as GeoJSON or GeoPackage for market morphology.</div>
+      </div>
+    </div>
+
+    <aside>
+      <section id="sec-pPanel">
+        <div class="lbl">People in view <em id="fovlbl"></em></div>
+        <div class="big"><b id="pView">0</b><span id="pSub"></span></div>
+        <dl class="kv">
+          <dt>Unique so far on this walk (tracked)</dt><dd id="pUnique">0</dd>
+          <dt>Density, this segment</dt><dd id="pDens">0</dd>
+        </dl>
+      </section>
+      <section id="sec-rolePanel">
+        <div class="lbl">Roles in view <em>rules + VLM</em></div>
+        <div class="bar" id="rBar"></div>
+        <div class="legend" id="rLeg"></div>
+        <div class="lbl">Age groups in view <em>broad, aggregate only</em></div>
+        <div class="bar" id="aBar"></div>
+        <div class="legend" id="aLeg"></div>
+        <dl class="kv">
+          <dt>Interactions in view</dt><dd id="iView">0</dd>
+          <dt>People stopped (≥ 10 s)</dt><dd id="stopView">0</dd>
+        </dl>
+      </section>
+      <section id="sec-sxPanel">
+        <div class="lbl">Men / women in view <em>est. accuracy 86% (example)</em></div>
+        <div class="bar" id="sxBar"></div>
+        <div class="legend" id="sxLeg"></div>
+        <div class="ethic">Estimated per tracked person from body appearance and shown only in aggregate. Faces are blurred and no crops are stored.</div>
+      </section>
+      <section id="sec-matPanel">
+        <div class="lbl">Stall materials in view <em>% of awning area</em></div>
+        <div class="bar" id="mBar"></div>
+        <div class="legend" id="mLeg"></div>
+      </section>
+      <section id="sec-ocrPanel">
+        <div class="lbl">Text in view <em id="oCount"></em></div>
+        <div class="bar" id="lBar"></div>
+        <div class="legend" id="lLeg"></div>
+        <ul class="shops signs" id="oList"></ul>
+        <div class="card ocr" id="ocrCard" hidden></div>
+        <div class="ethic">Tesseract 5 (heb+eng+ara) on rectified crops, voted across frames, then final-letter fix and spellcheck.</div>
+      </section>
+      <section id="sec-shopPanel">
+        <div class="lbl">Shops in view <em id="sCount"></em></div>
+        <ul class="shops" id="sList"></ul>
+        <div class="card" id="card" hidden></div>
+      </section>
+      <section id="sec-mapPanel">
+        <div class="lbl">Map <em>EPSG:2039 → WGS84</em></div>
+        <svg id="minimap" viewBox="-44 -128 88 134" role="img" aria-label="Mini-map with walk path and view cone"></svg>
+      </section>
+      <section id="sec-rqPanel">
+        <div class="lbl">Research questions <em>whole segment, example data</em></div>
+        <div class="rqlist" id="rqList"></div>
+      </section>
+      <section id="sec-gisPanel">
+        <div class="lbl">GIS export <em id="gCount"></em></div>
+        <dl class="kv" id="gTypes"></dl>
+        <button class="btn" id="gCopy">Copy observations as GeoJSON</button>
+        <div class="gstatus" id="gStatus" role="status">Every entity seen so far, with persistent IDs. The pipeline also writes GeoPackage and CSV.</div>
+        <textarea id="gPrev" readonly aria-label="GeoJSON preview"></textarea>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- world model (local metres: x east, y north) ----------
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const R = rng(7);
+  const MATS = ["cardboard", "canvas", "metal", "plastic", "wood"];
+  const MAT_LABEL = { cardboard: "Cardboard", canvas: "Canvas", metal: "Metal framing", plastic: "Plastic sheet", wood: "Wood" };
+  const MAT_W = [0.34, 0.26, 0.2, 0.12, 0.08];
+  const pickMat = () => { let r = R(), a = 0; for (let i = 0; i < MATS.length; i++) { a += MAT_W[i]; if (r < a) return MATS[i]; } return "canvas"; };
+  const CATS = ["Antiques", "Furniture", "Textiles", "Lamps & brass", "Records & books", "Café", "Vintage clothing", "Ceramics"];
+  const OWN = ["Family-owned, 2nd generation", "Tenant, lease 2019", "Municipal lease", "Family-owned, 3rd generation", "Tenant, lease 2022"];
+  const NAMES = ["The Brass Corner", "Old Jaffa Rugs", "Lamp Alley", "Beit Eshel Antiques", "Vinyl Station", "Dahan Furniture", "Kilim & Co.", "Clock Repair", "Copper Pots", "Second Life Chairs", "Mosaic Tiles", "Corner Café", "Frames & Mirrors", "Pishpesh Vintage", "Ceramics Atelier", "Map & Print"];
+
+  const frontages = [];
+  function addRun(ax, ay, bx, by, nx, ny, skip) {
+    const len = Math.hypot(bx - ax, by - ay), ux = (bx - ax) / len, uy = (by - ay) / len;
+    let s = 0;
+    while (s < len - 1) {
+      const w = Math.min(3.5 + R() * 3, len - s);
+      const p0 = [ax + ux * s, ay + uy * s], p1 = [ax + ux * (s + w), ay + uy * (s + w)];
+      const mid = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2];
+      if (!(skip && skip(mid))) frontages.push({ id: frontages.length, p0, p1, n: [nx, ny], mat: pickMat(), wallH: 6 + R() * 4, awn: 2.4 + R() * 0.4, stone: R() });
+      s += w;
+    }
+  }
+  const inCross = m => m[1] > 54.5 && m[1] < 63.5;
+  addRun(-4, 0, -4, 124, 1, 0, inCross);    // west side of main street, facing east
+  addRun(4, 0, 4, 124, -1, 0, inCross);     // east side, facing west
+  addRun(4, 55, 40, 55, 0, 1); addRun(-40, 55, -4, 55, 0, 1);   // cross street, south side
+  addRun(4, 63, 40, 63, 0, -1); addRun(-40, 63, -4, 63, 0, -1); // cross street, north side
+  addRun(-4, 124, 4, 124, 0, -1); addRun(-4, -1, 4, -1, 0, 1);   // street ends
+  addRun(40, 55, 40, 63, -1, 0); addRun(-40, 55, -40, 63, 1, 0);
+
+  // GIS records attached to a subset of frontages (example data)
+  const shops = [];
+  const shopCand = frontages.filter(f => f.p0[1] > 6 && f.p0[1] < 120 && Math.abs((f.p0[0] + f.p1[0]) / 2) < 30);
+  for (let i = 0; i < NAMES.length; i++) {
+    const f = shopCand[Math.floor((i + 0.3) * shopCand.length / NAMES.length)];
+    if (!f || f.shop) continue;
+    f.shop = { id: "S" + String(101 + i), name: NAMES[i], cat: CATS[i % CATS.length], owner: OWN[i % OWN.length], since: 1962 + Math.floor(R() * 58), area: Math.round(12 + R() * 40), f };
+    shops.push(f.shop);
+  }
+  // Signs on the frontages (example texts) and simulated Tesseract results
+  const HE_NAMES = { "The Brass Corner": "פינת הנחושת", "Old Jaffa Rugs": "שטיחי יפו העתיקה", "Lamp Alley": "סמטת המנורות", "Beit Eshel Antiques": "עתיקות בית אשל", "Vinyl Station": "תחנת התקליטים", "Dahan Furniture": "רהיטי דהן", "Kilim & Co.": "קילים ושות׳", "Clock Repair": "תיקון שעונים", "Copper Pots": "סירי נחושת", "Second Life Chairs": "כיסאות יד שנייה", "Mosaic Tiles": "אריחי פסיפס", "Corner Café": "קפה הפינה", "Frames & Mirrors": "מסגרות ומראות", "Pishpesh Vintage": "פשפש וינטג׳", "Ceramics Atelier": "סטודיו לקרמיקה", "Map & Print": "מפות והדפסים" };
+  const GENERIC = ["עתיקות", "רהיטים", "שטיחים", "מנורות", "תקליטים", "בגדים במשקל", "כלי נחושת", "מבצע!", "הכל ב-10 ₪", "תיקוני רהיטים", "שעונים", "מראות", "ANTIQUES", "VINTAGE", "SALE", "OPEN", "Furniture", "עתיקות ANTIQUES", "וינטג׳ VINTAGE", "تحف", "قهوة", "أثاث"];
+  const langOf = s => { const he = /[֐-׿]/.test(s), ar = /[؀-ۿ]/.test(s), en = /[A-Za-z]/.test(s); return (he && en) ? "mixed" : he ? "he" : ar ? "ar" : "en"; };
+  const LANG_LABEL = { he: "Hebrew", en: "English", ar: "Arabic", mixed: "Mixed" };
+  const FINAL_TO_NON = { "ם": "מ", "ן": "נ", "ך": "כ", "ף": "פ", "ץ": "צ" };
+  const HE_CONFUSE = { "ה": "ח", "ר": "ד", "ו": "ז", "ב": "כ", "ת": "ח", "ד": "ר" };
+  const SR = rng(23);
+  function simulateOcr(text) {
+    const lang = langOf(text), r = SR();
+    if (lang === "ar") return { raw: text, fixes: [], conf: 0.62 + SR() * 0.12 };
+    if (lang !== "en" && r < 0.35) {
+      const m = text.match(/[םןךףץ](?=\s|$)/);
+      if (m) return { raw: text.slice(0, m.index) + FINAL_TO_NON[m[0]] + text.slice(m.index + 1), fixes: ["Final letters (HebrewFinalFixer)"], conf: 0.74 + SR() * 0.15 };
+    }
+    if (lang !== "en" && r < 0.55) {
+      const idx = [...text].findIndex((c, i) => i > 0 && HE_CONFUSE[c]);
+      if (idx > 0) return { raw: text.slice(0, idx) + HE_CONFUSE[text[idx]] + text.slice(idx + 1), fixes: ["Spellcheck (symspell + Hebrew frequency list)"], conf: 0.68 + SR() * 0.15 };
+    }
+    if (lang === "en" && r < 0.3) {
+      const raw = text.replace("I", "l").replace("O", "0");
+      if (raw !== text) return { raw, fixes: ["Spellcheck (symspell + English frequency list)"], conf: 0.7 + SR() * 0.15 };
+    }
+    return { raw: text, fixes: [], conf: 0.82 + SR() * 0.16 };
+  }
+  const signs = [];
+  frontages.forEach(f => {
+    let lines = null;
+    if (f.shop) {
+      const he = HE_NAMES[f.shop.name] || f.shop.name, v = signs.length % 3;
+      lines = v === 0 ? [he, f.shop.name] : v === 1 ? [he] : [f.shop.name];
+      f.shop.he = he;
+    } else if (SR() < 0.42 && Math.hypot(f.p1[0] - f.p0[0], f.p1[1] - f.p0[1]) > 3) {
+      lines = [GENERIC[Math.floor(SR() * GENERIC.length)]];
+    }
+    if (!lines) return;
+    const text = lines.join(" / ");
+    const readable = f.shop || SR() > 0.12;
+    const o = readable ? simulateOcr(text) : { raw: "", fixes: [], conf: 0.22 + SR() * 0.15 };
+    const fixes = o.fixes.slice();
+    if (f.shop) fixes.push("Matched GIS shop name (rapidfuzz)");
+    const nFrames = 8 + Math.floor(SR() * 34);
+    f.sign = { id: "T" + String(signs.length + 1).padStart(3, "0"), f, lines, text, lang: langOf(text), readable, raw: o.raw, conf: o.conf, fixes, psm: lines.length > 1 ? 6 : 7, nFrames, used: Math.min(5, nFrames), board: signs.length % 3 };
+    signs.push(f.sign);
+  });
+
+  // Boaz's field material pins
+  const field = [{ x: -3.5, y: 30, kind: "Drawing", label: "Drawing #14 · Mar 2025" }, { x: 3.5, y: 82, kind: "Photo", label: "Photo series · Jun 2025" }, { x: 12, y: 59, kind: "Interview", label: "Interview · stall owner" }];
+
+  // People: walkers in the main street and the cross street
+  const people = [];
+  const PR = rng(11);
+  for (let i = 0; i < 130; i++) people.push({ id: i + 1, main: true, x: -3 + PR() * 6, y: PR() * 122, v: (PR() < 0.5 ? -1 : 1) * (0.4 + PR() * 0.9), h: 1.55 + PR() * 0.3, conf: 0.55 + PR() * 0.43, sway: PR() * 6 });
+  for (let i = 0; i < 40; i++) people.push({ id: 131 + i, main: false, x: -38 + PR() * 76, y: 56 + PR() * 6, v: (PR() < 0.5 ? -1 : 1) * (0.4 + PR() * 0.8), h: 1.55 + PR() * 0.3, conf: 0.55 + PR() * 0.43, sway: PR() * 6 });
+  for (const p of people) { const r = PR(); p.sex = r < 0.15 ? "u" : r < 0.6 ? "m" : "w"; }
+
+  // ---------- [Brief] social / material / spatial / logistics entities (example data) ----------
+  const XR = rng(31);
+  const mid = f => [(f.p0[0] + f.p1[0]) / 2, (f.p0[1] + f.p1[1]) / 2];
+  const MORPHS = ["walk-in shop", "open stall", "counter", "temporary table"];
+  const MORPH_VAR = { "walk-in shop": "--l-he", "open stall": "--l-ar", "counter": "--l-en", "temporary table": "--l-mx" };
+  const TRADES = ["Produce", "Spices & nuts", "Fish", "Butcher", "Bakery", "Household goods", "Clothing", "Café & food"];
+  const ROLES = ["vendor", "shopper", "passer-by", "worker"];
+  const ROLE_VAR = { vendor: "--l-en", shopper: "--l-ar", "passer-by": "--sx-u", worker: "--logi" };
+  const AGES = ["child", "young adult", "adult", "older adult", "uncertain"];
+  const AGE_VAR = { child: "--l-mx", "young adult": "--l-ar", adult: "--l-he", "older adult": "--l-en", uncertain: "--sx-u" };
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+  const ageFor = y => { const r = XR(), south = y < 59; if (r < 0.1) return "uncertain"; if (r < 0.17) return "child"; if (r < (south ? 0.35 : 0.47)) return "young adult"; if (r < (south ? 0.68 : 0.87)) return "adult"; return "older adult"; };
+  frontages.forEach(f => {
+    f.fid = "F" + String(f.id + 1).padStart(3, "0");
+    f.main = Math.abs(f.n[0]) === 1 && Math.abs(f.p0[0]) === 4 && f.p0[1] > 2 && f.p1[1] < 122;
+    const r = XR();
+    f.morph = r < 0.3 ? "walk-in shop" : r < 0.65 ? "open stall" : r < 0.85 ? "counter" : "temporary table";
+    f.trade = TRADES[Math.floor(XR() * TRADES.length)];
+    f.perm = f.morph === "walk-in shop" ? 0.3 + XR() * 0.3 : f.morph === "counter" ? 0.5 + XR() * 0.3 : 0.8 + XR() * 0.2;
+    f.vendorOut = f.morph === "walk-in shop" ? XR() < 0.15 : XR() < 0.55;
+    f.spill = (f.morph === "open stall" || f.morph === "temporary table") && XR() < 0.6 ? 0.4 + XR() * 0.9 : 0;
+    f.thrIn = (f.morph === "walk-in shop" || f.morph === "counter") ? Math.floor(4 + XR() * 20) : 0;
+    f.thrOut = Math.max(0, f.thrIn - Math.floor(XR() * 5));
+    f.conf = 0.6 + XR() * 0.35; f.inter = 0; f.hasVendor = false;
+  });
+  // walkers: role and broad age group
+  for (const p of people) { p.kind = "walk"; p.role = XR() < 0.15 ? "shopper" : "passer-by"; p.age = ageFor(p.y); }
+  let pidN = people.length;
+  const addPerson = o => { const p = Object.assign({ id: ++pidN, h: 1.55 + XR() * 0.3, conf: 0.6 + XR() * 0.38, sway: XR() * 6, sex: XR() < 0.12 ? "u" : XR() < 0.5 ? "m" : "w", v: 0, dwell: 0 }, o); p.age = p.age || ageFor(p.y); p.main = Math.abs(p.x) <= 4; people.push(p); return p; };
+  // vendors at stalls, shoppers in front of them, and the interactions between them
+  const interactions = [];
+  const addInter = (a, b, type, dur, f) => { interactions.push({ id: "I" + String(interactions.length + 1).padStart(4, "0"), a, b, type, dur, f, conf: 0.55 + XR() * 0.4 }); if (f) f.inter++; };
+  frontages.filter(f => f.main && f.morph !== "walk-in shop" && XR() < 0.62).forEach(f => {
+    const [mx, my] = mid(f), off = f.vendorOut ? 0.6 : -0.45;
+    const v = addPerson({ kind: "static", role: "vendor", x: mx + f.n[0] * off, y: my + f.n[1] * off, f, dwell: 900 });
+    v.main = true; f.hasVendor = true;
+    if (XR() < (f.vendorOut ? 0.8 : 0.45)) {
+      const s = addPerson({ kind: "static", role: "shopper", x: mx + f.n[0] * (1.5 + XR() * 0.4), y: my + (XR() - 0.5) * 1.2, f, dwell: 15 + Math.floor(XR() * 120) });
+      addInter(v, s, XR() < 0.7 ? "transaction" : "conversation", s.dwell, f);
+    }
+  });
+  // walk-in shops: a vendor in the doorway now and then, with a customer at the threshold
+  frontages.filter(f => f.main && f.morph === "walk-in shop" && XR() < 0.3).forEach(f => {
+    const [mx, my] = mid(f);
+    const v = addPerson({ kind: "static", role: "vendor", x: mx - f.n[0] * 0.4, y: my, f, dwell: 900 }); v.main = true; f.hasVendor = true;
+    if (XR() < 0.6) { const s = addPerson({ kind: "static", role: "shopper", x: mx + f.n[0] * 0.9, y: my + 0.4, f, dwell: 10 + Math.floor(XR() * 60) }); addInter(v, s, "transaction", s.dwell, f); }
+  });
+  for (let k = 0; k < 4; k++) {
+    const y = 10 + XR() * 105, x = -1.4 + XR() * 2.8;
+    const a = addPerson({ kind: "static", role: "shopper", x, y, dwell: 20 + Math.floor(XR() * 90) });
+    const b = addPerson({ kind: "static", role: XR() < 0.5 ? "shopper" : "passer-by", x: x + 0.9, y: y + 0.3, dwell: a.dwell });
+    addInter(a, b, k % 2 ? "group" : "conversation", a.dwell, null);
+  }
+  frontages.forEach(f => { f.active = Math.min(1, f.perm * 0.4 + (f.hasVendor ? 0.2 : 0) + Math.min(1, f.inter / 2) * 0.3 + (f.spill ? 0.1 : 0)); });
+  // logistics and operations
+  const TOOL = { porter: "hand truck", ebike: "e-bike + delivery box", crates: "crate stack", sweeper: "broom", waste: "wheelie bin", delivery: "parcel", loading: "van" };
+  const LOGI = [{ type: "porter", label: "Porter · hand truck", v: 1.0 }, { type: "ebike", label: "E-bike delivery", v: 3.2 }, { type: "crates", label: "Crate collector", v: 0.8 }, { type: "sweeper", label: "Street sweeper", v: 0.3 }, { type: "waste", label: "Waste handler", v: 0.6 }, { type: "delivery", label: "Delivery worker", v: 1.2 }, { type: "porter", label: "Porter · stock movement", v: -0.9 }, { type: "ebike", label: "E-bike delivery", v: -2.8 }];
+  const logiAgents = LOGI.map((L, i) => { const p = addPerson({ kind: "logi", role: "worker", x: (i % 2 ? 1 : -1) * (0.8 + XR() * 1.8), y: XR() * 122, v: L.v, logi: Object.assign({ lid: "L" + String(i + 1).padStart(4, "0") }, L) }); p.main = true; return p; });
+  [[11.2, 58.6], [10.3, 59.8]].forEach(([x, y]) => logiAgents.push(addPerson({ kind: "logi", role: "worker", x, y, dwell: 300, logi: { lid: "L0009", type: "loading", label: "Loading / unloading", v: 0 } })));
+  const mainF = frontages.filter(f => f.main);
+  const logiEvents = [];
+  logiAgents.filter(p => ["porter", "delivery", "crates"].includes(p.logi.type)).forEach(p => { for (let k = 0; k < 2; k++) { const f = mainF[Math.floor(XR() * mainF.length)], m = mid(f); logiEvents.push({ lid: p.logi.lid, type: p.logi.type === "crates" ? "crate pickup" : "stock delivery", x: m[0] * 0.85, y: m[1], f }); } });
+  logiEvents.push({ lid: "L0009", type: "loading / unloading", x: 12, y: 58.5, f: null });
+  // objects: waste, seating, obstacles, the delivery van
+  const objects = [];
+  const WASTE = ["cardboard", "plastic", "organic waste", "crates", "packaging"];
+  const addObj = o => { o.id = "O" + String(objects.length + 1).padStart(4, "0"); o.conf = o.conf || 0.55 + XR() * 0.4; objects.push(o); return o; };
+  mainF.forEach(f => {
+    const [mx, my] = mid(f);
+    if (XR() < 0.38) { const cls = WASTE[Math.floor(XR() * WASTE.length)], off = 0.3 + XR() * 0.6; addObj({ kind: "waste", cls, x: mx + f.n[0] * off, y: my + (XR() - 0.5) * 2, w: cls === "crates" ? 0.6 : 0.5 + XR() * 0.4, h: cls === "crates" ? 0.9 : cls === "organic waste" ? 0.25 : 0.42, area: +(0.2 + XR() * 1.2).toFixed(1), f, layer: "material" }); }
+    if (XR() < 0.12) addObj({ kind: "seat", cls: "seating", x: mx + f.n[0] * 0.75, y: my + 0.8, w: 0.45, h: 0.8, f, layer: "spatial" });
+  });
+  for (let k = 0; k < 3; k++) addObj({ kind: "obstacle", cls: "parked cart", x: (k % 2 ? 1 : -1) * 2.3, y: 22 + k * 36, w: 1.0, h: 1.0, layer: "spatial" });
+  addObj({ kind: "van", cls: "delivery van", x: 13.5, y: 57.4, w: 2.4, h: 2.2, layer: "logistics" });
+  // research questions over the whole segment
+  const avg = (arr, fn) => arr.length ? arr.reduce((a, x) => a + fn(x), 0) / arr.length : 0;
+  const vendors = people.filter(p => p.role === "vendor");
+  const knownAge = people.filter(p => p.age !== "uncertain");
+  const olderShare = south => { const g = knownAge.filter(p => (p.y < 59) === south); return g.length ? g.filter(p => p.age === "older adult").length / g.length : 0; };
+  const RQ = {
+    q1: [avg(mainF.filter(f => f.morph === "open stall"), f => f.inter), avg(mainF.filter(f => f.morph === "walk-in shop"), f => f.inter), mainF.length],
+    q2: [avg(vendors.filter(v => v.f.vendorOut), v => interactions.filter(i => i.a === v).length), avg(vendors.filter(v => !v.f.vendorOut), v => interactions.filter(i => i.a === v).length), vendors.length],
+    q3: [olderShare(true), olderShare(false), knownAge.length],
+    q4: [avg(mainF.filter(f => f.sign), f => f.inter), avg(mainF.filter(f => !f.sign), f => f.inter), mainF.length],
+    cells: Array.from({ length: 12 }, (_, c) => { const y0 = 4 + c * 10, inC = y => y >= y0 && y < y0 + 10; const w = objects.some(o => o.kind === "waste" && inC(o.y)), l = logiEvents.some(e => inC(e.y)), s = interactions.some(i => inC(i.a.y)); return { from: c * 10, w, l, s, all: w && l && s }; })
+  };
+  const hotspots = [];
+  for (let c = 0; c < 12; c++) { const g = interactions.filter(i => i.a.y >= 4 + c * 10 && i.a.y < 14 + c * 10); if (g.length >= 2) hotspots.push({ x: avg(g, i => i.a.x), y: avg(g, i => i.a.y), n: g.length }); }
+
+  function personAt(p, sec) {
+    if (p.kind === "static" || p.v === 0) return [p.x + Math.sin(sec / 2 + p.sway) * 0.05, p.y];
+    if (p.main) { let y = (p.y + p.v * sec) % 122; if (y < 0) y += 122; return [p.x + Math.sin(sec / 3 + p.sway) * 0.3, y]; }
+    let x = ((p.x + 38 + p.v * sec) % 76 + 76) % 76 - 38; return [x, p.y + Math.sin(sec / 3 + p.sway) * 0.3];
+  }
+
+  // ---------- camera path ----------
+  const WALK_SEC = 90, FPS_ANALYSIS = 2, N_FRAMES = WALK_SEC * FPS_ANALYSIS;
+  function camAt(t) { // t in [0,1]
+    const y = 4 + t * 114;
+    return { x: Math.sin(t * 9) * 0.6, y, heading: Math.sin(t * 13) * 6 };
+  }
+  const LAT0 = 32.05244, LON0 = 34.79029;  // Shuk HaTikvah (from the GPS-tagged field photos)
+  const toLL = (x, y) => [LAT0 + y / 111320, LON0 + x / (111320 * Math.cos(LAT0 * Math.PI / 180))];
+
+  // ---------- state ----------
+  const S = { t: 0, viewYaw: -12, hfov: 100, playing: true, layers: { gis: true, people: true, ids: true, shops: true, mat: true, logi: true, spatial: false, ocr: true, field: true, pPanel: true, rolePanel: true, sxPanel: true, matPanel: true, ocrPanel: true, shopPanel: true, mapPanel: true, rqPanel: true, gisPanel: true }, selSign: null, sel: null, mode: "illus", selected: null, seen: new Set() };
+
+  // ---------- rendering ----------
+  const cv = document.getElementById("scene"), ctx = cv.getContext("2d"), vp = document.getElementById("vp");
+  let W = 0, H = 0, DPR = 1, C = {};
+  const texCache = new Map();
+  let signsFrame = [], frontsFrame = [], interFrame = [], screenPos = {}, anchor = null, PAL = {}, fade = null;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function readColors() { const cs = getComputedStyle(document.documentElement); for (const k of ["ink", "muted", "sky", "stone", "pave", "opening", "tag", "person", "accent", "surface", "line", "ocr", "m-cardboard", "m-canvas", "m-metal", "m-plastic", "m-wood", "logi", "waste", "org", "spatial", "inter", "l-he", "l-en", "l-ar", "l-mx"]) C[k] = cs.getPropertyValue("--" + k).trim(); texCache.clear(); }
+  // [Brief] three representations of the same viewpoint
+  function palette() {
+    if (S.mode === "digital") return { mode: "digital", sky: "#0c1d29", pave: "#0f2636", stone: "rgba(52,128,168,0.30)", opening: "#06131c", line: "#5ccbe4", outline: true, hatch: false, wobble: false };
+    if (S.mode === "photo") return { mode: "photo", stone: "#cbbda3", opening: "#2a251f", line: "#3b3631", outline: false, hatch: false, wobble: false };
+    return { mode: "illus", sky: C.sky, pave: C.pave, stone: C.stone, opening: C.opening, line: C.ink, outline: true, hatch: true, wobble: true };
+  }
+  const morphCol = f => C[MORPH_VAR[f.morph].slice(2)];
+  // Sign texture: board + painted text, drawn once and warped onto the wall in vertical strips
+  function signTex(sg) {
+    if (texCache.has(sg.id)) return texCache.get(sg.id);
+    const len = Math.hypot(sg.f.p1[0] - sg.f.p0[0], sg.f.p1[1] - sg.f.p0[1]) * 0.76;
+    const th = 96, tw = Math.max(160, Math.round(th * len / 0.85));
+    const c = document.createElement("canvas"); c.width = tw; c.height = th;
+    const g = c.getContext("2d");
+    const styles = [[C.surface, C.ink], [C.tag, C.surface], [C.accent, C.surface]];
+    const [bg, fg] = styles[sg.board];
+    g.fillStyle = bg; g.fillRect(0, 0, tw, th);
+    g.strokeStyle = C.ink; g.lineWidth = 4; g.strokeRect(2, 2, tw - 4, th - 4);
+    g.fillStyle = fg; g.textAlign = "center"; g.textBaseline = "middle";
+    const n = sg.lines.length;
+    sg.lines.forEach((t, i) => {
+      const size = n === 1 ? 56 : (i === 0 ? 44 : 30);
+      g.font = `700 ${size}px Rubik, "Noto Sans Arabic", sans-serif`;
+      g.direction = /[֐-׿؀-ۿ]/.test(t) ? "rtl" : "ltr";
+      const w = g.measureText(t).width, s = Math.min(1, (tw * 0.88) / w);
+      g.save(); g.translate(tw / 2, n === 1 ? th / 2 : (i === 0 ? th * 0.36 : th * 0.74)); g.scale(s, 1); g.fillText(t, 0, 0); g.restore();
+    });
+    texCache.set(sg.id, c);
+    return c;
+  }
+  function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); const r = vp.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); draw(); }
+  const wrap = a => ((a + 540) % 360) - 180;
+  const deg = Math.PI / 180, CAMH = 1.6;
+  let hits = [];
+
+  function project(cam, px, py, hm) {
+    const dx = px - cam.x, dy = py - cam.y, d = Math.hypot(dx, dy);
+    const bearing = Math.atan2(dx, dy) / deg;
+    const rel = wrap(bearing - cam.heading - S.viewYaw);
+    const f = W / (S.hfov * deg);
+    return { rel, d, x: W / 2 + rel * deg * f, y: H * 0.52 - Math.atan2(hm - CAMH, d) * f, bearing };
+  }
+  function visibleFromMain(cam, px, py) {
+    if (Math.abs(px) <= 4) return true;
+    const sx = Math.sign(px) * 4, k = (sx - cam.x) / (px - cam.x), yy = cam.y + k * (py - cam.y);
+    return yy > 55 && yy < 63;
+  }
+  function jit(id, i) { const r = rng(id * 977 + i * 31); return [(r() - 0.5) * 1.6, (r() - 0.5) * 1.6]; }
+
+  function draw() {
+    if (!W) return;
+    const cam = camAt(S.t), sec = S.t * WALK_SEC, frame = Math.round(S.t * (N_FRAMES - 1));
+    hits = []; signsFrame = []; frontsFrame = []; interFrame = []; screenPos = {}; anchor = null;
+    PAL = palette();
+    const hz = H * 0.52;
+    // sky and paving (per representation)
+    if (PAL.mode === "photo") {
+      let g = ctx.createLinearGradient(0, 0, 0, hz); g.addColorStop(0, "#8fb6d6"); g.addColorStop(1, "#e6ecef"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, hz);
+      g = ctx.createLinearGradient(0, hz, 0, H); g.addColorStop(0, "#9b9486"); g.addColorStop(1, "#6f685c"); ctx.fillStyle = g; ctx.fillRect(0, hz, W, H - hz);
+    } else {
+      ctx.fillStyle = PAL.sky; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = PAL.pave; ctx.fillRect(0, hz, W, H - hz);
+    }
+    if (PAL.mode === "illus") {
+      ctx.strokeStyle = C.muted; ctx.globalAlpha = 0.25; ctx.lineWidth = 1;
+      for (let i = 1; i < 14; i++) { const y = hz + (H - hz) * Math.pow(i / 14, 2.2); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    if (PAL.mode === "digital") drawGrid(cam);
+    groundOverlays(cam);
+
+    // build draw list (painter's algorithm, far to near)
+    const items = [];
+    for (const f of frontages) {
+      const mx = (f.p0[0] + f.p1[0]) / 2, my = (f.p0[1] + f.p1[1]) / 2;
+      // back-face cull: the frontage must face the camera
+      if ((cam.x - mx) * f.n[0] + (cam.y - my) * f.n[1] <= 0) continue;
+      items.push({ type: "f", f, d: Math.hypot(mx - cam.x, my - cam.y) });
+    }
+    const visPeople = [];
+    for (const p of people) {
+      const [x, y] = personAt(p, sec), d = Math.hypot(x - cam.x, y - cam.y);
+      if (d < 1.2 || d > 40) continue;
+      // inside vendors stand in the stall opening, so draw them after their frontage
+      items.push({ type: "p", p, x, y, d: p.role === "vendor" ? d - 1 : d });
+    }
+    for (const o of objects) { const d = Math.hypot(o.x - cam.x, o.y - cam.y); if (d < 1 || d > 40) continue; items.push({ type: "o", o, d }); }
+    items.sort((a, b) => b.d - a.d);
+
+    const matPx = Object.fromEntries(MATS.map(m => [m, 0]));
+    const shopsInView = [], visObjs = [];
+    for (const it of items) {
+      if (it.type === "f") drawFrontage(cam, it.f, matPx, shopsInView);
+      else if (it.type === "o") { const r = drawObject(cam, it); if (r) visObjs.push(r); }
+      else {
+        const pr = drawPerson(cam, it);
+        if (pr && Math.abs(pr.rel) < S.hfov / 2 && (it.p.main || visibleFromMain(cam, it.x, it.y))) visPeople.push(it);
+      }
+    }
+    interFrame = interactions.filter(i => screenPos[i.a.id] && screenPos[i.b.id]).map(i => ({ i, pa: screenPos[i.a.id], pb: screenPos[i.b.id] }));
+    if (S.layers.people) drawInteractions();
+    // field pins
+    if (S.layers.field) for (const fp of field) {
+      const pr = project(cam, fp.x, fp.y, 3.6); if (Math.abs(pr.rel) > 70 || pr.d > 45 || !visibleFromMain(cam, fp.x, fp.y)) continue;
+      ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(pr.x, pr.y, 7, 0, 7); ctx.fill();
+      ctx.fillStyle = C.surface; ctx.font = "600 9px IBM Plex Sans, sans-serif"; ctx.textAlign = "center"; ctx.fillText(fp.kind[0], pr.x, pr.y + 3);
+      ctx.fillStyle = C.ink; ctx.font = "11px IBM Plex Sans, sans-serif"; ctx.fillText(fp.label, pr.x, pr.y - 12);
+    }
+    if (S.layers.shops) drawFrontChips();
+    if (S.layers.spatial) drawSpatialLabels(cam);
+    if (S.layers.ocr) drawOCR();
+    // GIS tags drawn last so they sit above the scene
+    if (S.layers.gis) drawTags(cam, shopsInView);
+    if (PAL.mode !== "illus") modeBadge();
+    logFrame(frame, visPeople, shopsInView, visObjs);
+    updatePanel(cam, visPeople, matPx, shopsInView);
+    updateCounters(visPeople, visObjs);
+    placeVCard();
+    if (fade) {
+      const k = (performance.now() - fade.t0) / 450;
+      if (k >= 1 || reduceMotion) fade = null;
+      else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1 - k; ctx.drawImage(fade.snap, 0, 0); ctx.restore(); }
+    }
+  }
+
+  // ---------- [Brief] ground-plane overlays, objects, interactions ----------
+  const lerpPts = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => [a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n]);
+  function groundSeg(cam, pts) {
+    const out = [], f = W / (S.hfov * deg); let prev = null, lo = Infinity, hi = -Infinity;
+    for (const [x, y] of pts) {
+      const b = project(cam, x, y, 0); if (b.d < 0.4 || b.d > 60) return null;
+      let rel = b.rel; if (prev !== null) rel = prev + wrap(rel - prev); prev = rel;
+      lo = Math.min(lo, rel); hi = Math.max(hi, rel);
+      out.push([W / 2 + rel * deg * f, b.y]);
+    }
+    if (hi - lo > 160 || lo > S.hfov / 2 + 30 || hi < -S.hfov / 2 - 30) return null;
+    return out;
+  }
+  function strokeGround(cam, pts, col, lw, dash, fillCol) {
+    const s = groundSeg(cam, pts); if (!s) return;
+    ctx.save(); ctx.beginPath(); s.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    if (fillCol) { ctx.closePath(); ctx.fillStyle = fillCol; ctx.fill(); }
+    if (col) { ctx.strokeStyle = col; ctx.lineWidth = lw || 1.5; if (dash) ctx.setLineDash(dash); ctx.stroke(); }
+    ctx.restore();
+  }
+  const faces = (cam, f) => { const m = mid(f); return (cam.x - m[0]) * f.n[0] + (cam.y - m[1]) * f.n[1] > 0; };
+  function drawGrid(cam) {
+    ctx.save(); ctx.globalAlpha = 0.35;
+    for (const x of [-4, -2, 0, 2, 4]) for (let y = 0; y < 124; y += 2) if (Math.abs(y - cam.y) < 50) strokeGround(cam, [[x, y], [x, y + 2]], PAL.line, 1);
+    for (let y = 0; y <= 124; y += 2) if (Math.abs(y - cam.y) < 50) strokeGround(cam, lerpPts([-4, y], [4, y], 4), PAL.line, 1);
+    ctx.restore();
+  }
+  function groundOverlays(cam) {
+    if (S.layers.shops) for (const f of frontages) {
+      if (!f.spill || !faces(cam, f)) continue;
+      const q0 = [f.p0[0] + f.n[0] * f.spill, f.p0[1] + f.n[1] * f.spill], q1 = [f.p1[0] + f.n[0] * f.spill, f.p1[1] + f.n[1] * f.spill];
+      ctx.globalAlpha = 0.28; strokeGround(cam, [...lerpPts(f.p0, f.p1, 6), ...lerpPts(q1, q0, 6)], null, 0, null, morphCol(f)); ctx.globalAlpha = 1;
+      strokeGround(cam, lerpPts(q0, q1, 6), morphCol(f), 1.5, [4, 3]);
+    }
+    if (S.layers.spatial) {
+      for (let k = 0; k < 8; k++) strokeGround(cam, Array.from({ length: 5 }, (_, i) => { const a = (k * 4 + i) / 32 * 2 * Math.PI; return [Math.cos(a) * 3.5, 59 + Math.sin(a) * 3.5]; }), C.spatial, 2, [6, 4]);
+      for (let y = 6; y < 120; y += 8) { strokeGround(cam, [[1.2, y - 0.6], [1.6, y + 0.2], [2.0, y - 0.6]], C.spatial, 2); strokeGround(cam, [[-2.0, y + 0.6], [-1.6, y - 0.2], [-1.2, y + 0.6]], C.spatial, 2); }
+      for (const f of mainF) {
+        if (!f.thrIn || !faces(cam, f)) continue;
+        const m = mid(f), L = Math.hypot(f.p1[0] - f.p0[0], f.p1[1] - f.p0[1]), ux = (f.p1[0] - f.p0[0]) / L, uy = (f.p1[1] - f.p0[1]) / L;
+        strokeGround(cam, lerpPts([m[0] - ux * 0.8 + f.n[0] * 0.08, m[1] - uy * 0.8 + f.n[1] * 0.08], [m[0] + ux * 0.8 + f.n[0] * 0.08, m[1] + uy * 0.8 + f.n[1] * 0.08], 3), C.spatial, 3, [3, 2]);
+      }
+    }
+  }
+  function pill(t, cx, y, col, sel, font) {
+    ctx.font = font || "500 10px IBM Plex Mono, monospace"; ctx.textAlign = "left";
+    const tw = ctx.measureText(t).width + 10, x = cx - tw / 2;
+    ctx.fillStyle = sel ? col : C.surface; ctx.strokeStyle = col; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.roundRect(x, y, tw, 15, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = sel ? C.surface : C.ink; ctx.fillText(t, x + 5, y + 11);
+    return { x, y, w: tw, h: 15 };
+  }
+  function drawObject(cam, it) {
+    const o = it.o, b = project(cam, o.x, o.y, 0);
+    if (Math.abs(b.rel) > S.hfov / 2 + 15) return null;
+    if (!(Math.abs(o.x) <= 4.8 || visibleFromMain(cam, o.x, o.y))) return null;
+    const fpx = W / (S.hfov * deg), top = project(cam, o.x, o.y, o.h).y, hp = b.y - top, wp = Math.max(3, o.w / b.d * fpx), x = b.x, dig = PAL.mode === "digital";
+    ctx.save(); ctx.lineWidth = 1;
+    const paint = col => { ctx.fillStyle = dig ? "rgba(92,203,228,0.18)" : col; ctx.strokeStyle = dig ? PAL.line : PAL.outline ? C.ink : "rgba(0,0,0,0.3)"; };
+    const rect = (rx, ry, rw, rh, col) => { paint(col); ctx.fillRect(rx, ry, rw, rh); ctx.strokeRect(rx, ry, rw, rh); };
+    switch (o.cls) {
+      case "cardboard": rect(x - wp / 2, top, wp, hp, C["m-cardboard"]); ctx.beginPath(); ctx.moveTo(x - wp / 2, top + hp * 0.25); ctx.lineTo(x + wp / 2, top + hp * 0.25); ctx.stroke(); break;
+      case "packaging": rect(x - wp / 2, top, wp, hp, C["m-canvas"]); break;
+      case "crates": for (let i = 0; i < 3; i++) rect(x - wp / 2, top + hp * i / 3, wp, hp / 3, C["m-wood"]); break;
+      case "plastic": paint(C["m-plastic"]); ctx.beginPath(); ctx.ellipse(x, b.y - hp / 2, wp / 2, hp / 2, 0, 0, 7); ctx.fill(); ctx.stroke(); break;
+      case "organic waste": paint(C.org); ctx.beginPath(); ctx.ellipse(x, b.y - hp / 2, wp / 2, Math.max(1.5, hp / 2), 0, 0, 7); ctx.fill(); ctx.stroke(); break;
+      case "seating": paint(C["m-canvas"]); ctx.fillRect(x - wp / 2, b.y - hp * 0.5, wp, hp * 0.08); ctx.beginPath(); ctx.moveTo(x - wp / 2, b.y); ctx.lineTo(x - wp / 2, b.y - hp * 0.5); ctx.lineTo(x - wp / 2, top); ctx.moveTo(x + wp / 2, b.y); ctx.lineTo(x + wp / 2, b.y - hp * 0.5); ctx.stroke(); break;
+      case "parked cart": rect(x - wp / 2, top + hp * 0.15, wp, hp * 0.6, C["m-metal"]); ctx.beginPath(); ctx.arc(x - wp * 0.3, b.y - hp * 0.1, hp * 0.1, 0, 7); ctx.arc(x + wp * 0.3, b.y - hp * 0.1, hp * 0.1, 0, 7); ctx.stroke(); break;
+      default: rect(x - wp / 2, top, wp, hp * 0.85, C["m-canvas"]); rect(x + wp * 0.15, top + hp * 0.1, wp * 0.3, hp * 0.3, C.opening); ctx.beginPath(); ctx.arc(x - wp * 0.3, b.y - hp * 0.08, hp * 0.08, 0, 7); ctx.arc(x + wp * 0.3, b.y - hp * 0.08, hp * 0.08, 0, 7); ctx.stroke();
+    }
+    ctx.restore();
+    const vis = Math.abs(b.rel) < S.hfov / 2;
+    const on = o.kind === "waste" ? S.layers.mat : o.kind === "van" ? S.layers.logi : S.layers.spatial;
+    const sel = S.sel && S.sel.kind === "obj" && S.sel.id === o.id;
+    if (on && vis && hp > 3) {
+      const col = o.kind === "waste" ? C.waste : o.kind === "van" ? C.logi : C.spatial;
+      ctx.strokeStyle = col; ctx.lineWidth = sel ? 2.5 : 1.5; ctx.strokeRect(x - wp / 2 - 2, top - 2, wp + 4, hp + 4);
+      if (b.d < 18 || sel) { const r = pill(`${o.kind === "van" ? "loading / unloading" : o.cls} ${o.conf.toFixed(2)}`, x, top - 19, col, sel); hits.push({ kind: "obj", id: o.id, ...r }); }
+      hits.push({ kind: "obj", id: o.id, x: x - wp / 2 - 2, y: top - 2, w: wp + 4, h: hp + 4 });
+    }
+    if (sel) anchor = { x: x + wp / 2, y: top };
+    return vis ? { o, d: b.d } : null;
+  }
+  function drawInteractions() {
+    for (const { i, pa, pb } of interFrame) {
+      const sel = S.sel && S.sel.kind === "inter" && S.sel.id === i.id;
+      const mx = (pa.x + pb.x) / 2, my = Math.min(pa.top, pb.top) - Math.max(10, Math.abs(pa.x - pb.x) * 0.3);
+      ctx.save(); ctx.strokeStyle = C.inter; ctx.lineWidth = sel ? 3 : 2; ctx.beginPath(); ctx.moveTo(pa.x, pa.top); ctx.quadraticCurveTo(mx, my, pb.x, pb.top); ctx.stroke(); ctx.restore();
+      if (Math.max(pa.h, pb.h) > 30 || sel) { const r = pill(`${i.type} · ${i.dur} s`, mx, my - 12, C.inter, sel); hits.push({ kind: "inter", id: i.id, ...r }); }
+      if (sel) anchor = { x: mx, y: my - 12 };
+    }
+  }
+  function drawFrontChips() {
+    for (const s of frontsFrame) {
+      const f = s.f, sel = S.sel && S.sel.kind === "front" && S.sel.id === f.fid;
+      if (s.d > 15 && !sel) continue;
+      const r = pill(`${f.morph} · vendor ${f.vendorOut ? "outside" : "inside"} · open ${Math.round(f.perm * 100)}%`, s.x, s.y0 + 6, morphCol(f), sel, "500 10px IBM Plex Sans, sans-serif");
+      hits.push({ kind: "front", id: f.fid, ...r });
+      if (sel) anchor = { x: s.x, y: s.y0 + 6 };
+    }
+  }
+  function drawSpatialLabels(cam) {
+    const j = project(cam, 0, 59, 0);
+    if (Math.abs(j.rel) < S.hfov / 2 && j.d > 3 && j.d < 45) pill("J1 · junction · 4 arms", j.x, j.y - 8, C.spatial, false);
+    for (const s of frontsFrame) if (s.f.thrIn && s.d < 12) pill(`threshold ${s.f.thrIn} in / ${s.f.thrOut} out`, s.x, s.y0 - 22, C.spatial, false);
+  }
+  function modeBadge() {
+    const t = PAL.mode === "photo" ? "Photographic view: the stitched 360° video frame goes here" : "Digital view: semantic segmentation + edges";
+    ctx.font = "500 11px IBM Plex Sans, sans-serif"; const tw = ctx.measureText(t).width + 16;
+    ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.beginPath(); ctx.roundRect(W / 2 - tw / 2, 46, tw, 18, 9); ctx.fill();
+    ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.fillText(t, W / 2, 59); ctx.textAlign = "left";
+  }
+
+  // ---------- [Brief] persistent observation log → GIS ----------
+  const obs = new Map(); let obsVer = 0;
+  const pidOf = p => "P-" + String(p.id).padStart(4, "0");
+  const chain = y => +Math.max(0, Math.min(114, y - 4)).toFixed(1);
+  function logObs(id, type, layer, cls, x, y, conf, attrs, frame) {
+    const t = +(frame / FPS_ANALYSIS).toFixed(1); let o = obs.get(id);
+    if (!o) { obs.set(id, { id, type, layer, cls, attrs, f0: frame, f1: frame, t0: t, t1: t, x, y, conf, path: [[x, y]] }); obsVer++; return; }
+    if (frame < o.f0) { o.f0 = frame; o.t0 = t; } if (frame > o.f1) { o.f1 = frame; o.t1 = t; }
+    o.x = x; o.y = y; o.conf = Math.max(o.conf, conf);
+    const lp = o.path[o.path.length - 1];
+    if (type === "logistics" && o.path.length < 300 && Math.hypot(lp[0] - x, lp[1] - y) > 1.5) o.path.push([x, y]);
+  }
+  function logFrame(frame, visPeople, shopsInView, visObjs) {
+    for (const v of visPeople) { const p = v.p;
+      if (p.logi) logObs(p.logi.lid, "logistics", "logistics", p.logi.type, v.x, v.y, p.conf, { activity: p.logi.label, tool: TOOL[p.logi.type], track: pidOf(p) }, frame);
+      logObs(pidOf(p), "person", "social", p.role, v.x, v.y, p.conf, { role: p.role, age_group: p.age, dwell_s: p.dwell }, frame); }
+    for (const s of shopsInView) { const m = mid(s.shop.f); logObs(s.shop.id, "shop", "gis", s.shop.cat, m[0], m[1], 1, { name: s.shop.name, frontage: s.shop.f.fid }, frame); }
+    for (const s of frontsFrame) { const f = s.f, m = mid(f); logObs(f.fid, "frontage", "material", f.morph, m[0], m[1], f.conf, { trade: f.trade, vendor_outside: f.vendorOut, permeability: +f.perm.toFixed(2), spill_out_m: +f.spill.toFixed(2), awning_material: f.mat, active_score: +f.active.toFixed(2) }, frame); }
+    for (const s of signsFrame) { const sg = s.sign, m = mid(sg.f); logObs(sg.id, "sign", "ocr", sg.lang, m[0], m[1], sg.conf, { text: sg.readable ? sg.text : null, shop: sg.f.shop ? sg.f.shop.id : null }, frame); }
+    for (const v of visObjs) { const o = v.o; logObs(o.id, "object", o.layer, o.cls, o.x, o.y, o.conf, o.area ? { area_m2: o.area, frontage: o.f ? o.f.fid : null } : {}, frame); }
+    for (const { i } of interFrame) logObs(i.id, "interaction", "social", i.type, (i.a.x + i.b.x) / 2, (i.a.y + i.b.y) / 2, i.conf, { a: pidOf(i.a), b: pidOf(i.b), duration_s: i.dur, frontage: i.f ? i.f.fid : null }, frame);
+  }
+  const MODEL = { person: "YOLO11 + ByteTrack + PAR; role: rules + Qwen2.5-VL", logistics: "YOLO-World tools + X-CLIP + VLM", object: "Grounding DINO + SAM 2", frontage: "Qwen2.5-VL + GIS", sign: "Tesseract 5 (heb+eng+ara)", shop: "GIS register", interaction: "track proximity rules + VLM" };
+  function toGeoJSON() {
+    let n = 0; const ll = (x, y) => { const [la, lo] = toLL(x, y); return [+lo.toFixed(6), +la.toFixed(6)]; };
+    return { type: "FeatureCollection", name: "shuk_observations_walk1", features: [...obs.values()].map(o => ({ type: "Feature",
+      geometry: o.path.length > 1 ? { type: "LineString", coordinates: o.path.map(p => ll(p[0], p[1])) } : { type: "Point", coordinates: ll(o.x, o.y) },
+      properties: { obs_id: "OBS-" + String(++n).padStart(5, "0"), entity_id: o.id, entity_type: o.type, layer: o.layer, class: o.cls, attributes: o.attrs, frame_start: o.f0, frame_end: o.f1, t_start: o.t0, t_end: o.t1, chainage_m: chain(o.y), confidence: +o.conf.toFixed(2), model: MODEL[o.type], walk_id: "walk-1" } })) };
+  }
+
+  function drawFrontage(cam, f, matPx, shopsInView) {
+    const len = Math.hypot(f.p1[0] - f.p0[0], f.p1[1] - f.p0[1]);
+    const n = Math.max(2, Math.ceil(len / 0.8));
+    const pts = [];
+    let prevRel = null;
+    for (let i = 0; i <= n; i++) {
+      const k = i / n, px = f.p0[0] + (f.p1[0] - f.p0[0]) * k, py = f.p0[1] + (f.p1[1] - f.p0[1]) * k;
+      const b = project(cam, px, py, 0); let rel = b.rel;
+      if (prevRel !== null) rel = prevRel + wrap(rel - prevRel); prevRel = rel;
+      if (b.d < 0.6) return;
+      const fpx = W / (S.hfov * deg), x = W / 2 + rel * deg * fpx;
+      const yAt = hm => H * 0.52 - Math.atan2(hm - CAMH, b.d) * fpx;
+      pts.push({ x, rel, d: b.d, k, y0: yAt(0), yA: yAt(f.awn), yA2: yAt(f.awn + 0.55), yT: yAt(f.wallH), yS: yAt(f.awn + 1.3), yB1: yAt(f.awn + 0.75), yB2: yAt(f.awn + 1.6) });
+    }
+    const minX = Math.min(...pts.map(p => p.x)), maxX = Math.max(...pts.map(p => p.x));
+    if (maxX < -40 || minX > W + 40) return;
+    const band = (ka, kb, fill) => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p[ka]) : ctx.moveTo(p.x, p[ka])); for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i].x, pts[i][kb]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+    ctx.globalAlpha = 1;
+    band("yT", "yA2", PAL.stone);
+    band("yA", "y0", PAL.opening);
+    const matCol = C["m-" + f.mat];
+    band("yA2", "yA", matCol);
+    // awning texture: canvas stripes / metal ribs / cardboard flaps
+    ctx.save(); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.yA2) : ctx.moveTo(p.x, p.yA2)); for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i].x, pts[i].yA); ctx.closePath(); ctx.clip();
+    ctx.strokeStyle = PAL.line; ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
+    for (let i = 0; i < pts.length; i += (f.mat === "canvas" ? 1 : 2)) { const p = pts[i]; ctx.beginPath(); ctx.moveTo(p.x, p.yA2); ctx.lineTo(p.x + (f.mat === "cardboard" ? 3 : 0), p.yA); ctx.stroke(); }
+    ctx.restore();
+    // materials segmentation overlay
+    if (S.layers.mat) { ctx.globalAlpha = 0.55; band("yA2", "yA", matCol); ctx.globalAlpha = 0.9; ctx.strokeStyle = matCol; ctx.lineWidth = 2; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.yA2) : ctx.moveTo(p.x, p.yA2)); for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i].x, pts[i].yA); ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 1; }
+    // stone hatching
+    if (PAL.hatch) {
+      ctx.strokeStyle = C.ink; ctx.globalAlpha = 0.18; ctx.lineWidth = 1;
+      const hr = rng(f.id * 13 + 5);
+      for (let i = 0; i < pts.length - 1; i++) { const p = pts[i], q = pts[i + 1]; for (let k = 0; k < 2; k++) { const u = hr(), v = 0.15 + hr() * 0.7; const x = p.x + (q.x - p.x) * u, yT = p.yT + (q.yT - p.yT) * u, yB = p.yA2 + (q.yA2 - p.yA2) * u; const y = yT + (yB - yT) * v; ctx.beginPath(); ctx.moveTo(x - 4, y + 3); ctx.lineTo(x + 4, y - 3); ctx.stroke(); } }
+    }
+    // ink outlines with a slight hand-drawn wobble (illustrated) or clean edges (digital)
+    if (PAL.outline) {
+      ctx.globalAlpha = PAL.mode === "digital" ? 0.9 : 0.85; ctx.strokeStyle = PAL.line; ctx.lineWidth = PAL.mode === "digital" ? 1 : 1.3;
+      const line = key => { ctx.beginPath(); pts.forEach((p, i) => { const [jx, jy] = PAL.wobble ? jit(f.id, i + key.length) : [0, 0]; i ? ctx.lineTo(p.x + jx, p[key] + jy) : ctx.moveTo(p.x + jx, p[key] + jy); }); ctx.stroke(); };
+      line("yT"); line("yA2"); line("yA"); line("y0");
+      const a = pts[0], b = pts[pts.length - 1];
+      ctx.beginPath(); ctx.moveTo(a.x, a.yT); ctx.lineTo(a.x + 1, a.y0); ctx.moveTo(b.x, b.yT); ctx.lineTo(b.x - 1, b.y0); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    if (PAL.mode === "photo") { ctx.globalAlpha = Math.min(0.55, pts[Math.floor(pts.length / 2)].d / 75); band("yT", "y0", "#e6ecef"); ctx.globalAlpha = 1; }
+    // [Brief] stall form: base line coloured by morphology
+    if (S.layers.shops && f.main) { ctx.strokeStyle = morphCol(f); ctx.lineWidth = 2 + f.active * 3; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y0) : ctx.moveTo(p.x, p.y0)); ctx.stroke(); }
+    { const m = pts[Math.floor(pts.length / 2)], mm = mid(f);
+      if (Math.abs(m.rel) < S.hfov / 2 && m.d < 30 && visibleFromMain(cam, mm[0] + f.n[0] * 0.3, mm[1] + f.n[1] * 0.3)) frontsFrame.push({ f, x: m.x, y0: m.y0, d: m.d }); }
+    // signboard warped onto the wall
+    if (f.sign) {
+      const sp = pts.filter(p => p.k >= 0.12 - 1e-6 && p.k <= 0.88 + 1e-6);
+      if (sp.length >= 2) {
+        const tex = signTex(f.sign), flip = sp[sp.length - 1].x < sp[0].x;
+        let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity;
+        for (let i = 0; i < sp.length - 1; i++) {
+          const p = sp[i], q = sp[i + 1];
+          let u0 = (p.k - 0.12) / 0.76, u1 = (q.k - 0.12) / 0.76;
+          if (flip) { u0 = 1 - u0; u1 = 1 - u1; }
+          const xa = Math.min(p.x, q.x), xb = Math.max(p.x, q.x);
+          const ua = p.x < q.x ? u0 : u1, ub = p.x < q.x ? u1 : u0;
+          const y = (p.yB2 + q.yB2) / 2, h = (p.yB1 + q.yB1) / 2 - y;
+          if (xb - xa < 0.3 || h < 1) continue;
+          ctx.drawImage(tex, ua * tex.width, 0, Math.max(1, (ub - ua) * tex.width), tex.height, xa, y, xb - xa + 0.6, h);
+          bx0 = Math.min(bx0, xa); bx1 = Math.max(bx1, xb); by0 = Math.min(by0, y); by1 = Math.max(by1, y + h);
+        }
+        const m = sp[Math.floor(sp.length / 2)];
+        const mx = (f.p0[0] + f.p1[0]) / 2 + f.n[0] * 0.3, my = (f.p0[1] + f.p1[1]) / 2 + f.n[1] * 0.3;
+        if (bx1 > bx0 && Math.abs(m.rel) < S.hfov / 2 && m.d < 32 && visibleFromMain(cam, mx, my))
+          signsFrame.push({ sign: f.sign, x0: bx0, x1: bx1, y0: by0, y1: by1, d: m.d, legible: (by1 - by0) > 11 });
+      }
+    }
+    // material share accounting (awning width inside the screen)
+    for (let i = 0; i < pts.length - 1; i++) { const x0 = Math.max(0, Math.min(pts[i].x, pts[i + 1].x)), x1 = Math.min(W, Math.max(pts[i].x, pts[i + 1].x)); if (x1 > x0) matPx[f.mat] += (x1 - x0) * Math.abs(pts[i].yA - pts[i].yA2); }
+    if (f.shop) { const m = pts[Math.floor(pts.length / 2)]; if (Math.abs(m.rel) < S.hfov / 2 && m.d < 38) shopsInView.push({ shop: f.shop, x: m.x, yS: m.yS, d: m.d, rel: m.rel }); }
+  }
+
+  function drawPerson(cam, it) {
+    const p = it.p, base = project(cam, it.x, it.y, 0); if (Math.abs(base.rel) > S.hfov / 2 + 10) return base;
+    const top = project(cam, it.x, it.y, p.h).y, h = base.y - top, w = h * 0.3, x = base.x;
+    const seen = p.main || visibleFromMain(cam, it.x, it.y);
+    // [Brief] stopping point: ring under people who have stood still for 10 s or more
+    if (S.layers.people && seen && p.dwell >= 10 && h > 14) { ctx.save(); ctx.strokeStyle = C.inter; ctx.lineWidth = 1.4; ctx.setLineDash([3, 2]); ctx.beginPath(); ctx.ellipse(x, base.y, w * 1.1, w * 0.3, 0, 0, 7); ctx.stroke(); ctx.restore(); }
+    drawFigure(p, x, top, h, w, base.y);
+    if (p.logi) drawTool(p, x, top, h, w, base.y);
+    if (!seen) return base;
+    screenPos[p.id] = { x, top, base: base.y, h };
+    const logiOn = p.logi && S.layers.logi;
+    if (logiOn && h > 10) {
+      const ext = p.logi.type === "ebike" ? h * 0.5 : w * 1.6, sel = S.sel && S.sel.id === p.id;
+      ctx.strokeStyle = C.logi; ctx.lineWidth = sel ? 2.5 : 1.8; ctx.strokeRect(x - ext, top - 2, ext * 2, h + 3);
+      hits.push({ kind: "logi", id: p.id, x: x - ext, y: top - 2, w: ext * 2, h: h + 3 });
+      if (h > 26 || sel) { const r = pill(`${p.logi.label} ${p.conf.toFixed(2)}`, x, top - 19, C.logi, sel); hits.push({ kind: "logi", id: p.id, ...r }); }
+    } else if (S.layers.people && h > 14) {
+      ctx.strokeStyle = C.person; ctx.lineWidth = S.sel && S.sel.id === p.id ? 2.5 : 1.5; ctx.strokeRect(x - w * 0.62, top - 2, w * 1.24, h + 3);
+      hits.push({ kind: "person", id: p.id, x: x - w * 0.62, y: top - 2, w: w * 1.24, h: h + 3 });
+      if (S.layers.ids && h > 34) { ctx.fillStyle = C.person; ctx.font = "500 10px IBM Plex Mono, monospace"; ctx.textAlign = "left"; const t = `#${p.id} ${p.role} ${p.conf.toFixed(2)}`; const tw = ctx.measureText(t).width + 6; ctx.fillRect(x - w * 0.62, top - 15, tw, 13); ctx.fillStyle = C.surface; ctx.fillText(t, x - w * 0.62 + 3, top - 5); }
+    }
+    if (S.sel && (S.sel.kind === "person" || S.sel.kind === "logi") && S.sel.id === p.id) anchor = { x: x + w * 0.8, y: top };
+    return base;
+  }
+  function drawFigure(p, x, top, h, w, by) {
+    if (PAL.mode === "digital") {
+      ctx.strokeStyle = PAL.line; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(x, top + h * 0.09, Math.max(0.5, h * 0.085), 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(x - w * 0.36, top + h * 0.2, w * 0.72, Math.max(1, by - top - h * 0.2), Math.max(0.5, w * 0.3)); ctx.stroke();
+      return;
+    }
+    const photo = PAL.mode === "photo";
+    ctx.globalAlpha = photo ? 1 : 0.82;
+    ctx.fillStyle = photo ? "#b98d6b" : C.ink;
+    ctx.beginPath(); ctx.arc(x, top + h * 0.09, h * 0.085, 0, 7); ctx.fill();
+    ctx.fillStyle = photo ? `hsl(${(p.id * 47) % 360} 28% 40%)` : C.ink;
+    ctx.beginPath(); ctx.moveTo(x - w * 0.42, top + h * 0.2); ctx.lineTo(x + w * 0.42, top + h * 0.2); ctx.lineTo(x + w * 0.3, top + h * 0.6); ctx.lineTo(x + w * 0.22, by); ctx.lineTo(x - w * 0.22, by); ctx.lineTo(x - w * 0.3, top + h * 0.6); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function drawTool(p, x, top, h, w, by) {
+    const dig = PAL.mode === "digital";
+    ctx.save(); ctx.strokeStyle = dig ? PAL.line : PAL.mode === "photo" ? "#3b3631" : C.ink; ctx.lineWidth = Math.max(1, h / 60);
+    const box = (bx, bY, bw, bh, col) => { ctx.fillStyle = dig ? "rgba(92,203,228,0.18)" : col; ctx.fillRect(bx, bY, bw, bh); ctx.strokeRect(bx, bY, bw, bh); };
+    switch (p.logi.type) {
+      case "porter": ctx.beginPath(); ctx.moveTo(x + w * 0.4, top + h * 0.45); ctx.lineTo(x + w * 1.1, by); ctx.stroke(); box(x + w * 0.6, by - h * 0.42, w * 0.8, h * 0.2, C["m-cardboard"]); box(x + w * 0.65, by - h * 0.22, w * 0.8, h * 0.2, C["m-cardboard"]); break;
+      case "ebike": { const r = h * 0.17; ctx.beginPath(); ctx.arc(x - h * 0.28, by - r, r, 0, 7); ctx.moveTo(x + h * 0.28 + r, by - r); ctx.arc(x + h * 0.28, by - r, r, 0, 7); ctx.moveTo(x - h * 0.28, by - r); ctx.lineTo(x, by - h * 0.45); ctx.lineTo(x + h * 0.28, by - r); ctx.stroke(); box(x - h * 0.32, top + h * 0.12, w * 0.9, h * 0.2, C.logi); break; }
+      case "crates": for (let i = 0; i < 3; i++) box(x + w * 0.55, by - h * 0.17 * (i + 1), w * 0.9, h * 0.16, C["m-wood"]); break;
+      case "sweeper": ctx.beginPath(); ctx.moveTo(x + w * 0.3, top + h * 0.4); ctx.lineTo(x + w * 1.2, by); ctx.stroke(); box(x + w * 0.95, by - h * 0.05, w * 0.6, h * 0.05, C["m-wood"]); break;
+      case "waste": box(x + w * 0.5, by - h * 0.5, w, h * 0.5, C.org); break;
+      default: box(x - w * 0.45, top + h * 0.3, w * 0.9, h * 0.22, C["m-cardboard"]);
+    }
+    ctx.restore();
+  }
+
+  function drawOCR() {
+    for (const s of signsFrame) {
+      const sg = s.sign, sel = S.selSign === sg.id;
+      ctx.save();
+      ctx.strokeStyle = C.ocr; ctx.lineWidth = sel ? 2.5 : 1.6; ctx.setLineDash([5, 3]);
+      ctx.strokeRect(s.x0 - 3, s.y0 - 3, s.x1 - s.x0 + 6, s.y1 - s.y0 + 6);
+      ctx.restore();
+      hits.push({ x: s.x0 - 3, y: s.y0 - 3, w: s.x1 - s.x0 + 6, h: s.y1 - s.y0 + 6, sign: sg.id });
+      if (S.sel && S.sel.kind === "sign" && S.sel.id === sg.id) anchor = { x: s.x1, y: s.y0 };
+      if (s.x1 - s.x0 < 40) continue;
+      const shown = !sg.readable ? "unreadable" : !s.legible ? "too small" : sg.text;
+      const meta = `${sg.lang.toUpperCase()} ${sg.conf.toFixed(2)}`;
+      ctx.font = `500 11px Rubik, "Noto Sans Arabic", sans-serif`; ctx.direction = /[֐-׿؀-ۿ]/.test(shown) ? "rtl" : "ltr";
+      const w1 = ctx.measureText(shown).width; ctx.direction = "ltr";
+      ctx.font = "500 9.5px IBM Plex Mono, monospace"; const w2 = ctx.measureText(meta).width;
+      const bw = w1 + w2 + 18, bx = (s.x0 + s.x1) / 2 - bw / 2, by = s.y1 + 6;
+      ctx.fillStyle = sel ? C.ocr : C.surface; ctx.strokeStyle = C.ocr; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(bx, by, bw, 17, 3); ctx.fill(); ctx.stroke();
+      ctx.textAlign = "left"; ctx.fillStyle = sel ? C.surface : C.muted; ctx.fillText(meta, bx + w1 + 12, by + 12);
+      ctx.font = `500 11px Rubik, "Noto Sans Arabic", sans-serif`; ctx.fillStyle = sel ? C.surface : C.ink;
+      ctx.direction = /[֐-׿؀-ۿ]/.test(shown) ? "rtl" : "ltr"; ctx.textAlign = ctx.direction === "rtl" ? "right" : "left";
+      ctx.fillText(shown, ctx.direction === "rtl" ? bx + 6 + w1 : bx + 6, by + 12.5);
+      ctx.direction = "ltr";
+      hits.push({ x: bx, y: by, w: bw, h: 17, sign: sg.id });
+    }
+  }
+
+  function drawTags(cam, list) {
+    ctx.font = "600 12px IBM Plex Sans, sans-serif"; ctx.textAlign = "left";
+    list.sort((a, b) => b.d - a.d);
+    const placed = [];
+    for (const s of list) {
+      const label = s.shop.name, sub = `${s.shop.cat} · ${s.d.toFixed(0)} m`;
+      const tw = Math.max(ctx.measureText(label).width, 80) + 16, th = 34;
+      let y = Math.max(8, s.yS - 70 - Math.min(40, 400 / s.d));
+      let x = s.x - tw / 2;
+      for (const r of placed) if (x < r.x + r.w && x + tw > r.x && y < r.y + r.h + 4 && y + th + 4 > r.y) y = r.y - th - 6;
+      y = Math.max(4, y);
+      placed.push({ x, y, w: tw, h: th });
+      const sel = S.selected === s.shop.id;
+      ctx.strokeStyle = C.tag; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(s.x, y + th); ctx.lineTo(s.x, s.yS); ctx.stroke();
+      ctx.beginPath(); ctx.arc(s.x, s.yS, 3, 0, 7); ctx.fillStyle = C.tag; ctx.fill();
+      ctx.fillStyle = sel ? C.tag : C.surface; ctx.strokeStyle = C.tag; ctx.lineWidth = sel ? 2 : 1.3;
+      ctx.beginPath(); ctx.roundRect(x, y, tw, th, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = sel ? C.surface : C.ink; ctx.font = "600 12px IBM Plex Sans, sans-serif"; ctx.fillText(label, x + 8, y + 15);
+      ctx.fillStyle = sel ? C.surface : C.muted; ctx.font = "10.5px IBM Plex Mono, monospace"; ctx.fillText(sub, x + 8, y + 28);
+      hits.push({ x, y, w: tw, h: th, id: s.shop.id });
+      if (S.sel && S.sel.kind === "shop" && S.sel.id === s.shop.id) anchor = { x: x + tw, y };
+    }
+  }
+
+  // ---------- panel ----------
+  const $ = id => document.getElementById(id);
+  function updatePanel(cam, visPeople, matPx, shopsInView) {
+    const frame = Math.round(S.t * (N_FRAMES - 1));
+    visPeople.forEach(v => S.seen.add(v.p.id));
+    const head = ((cam.heading + S.viewYaw) % 360 + 360) % 360;
+    $("pView").textContent = visPeople.length;
+    $("pSub").textContent = `within ${S.hfov}° view, facing ${head.toFixed(0)}°`;
+    $("pUnique").textContent = S.seen.size;
+    const segPeople = people.filter(p => { const [x, y] = personAt(p, S.t * WALK_SEC); return Math.abs(y - cam.y) < 10 && Math.abs(x) < 4; }).length;
+    $("pDens").textContent = (segPeople / (20 * 8) * 100).toFixed(1) + " / 100 m²";
+    $("fovlbl").textContent = `frame ${frame}`;
+    const sx = { m: 0, w: 0, u: 0 }; visPeople.forEach(v => sx[v.p.sex]++);
+    const sxT = visPeople.length || 1, SXL = { m: "Men", w: "Women", u: "Uncertain" };
+    $("sxBar").innerHTML = ["m", "w", "u"].map(k => `<div style="width:${(sx[k] / sxT * 100).toFixed(1)}%;background:var(--sx-${k})"></div>`).join("");
+    $("sxLeg").innerHTML = ["m", "w", "u"].map(k => `<span><i style="background:var(--sx-${k})"></i>${SXL[k]}<b>${Math.round(sx[k] / sxT * 100)}%</b></span>`).join("");
+    const tot = Object.values(matPx).reduce((a, b) => a + b, 0) || 1;
+    const order = MATS.slice().sort((a, b) => matPx[b] - matPx[a]);
+    $("mBar").innerHTML = order.map(m => `<div style="width:${(matPx[m] / tot * 100).toFixed(1)}%;background:var(--m-${m})" title="${MAT_LABEL[m]}"></div>`).join("");
+    $("mLeg").innerHTML = order.map(m => `<span><i style="background:var(--m-${m})"></i>${MAT_LABEL[m]}<b>${Math.round(matPx[m] / tot * 100)}%</b></span>`).join("");
+    shopsInView.sort((a, b) => a.d - b.d);
+    $("sCount").textContent = `${shopsInView.length} tagged`;
+    const sig = shopsInView.map(s => s.shop.id + S.selected).join();
+    if (sig !== updatePanel.sig) {
+      updatePanel.sig = sig;
+      $("sList").innerHTML = shopsInView.length ? shopsInView.map(s => `<li><button data-id="${s.shop.id}" aria-current="${S.selected === s.shop.id}"><span>${s.shop.name}</span><small>${s.d.toFixed(0)} m · ${s.rel > 0 ? "R" : "L"}</small></button></li>`).join("") : `<li class="ethic">No GIS-tagged shops in this direction. Turn toward the stalls.</li>`;
+    }
+    const [lat, lon] = toLL(cam.x, cam.y);
+    $("hud").innerHTML = `t ${(S.t * WALK_SEC).toFixed(1)} s · frame ${frame}/${N_FRAMES - 1}<br>${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E<br>cam heading ${(((cam.heading % 360) + 360) % 360).toFixed(0)}° · view ${head.toFixed(0)}°<br>route ${chain(cam.y).toFixed(1)} m of 114 m`;
+    if (S.layers.rolePanel) updateRolePanel(visPeople);
+    if (S.layers.gisPanel) updateGisPanel();
+    $("needle").setAttribute("transform", `rotate(${-head})`);
+    $("tlmeta").textContent = `${fmt(S.t * WALK_SEC)} / ${fmt(WALK_SEC)} · ${FPS_ANALYSIS} fps analysed`;
+    if (!scrubbing) $("scrub").value = Math.round(S.t * 1000);
+    if (S.layers.mapPanel) drawMap(cam, head, visPeople);
+    if (S.layers.ocrPanel) updateOcrPanel();
+  }
+  const LK = ["he", "en", "ar", "mixed"], LVAR = { he: "--l-he", en: "--l-en", ar: "--l-ar", mixed: "--l-mx" };
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  function updateOcrPanel() {
+    const list = signsFrame.slice().sort((a, b) => a.d - b.d);
+    const read = list.filter(s => s.sign.readable && s.legible);
+    const cnt = Object.fromEntries(LK.map(k => [k, 0])); read.forEach(s => cnt[s.sign.lang]++);
+    const tot = read.length || 1;
+    $("oCount").textContent = `${list.length} signs · ${read.length} read`;
+    $("lBar").innerHTML = LK.map(k => `<div style="width:${(cnt[k] / tot * 100).toFixed(1)}%;background:var(${LVAR[k]})"></div>`).join("");
+    $("lLeg").innerHTML = LK.map(k => `<span><i style="background:var(${LVAR[k]})"></i>${LANG_LABEL[k]}<b>${Math.round(cnt[k] / tot * 100)}%</b></span>`).join("");
+    const sig = list.map(s => s.sign.id + (s.legible ? 1 : 0)).join() + S.selSign;
+    if (sig === updateOcrPanel.sig) return;
+    updateOcrPanel.sig = sig;
+    $("oList").innerHTML = list.length ? list.map(s => {
+      const sg = s.sign, txt = !sg.readable ? "detected, unreadable" : !s.legible ? "detected, too small to read" : sg.text;
+      return `<li><button data-sign="${sg.id}" aria-current="${S.selSign === sg.id}"><span class="lang" style="--lc: var(${LVAR[sg.lang]})">${sg.lang}</span><span class="txt" dir="auto">${esc(txt)}</span><small>${sg.readable && s.legible ? sg.conf.toFixed(2) : "–"}${sg.f.shop ? " ✓" : ""}</small></button></li>`;
+    }).join("") : `<li class="ethic">No signs detected in this direction.</li>`;
+  }
+  function showSignCard() {
+    const c = $("ocrCard"), sg = signs.find(s => s.id === S.selSign);
+    if (!sg) { c.hidden = true; return; }
+    c.hidden = false;
+    const changed = sg.readable && sg.raw !== sg.text;
+    c.innerHTML = `<h3 class="bidi" dir="auto">${sg.readable ? esc(sg.text) : "Unreadable sign"}</h3>
+      <p>Sign ${sg.id} · ${LANG_LABEL[sg.lang]}${sg.f.shop ? ` · linked to GIS ${sg.f.shop.id} (${esc(sg.f.shop.name)})` : ""}</p>
+      <dl class="kv">
+        <dt>Raw Tesseract output</dt><dd class="bidi" dir="auto">${sg.readable ? (changed ? `<del>${esc(sg.raw)}</del>` : esc(sg.raw)) : "—"}</dd>
+        <dt>Confidence (mean word)</dt><dd>${sg.conf.toFixed(2)}</dd>
+        <dt>Engine</dt><dd>Tesseract 5 · heb+eng${sg.lang === "ar" ? "+ara" : ""} · psm ${sg.psm}</dd>
+        <dt>Frames voted</dt><dd>${sg.used} best of ${sg.nFrames}</dd>
+      </dl>
+      ${sg.readable ? (sg.fixes.length ? `<ul class="fixes">${sg.fixes.map(x => `<li>${x}</li>`).join("")}</ul>` : `<p>No corrections needed.</p>`) : `<p>Below the confidence threshold, so the text is not guessed.</p>`}`;
+  }
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  // ---------- [Brief] roles / age, research questions, GIS export, in-view card ----------
+  const barHtml = (keys, cnt, n, vars) => keys.map(k => `<div style="width:${(cnt[k] / n * 100).toFixed(1)}%;background:var(${vars[k]})"></div>`).join("");
+  const legHtml = (keys, cnt, n, vars) => keys.map(k => `<span><i style="background:var(${vars[k]})"></i>${cap(k)}<b>${Math.round(cnt[k] / n * 100)}%</b></span>`).join("");
+  function updateRolePanel(vis) {
+    const rc = Object.fromEntries(ROLES.map(r => [r, 0])), ac = Object.fromEntries(AGES.map(a => [a, 0]));
+    vis.forEach(v => { rc[v.p.role]++; ac[v.p.age]++; });
+    const n = vis.length || 1;
+    $("rBar").innerHTML = barHtml(ROLES, rc, n, ROLE_VAR); $("rLeg").innerHTML = legHtml(ROLES, rc, n, ROLE_VAR);
+    $("aBar").innerHTML = barHtml(AGES, ac, n, AGE_VAR); $("aLeg").innerHTML = legHtml(AGES, ac, n, AGE_VAR);
+    $("iView").textContent = interFrame.length; $("stopView").textContent = vis.filter(v => v.p.dwell >= 10).length;
+  }
+  const TYPE_LABEL = { person: "People (tracks)", interaction: "Interactions", logistics: "Logistics events", object: "Objects (waste, seating, obstacles)", frontage: "Frontages", sign: "Signs (OCR)", shop: "GIS shops" };
+  let gisVer = -1;
+  function updateGisPanel() {
+    if (gisVer === obsVer) return; gisVer = obsVer;
+    const by = {}; for (const o of obs.values()) by[o.type] = (by[o.type] || 0) + 1;
+    $("gCount").textContent = `${obs.size} entities`;
+    $("gTypes").innerHTML = Object.keys(TYPE_LABEL).map(k => `<dt>${TYPE_LABEL[k]}</dt><dd>${by[k] || 0}</dd>`).join("");
+    const gj = toGeoJSON(); $("gPrev").value = JSON.stringify({ ...gj, features: gj.features.slice(0, 2) }, null, 1);
+  }
+  function renderRQ() {
+    const f2 = v => v.toFixed(2), pc = v => Math.round(v * 100) + "%";
+    const row = (q, la, va, lb, vb, fm, unit) => { const mx = Math.max(va, vb) || 1; return `<div class="rq"><p>${q}</p><div class="rqv"><span>${la}</span><span class="trk"><i style="width:${(va / mx * 100).toFixed(0)}%"></i></span><b>${fm(va)}</b><span>${lb}</span><span class="trk"><i style="width:${(vb / mx * 100).toFixed(0)}%"></i></span><b>${fm(vb)}</b></div><small>${unit}</small></div>`; };
+    const hit = RQ.cells.filter(c => c.all);
+    $("rqList").innerHTML =
+      row("Do open stalls produce more social interaction than walk-in shops?", "Open stall", RQ.q1[0], "Walk-in shop", RQ.q1[1], f2, `interactions per frontage · n = ${RQ.q1[2]} frontages`) +
+      row("Do vendors positioned outside interact more frequently?", "Vendor outside", RQ.q2[0], "Vendor inside", RQ.q2[1], f2, `interactions per vendor · n = ${RQ.q2[2]} vendors`) +
+      row("Are older and younger users concentrated in different parts?", "South half", RQ.q3[0], "North half", RQ.q3[1], pc, `share of older adults · n = ${RQ.q3[2]} people with an age estimate`) +
+      row("Do interaction hotspots correspond with signage?", "With a sign", RQ.q4[0], "No sign", RQ.q4[1], f2, "interactions per frontage") +
+      `<div class="rq"><p>Where do waste, logistics and social activity overlap?</p><div class="cells" aria-label="10 m route cells">${RQ.cells.map(c => `<i class="${c.all ? "on" : ""}" title="${c.from}–${c.from + 10} m: waste ${c.w ? "yes" : "no"}, logistics ${c.l ? "yes" : "no"}, interaction ${c.s ? "yes" : "no"}"></i>`).join("")}</div><small>${hit.length} of ${RQ.cells.length} route cells (10 m) have all three${hit.length ? `: ${hit.map(c => `${c.from}–${c.from + 10} m`).join(", ")}` : ""}. One walk is one moment in time; repeat walks before drawing conclusions.</small></div>`;
+  }
+  const vcard = $("vcard");
+  const seenTxt = id => { const o = obs.get(id); return o ? `frames ${o.f0}–${o.f1}` : "not yet logged"; };
+  function buildVCard() {
+    const s = S.sel; if (!s) { vcard.hidden = true; return; }
+    let kind = "", col = "--accent", title = "", rows = [], note = "";
+    if (s.kind === "shop") { const sh = shops.find(x => x.id === s.id); if (!sh) return; const f = sh.f; kind = "Shop"; col = "--tag"; title = sh.name;
+      rows = [["GIS id", sh.id], ["Hebrew name", sh.he || "—"], ["Category", sh.cat], ["Ownership", sh.owner], ["Stall form", f.morph], ["Vendor", f.vendorOut ? "outside" : "inside"], ["Open front", Math.round(f.perm * 100) + "%"], ["Signage", f.sign && f.sign.readable ? esc(f.sign.text) : "none read"], ["Route position", chain(mid(f)[1]) + " m"]]; }
+    else if (s.kind === "sign") { const sg = signs.find(x => x.id === s.id); if (!sg) return; kind = "Sign"; col = "--ocr"; title = sg.readable ? sg.text : "Unreadable sign";
+      rows = [["Sign", sg.id], ["Language", LANG_LABEL[sg.lang]], ["Confidence", sg.conf.toFixed(2)], ["Engine", `Tesseract 5 · psm ${sg.psm}`], ["Linked shop", sg.f.shop ? sg.f.shop.id : "—"], ["Seen", seenTxt(sg.id)]]; }
+    else if (s.kind === "person" || s.kind === "logi") { const p = people.find(x => x.id === s.id); if (!p) return;
+      const nI = interactions.filter(i => i.a === p || i.b === p).length, [px, py] = personAt(p, S.t * WALK_SEC);
+      if (s.kind === "logi" && p.logi) { kind = "Logistics"; col = "--logi"; title = p.logi.label; const o = obs.get(p.logi.lid);
+        rows = [["Event", p.logi.lid], ["Track", pidOf(p)], ["Tool / vehicle", TOOL[p.logi.type]], ["Speed", p.v ? Math.abs(p.v).toFixed(1) + " m/s" : "stationary"], ["Seen", seenTxt(p.logi.lid)], ["Path logged", o ? o.path.length + " points" : "—"], ["Route position", chain(py) + " m"], ["Confidence", p.conf.toFixed(2)]]; }
+      else { kind = "Person"; col = "--person"; title = `${cap(p.role)} · ${pidOf(p)}`;
+        rows = [["Track", pidOf(p)], ["Role (rules + VLM)", p.role], ["Activity", p.logi ? p.logi.label : p.role === "vendor" ? "Selling at the stall" : p.dwell ? "Standing, browsing or talking" : "Walking through"], ["Dwell", p.dwell ? p.dwell + " s" : "moving"], ["Interactions", nI], ["Seen", seenTxt(pidOf(p))], ["Route position", chain(py) + " m"], ["Confidence", p.conf.toFixed(2)]];
+        note = "Age group and sex are reported only in aggregate, never per person."; } }
+    else if (s.kind === "obj") { const o = objects.find(x => x.id === s.id); if (!o) return; kind = o.kind === "waste" ? "Waste" : o.kind === "van" ? "Logistics" : "Spatial"; col = o.kind === "waste" ? "--waste" : o.kind === "van" ? "--logi" : "--spatial"; title = cap(o.cls);
+      rows = [["Object", o.id], ["Class", o.cls], ["Layer", o.layer]].concat(o.area ? [["Area (est.)", o.area + " m²"]] : []).concat([["Near frontage", o.f ? o.f.fid : "in walkway"], ["Seen", seenTxt(o.id)], ["Route position", chain(o.y) + " m"], ["Confidence", o.conf.toFixed(2)]]); }
+    else if (s.kind === "front") { const f = frontages.find(x => x.fid === s.id); if (!f) return; kind = "Frontage"; col = MORPH_VAR[f.morph]; title = `${cap(f.morph)} · ${f.fid}`;
+      rows = [["Trade", f.trade], ["Vendor", f.vendorOut ? "outside" : "inside"], ["Open front (permeability)", Math.round(f.perm * 100) + "%"], ["Spill-out", f.spill ? f.spill.toFixed(1) + " m into walkway" : "none"], ["Thresholds", f.thrIn ? `${f.thrIn} in / ${f.thrOut} out` : "open front"], ["Interactions", f.inter], ["Active-frontage score", f.active.toFixed(2)], ["Awning", MAT_LABEL[f.mat]], ["Route position", chain(mid(f)[1]) + " m"]]; }
+    else if (s.kind === "inter") { const i = interactions.find(x => x.id === s.id); if (!i) return; kind = "Interaction"; col = "--inter"; title = `${cap(i.type)} · ${i.id}`;
+      rows = [["Participants", `${pidOf(i.a)} ↔ ${pidOf(i.b)}`], ["Roles", `${i.a.role} ↔ ${i.b.role}`], ["Duration", i.dur + " s"], ["Frontage", i.f ? `${i.f.fid} (${i.f.morph})` : "in the walkway"], ["Route position", chain(i.a.y) + " m"], ["Confidence", i.conf.toFixed(2)]]; }
+    vcard.style.setProperty("--kc", `var(${col})`);
+    vcard.innerHTML = `<header><span class="kind">${kind}</span><b dir="auto">${esc(String(title))}</b><button class="x" aria-label="Close card">✕</button></header><dl class="kv">${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${note ? `<p>${note}</p>` : ""}`;
+    vcard.hidden = false;
+  }
+  let vcardTick = 0;
+  function placeVCard() {
+    if (!S.sel || !anchor) { vcard.hidden = true; return; }
+    if (vcard.hidden) vcard.hidden = false;
+    if (++vcardTick % 20 === 0) buildVCard();
+    const cw = vcard.offsetWidth || 260, ch = vcard.offsetHeight || 160;
+    let x = anchor.x + 16; if (x + cw > W - 8) x = anchor.x - cw - 16;
+    x = Math.max(8, Math.min(W - cw - 8, x));
+    const y = Math.max(8, Math.min(H - ch - 8, anchor.y - 24));
+    vcard.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+  function updateCounters(visPeople, visObjs) {
+    const L = S.layers, parts = [];
+    if (L.people) parts.push(["--person", `${visPeople.length} people`], ["--inter", `${interFrame.length} interactions`]);
+    if (L.logi) parts.push(["--logi", `${visPeople.filter(v => v.p.logi).length + visObjs.filter(v => v.o.kind === "van").length} logistics`]);
+    if (L.mat) parts.push(["--waste", `${visObjs.filter(v => v.o.kind === "waste").length} waste items`]);
+    if (L.shops) parts.push(["--l-ar", `${frontsFrame.length} frontages`]);
+    if (L.ocr) parts.push(["--ocr", `${signsFrame.length} signs`]);
+    const html = parts.map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join("");
+    if (html !== updateCounters.h) { updateCounters.h = html; $("ctr").innerHTML = html; }
+  }
+
+  function showCard() {
+    const c = $("card"), s = shops.find(x => x.id === S.selected);
+    if (!s) { c.hidden = true; return; }
+    c.hidden = false;
+    c.innerHTML = `<h3>${s.name}</h3><p>${s.cat} · GIS id ${s.id}</p><dl class="kv"><dt>Ownership</dt><dd>${s.owner}</dd><dt>Trading since</dt><dd>${s.since}</dd><dt>Floor area</dt><dd>${s.area} m²</dd><dt>Awning material</dt><dd>${MAT_LABEL[s.f.mat]}</dd></dl>`;
+  }
+
+  // ---------- mini-map ----------
+  const mm = $("minimap");
+  function drawMap(cam, head, visPeople) {
+    const Y = y => -y; let h = "";
+    h += `<rect x="-44" y="-128" width="88" height="134" fill="var(--surface)"/>`;
+    h += `<path d="M-4,1 V-55 H-40 V-63 H-4 V-124 H4 V-63 H40 V-55 H4 V1 Z" fill="var(--pave)" opacity="0.55"/>`;
+    for (const f of frontages) h += `<line x1="${f.p0[0]}" y1="${Y(f.p0[1])}" x2="${f.p1[0]}" y2="${Y(f.p1[1])}" stroke="var(--m-${f.mat})" stroke-width="1.6"/>`;
+    h += `<line x1="0" y1="${Y(4)}" x2="0" y2="${Y(118)}" stroke="var(--accent)" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.7"/>`;
+    const a0 = (head - S.hfov / 2) * deg, a1 = (head + S.hfov / 2) * deg, r = 22;
+    h += `<path d="M${cam.x},${Y(cam.y)} L${cam.x + r * Math.sin(a0)},${Y(cam.y + r * Math.cos(a0))} A${r},${r} 0 0 1 ${cam.x + r * Math.sin(a1)},${Y(cam.y + r * Math.cos(a1))} Z" fill="var(--accent)" opacity="0.22"/>`;
+    for (const s of shops) { const m = [(s.f.p0[0] + s.f.p1[0]) / 2, (s.f.p0[1] + s.f.p1[1]) / 2]; h += `<circle cx="${m[0]}" cy="${Y(m[1])}" r="${S.selected === s.id ? 2.6 : 1.6}" fill="var(--tag)" stroke="var(--surface)" stroke-width="0.5"/>`; }
+    if (S.layers.spatial) {
+      for (const hs of hotspots) h += `<circle cx="${hs.x.toFixed(1)}" cy="${Y(hs.y).toFixed(1)}" r="${(2 + hs.n * 1.5).toFixed(1)}" fill="var(--inter)" opacity="0.18"/>`;
+      h += `<circle cx="0" cy="${Y(59)}" r="3.5" fill="none" stroke="var(--spatial)" stroke-width="0.6" stroke-dasharray="1.5 1"/>`;
+      for (let y = 10; y < 118; y += 18) h += `<path d="M1.2,${Y(y - 1)} L1.6,${Y(y + 1)} L2,${Y(y - 1)} M-2,${Y(y + 1)} L-1.6,${Y(y - 1)} L-1.2,${Y(y + 1)}" fill="none" stroke="var(--spatial)" stroke-width="0.5"/>`;
+    }
+    if (S.layers.shops) for (const f of mainF) { const ox = f.n[0] * 0.9; h += `<line x1="${f.p0[0] + ox}" y1="${Y(f.p0[1])}" x2="${f.p1[0] + ox}" y2="${Y(f.p1[1])}" stroke="var(${MORPH_VAR[f.morph]})" stroke-width="1"/>`; }
+    if (S.layers.mat) for (const o of objects) if (o.kind === "waste") h += `<circle cx="${o.x.toFixed(2)}" cy="${Y(o.y).toFixed(2)}" r="0.8" fill="var(--waste)"/>`;
+    if (S.layers.people) for (const i of interactions) h += `<circle cx="${((i.a.x + i.b.x) / 2).toFixed(2)}" cy="${Y((i.a.y + i.b.y) / 2).toFixed(2)}" r="1.1" fill="none" stroke="var(--inter)" stroke-width="0.5"/>`;
+    if (S.layers.logi) {
+      for (const e of logiEvents) h += `<rect x="${(e.x - 0.7).toFixed(2)}" y="${(Y(e.y) - 0.7).toFixed(2)}" width="1.4" height="1.4" fill="var(--logi)"/>`;
+      for (const p of logiAgents) { const [x, y] = personAt(p, S.t * WALK_SEC); h += `<path d="M${x.toFixed(2)},${(Y(y) - 1.2).toFixed(2)} l1.1,1.2 l-1.1,1.2 l-1.1,-1.2 z" fill="var(--logi)"/>`; }
+    }
+    if (S.layers.people) for (const v of visPeople) h += `<circle cx="${v.x.toFixed(2)}" cy="${Y(v.y).toFixed(2)}" r="0.9" fill="var(--person)"/>`;
+    h += `<circle cx="${cam.x}" cy="${Y(cam.y)}" r="2.4" fill="var(--accent)" stroke="var(--surface)" stroke-width="0.8"/>`;
+    h += `<text x="-42" y="-120" font-size="4" fill="var(--muted)" font-family="IBM Plex Mono">N ↑ · 10 m</text><line x1="-42" y1="-117" x2="-32" y2="-117" stroke="var(--muted)" stroke-width="0.6"/>`;
+    mm.innerHTML = h;
+  }
+
+  // ---------- interaction ----------
+  let drag = null, scrubbing = false;
+  vp.addEventListener("pointerdown", e => { drag = { x: e.clientX, yaw: S.viewYaw, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("dragging"); });
+  vp.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) drag.moved = true; S.viewYaw = wrap(drag.yaw - dx * S.hfov / W); if (!S.playing) draw(); });
+  vp.addEventListener("pointerup", e => {
+    vp.classList.remove("dragging");
+    if (drag && !drag.moved) { const r = vp.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; const h = hits.slice().reverse().find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+      if (h) {
+        const kind = h.kind || (h.sign ? "sign" : "shop"), id = h.kind ? h.id : (h.sign || h.id);
+        if (kind === "sign") { S.selSign = S.selSign === id ? null : id; showSignCard(); updateOcrPanel.sig = null; }
+        if (kind === "shop") { S.selected = S.selected === id ? null : id; showCard(); }
+        S.sel = S.sel && S.sel.kind === kind && S.sel.id === id ? null : { kind, id };
+        buildVCard();
+      }
+      if (!S.playing) draw(); }
+    drag = null;
+  });
+  vp.tabIndex = 0;
+  vp.addEventListener("keydown", e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { S.viewYaw = wrap(S.viewYaw + (e.key === "ArrowLeft" ? -8 : 8)); e.preventDefault(); if (!S.playing) draw(); } });
+  // [Brief] move along the route, switch representation, immersive mode, in-view card, GIS export
+  function step(m) { S.t = Math.max(0, Math.min(1, S.t + m / 114)); draw(); }
+  vp.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") { step(e.key === "ArrowUp" ? 1 : -1); e.preventDefault(); }
+    if (e.key === "Escape" && S.sel) { S.sel = null; buildVCard(); draw(); }
+  });
+  $("stepB").addEventListener("click", () => step(-2));
+  $("stepF").addEventListener("click", () => step(2));
+  function setMode(m) {
+    if (m === S.mode) return;
+    if (W && !reduceMotion) { const snap = document.createElement("canvas"); snap.width = cv.width; snap.height = cv.height; snap.getContext("2d").drawImage(cv, 0, 0); fade = { snap, t0: performance.now() }; }
+    S.mode = m;
+    document.querySelectorAll(".modesw button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+    try { localStorage.setItem("shuk-mode", m); } catch (e) {}
+    draw();
+    if (!S.playing) { const tick = () => { if (!fade || S.playing) return; draw(); requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+  }
+  document.querySelectorAll(".modesw button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+  for (const el of [$("modesw"), vcard]) el.addEventListener("pointerdown", e => e.stopPropagation());
+  vcard.addEventListener("click", e => { if (e.target.closest(".x")) { S.sel = null; buildVCard(); if (!S.playing) draw(); } });
+  const mainEl = document.querySelector(".main");
+  $("immBtn").addEventListener("click", e => { const on = !mainEl.classList.contains("immersive"); mainEl.classList.toggle("immersive", on); e.currentTarget.setAttribute("aria-pressed", String(on)); e.currentTarget.textContent = on ? "Show side panel" : "Immersive view"; });
+  $("gCopy").addEventListener("click", () => {
+    const txt = JSON.stringify(toGeoJSON()), st = $("gStatus");
+    const fallback = () => { const ta = $("gPrev"); ta.value = txt; ta.focus(); ta.select(); gisVer = obsVer; st.textContent = "Copying is blocked here. The full GeoJSON is selected in the box: press Ctrl+C."; };
+    try { navigator.clipboard.writeText(txt).then(() => { st.textContent = `Copied ${obs.size} features as GeoJSON. Paste into QGIS or geojson.io.`; }, fallback); } catch (err) { fallback(); }
+  });
+  try { const m = localStorage.getItem("shuk-mode"); if (m === "photo" || m === "digital" || m === "illus") { S.mode = m; document.querySelectorAll(".modesw button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === m))); } } catch (e) {}
+  renderRQ();
+  $("sList").addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (!b) return; S.selected = b.dataset.id; S.sel = { kind: "shop", id: b.dataset.id }; buildVCard(); const s = shops.find(x => x.id === S.selected), cam = camAt(S.t), m = [(s.f.p0[0] + s.f.p1[0]) / 2, (s.f.p0[1] + s.f.p1[1]) / 2]; S.viewYaw = wrap(Math.atan2(m[0] - cam.x, m[1] - cam.y) / deg - cam.heading); showCard(); draw(); });
+  $("oList").addEventListener("click", e => { const b = e.target.closest("button[data-sign]"); if (!b) return; S.selSign = S.selSign === b.dataset.sign ? null : b.dataset.sign; showSignCard(); updateOcrPanel.sig = null; S.sel = S.selSign ? { kind: "sign", id: S.selSign } : null; buildVCard(); draw(); });
+  // data selection: scene layers and panel sections, remembered per viewer
+  try { const saved = JSON.parse(localStorage.getItem("shuk-layers") || "{}"); for (const k in saved) if (k in S.layers) S.layers[k] = !!saved[k]; } catch (e) {}
+  function applyLayers() {
+    for (const k of Object.keys(S.layers)) { $("L-" + k).checked = S.layers[k]; const sec = $("sec-" + k); if (sec) sec.hidden = !S.layers[k]; }
+    $("L-ids").disabled = !S.layers.people;
+  }
+  for (const k of Object.keys(S.layers)) $("L-" + k).addEventListener("change", e => {
+    S.layers[k] = e.target.checked; applyLayers(); updatePanel.sig = null;
+    try { localStorage.setItem("shuk-layers", JSON.stringify(S.layers)); } catch (err) {}
+    draw();
+  });
+  applyLayers();
+  const playBtn = $("play");
+  function setPlaying(p) { S.playing = p; playBtn.textContent = p ? "❚❚" : "▶"; playBtn.setAttribute("aria-label", p ? "Pause" : "Play"); if (p) { last = performance.now(); requestAnimationFrame(loop); } }
+  playBtn.addEventListener("click", () => setPlaying(!S.playing));
+  const scrub = $("scrub");
+  scrub.addEventListener("input", () => { scrubbing = true; S.t = scrub.value / 1000; if (S.t < 0.01) S.seen.clear(); draw(); });
+  scrub.addEventListener("change", () => { scrubbing = false; });
+
+  let last = performance.now();
+  function loop(now) {
+    if (!S.playing) return;
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    S.t += dt / WALK_SEC; if (S.t >= 1) { S.t = 0; S.seen.clear(); }
+    draw(); requestAnimationFrame(loop);
+  }
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  readColors();
+  new ResizeObserver(resize).observe(vp);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); draw(); });
+  new MutationObserver(() => { readColors(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  document.fonts && document.fonts.ready.then(() => { texCache.clear(); draw(); });
+  S.t = 0.18; S.selected = null;
+  setPlaying(!reduce);
+  resize();
+})();
+</script>

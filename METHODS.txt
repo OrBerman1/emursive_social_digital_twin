@@ -1,0 +1,109 @@
+SHUK HATIKVAH 360 - METHODS USED (what algorithm / code solves each problem)
+Last updated: 13 Oct 2026 (OCR results added). Keep this file current whenever a method changes.
+Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: viewer\index.html.
+
+1. INPUT / STITCHING  (pipeline\extract_frames.py, encode_video.py)
+   - Camera: Insta360 ONE RS, raw dual-fisheye .insv (3968x1920, 29.97 fps).
+   - Stitch: ffmpeg v360 filter, dual-fisheye -> equirectangular, lens FOV 190 deg,
+     roll 180 (camera was held upside down). Fast approximate stitch; seam visible.
+   - Analysis frames: 5 fps, 3840x1920 JPEG. Viewer video: 2880x1440 H.264 (NVENC).
+
+2. VIDEO STABILISATION  (imu_extract.py, stabilize.py, bake_stab.py)
+   - Gyro + accelerometer (1 kHz) read from the Insta360 trailer with telemetry-parser
+     (Gyroflow's parser; runs in a separate Python 3.9 env, .venv-imu).
+   - Gyro-to-camera axis mapping and time offset: fitted against the visual rotation
+     between consecutive frames (ORB features on the sphere + RANSAC + Kabsch/SVD
+     rotation fit), trying all 48 signed axis permutations and lags of +-0.5 s.
+   - Orientation: quaternion integration of the gyro (scipy Rotation), horizon
+     levelled with a complementary filter toward the accelerometer's "up".
+   - Smoothing: camera heading smoothed with a Gaussian (sigma 1 s); correction
+     rotation Q = R(t)^T * Ry(smoothed heading).
+   - Timing fine-tuned (5 ms steps) separately for the 30 fps video and the 5 fps frames
+     by minimising the remaining frame-to-frame rotation.
+   - Applied OFFLINE: every pixel re-projected through Q on the GPU (torch grid_sample),
+     written to video_stab\ and frames_stab\. (Render-time stabilisation was tried and
+     removed - it shook.) Result: high-frequency shake about -87%, horizon level.
+
+3. DETECTION - LEVEL 1, public classes  (detect.py)
+   - YOLO11x (Ultralytics, COCO weights): person, bicycle, motorcycle, car, truck, bus,
+     chair, bench, handbag, backpack, ... plus produce classes.
+   - Each 360 frame is cut into 8 undistorted perspective tiles (100 deg FOV, pitch -15,
+     1024 px; precomputed cv2.remap grids); boxes mapped back to yaw/pitch on the sphere.
+   - Raw detections saved at confidence >= 0.05 (cached once); the display threshold is
+     applied later (viewer default 0.6).
+
+4. DETECTION - LEVEL 2, open vocabulary  (detect.py --prompts level2)
+   - YOLO-World v2 (yolov8x-worldv2, CLIP ViT-B/32 text encoder) with 28 text prompts:
+     crates, cardboard, plastic bag, organic waste, trash bin, hand truck, shopping
+     trolley, walker, mobility scooter, e-bike, broom, display table, flag, lamp, ...
+   - Same tiling and caching as level 1.
+
+5. DUPLICATES ACROSS TILES  (tracks.py: dedup_frame)
+   - Non-maximum suppression in yaw/pitch space (wrap-aware angular IoU > 0.35),
+     preferring the tile where the box is least truncated (centrality score).
+
+6. TRACKING (persistent IDs)  (tracks.py: track, stitch)
+   - Frame-to-frame assignment with the Hungarian algorithm (lap.lapjv).
+   - Similarity = max(angular IoU, Gaussian of centre distance scaled by box height),
+     with a size-ratio gate; constant-velocity yaw prediction; tracks kept 2 s unseen.
+   - Tracklet stitching: a track ending and another starting within 3 s near the
+     extrapolated position with a similar size are merged.
+   - Objects (level 1 and 2) tracked the same way, per class.
+
+7. BOX SMOOTHING  (tracks.py: smooth_tracks; viewer)
+   - Gaps up to 1 s filled by linear interpolation; centre smoothed with a zero-phase
+     Gaussian (sigma 0.3 s), box size with sigma 0.6 s (offline, no lag).
+   - Viewer: boxes interpolated per track ID between 5 fps frames (smooth at 30 fps),
+     fade in/out, tracks shorter than 1 s hidden, non-overlapping labels (closest first).
+
+8. CAMERA OPERATOR REMOVAL  (tracks.py: operator_like; stabilize.py: operator_mask_yaw)
+   - Fingers: boxes entirely below -35 deg pitch dropped. Body: very large boxes.
+   - Operator's camera-fixed direction = most frequent yaw of "huge, very close" person
+     boxes; detections inside +-45 deg of it and very close are dropped (on stabilised
+     frames, boxes are rotated back to camera directions with Q first).
+
+9. DISTANCE AND CAMERA HEIGHT  (tracks.py)
+   - Camera height self-calibrated: median over many people of the height implied by
+     their box (assumed person height 1.70 m). Result 1.37 m / 1.20 m (stabilised).
+   - Ground distance = camera height / tan(angle of the feet below the horizon).
+
+10. PERCEIVED GENDER + AGE GROUP  (attributes.py)
+   - CLIP ViT-L/14 zero-shot on full-body crops (faces too small in 360 footage):
+     up to 5 largest, confident crops per track; undistorted crop with neighbours
+     greyed out; prompt ensembles ("a photo of a man/woman ...", age groups).
+   - Probabilities averaged per track; label only if >= 0.75, else "uncertain";
+     tracks with no crop >= 6 deg tall are "uncertain".
+   - Age groups follow the team's coding scheme (18-35 / 36-60 / 61+, child).
+   - Crops are not stored; results shown only in aggregate. Not yet validated.
+
+11. OCR OF SIGNS  (ocr_signs.py; pipeline\ocr\ copied from C:\Projects\OCR)
+   - Text detection: docTR db_resnet50 on 16 tiles (8 at eye level, 8 tilted up for shop
+     signs), every 2nd analysis frame; word boxes merged into text lines.
+   - Lines grouped into signs across frames with the tracker from section 6.
+   - Recognition: Tesseract 5.5 (heb+eng, page segmentation mode 7 = single line) on the
+     2 best crops per sign, each upscaled + CLAHE + unsharp mask, normal and inverted
+     (light text on dark boards); best mean word confidence wins.
+   - Correction: HebrewFinalFixer (final letters, samekh/final-mem swaps) + SymSpell
+     spellcheck (Hebrew 100k frequency list + English dictionary). Signs below confidence
+     55 are marked "unreadable", not guessed.
+   - RESULT (13 Oct): weak. ~2,000 signs per walk detected, ~1,000 large enough to try,
+     only 6-11% reach confidence 55; manual spot check of the best 24: ~3 fully correct,
+     ~6 partly, ~15 wrong. Detection (docTR) works; Tesseract recognition on painted/angled
+     Hebrew does not. Also found: sign grouping too loose (neighbouring lines merged) and the
+     operator's T-shirt read as a sign.
+   - PLANNED: Claude vision as the sign reader (offline, cached; user agreed the method is
+     open), per-line grouping, operator mask for text. Waiting for an API key.
+
+12. CACHING ("compute once")  (common.py: Stage)
+   - Every expensive stage writes outputs + manifest.json (stage version, parameters,
+     input fingerprints) and is skipped when unchanged. Cheap stages always rerun.
+
+13. VIEWER  (viewer\index.html, pipeline\serve.py, start_viewer.bat)
+   - WebGL fragment shader renders the equirectangular video as a perspective view;
+     overlays projected with the same yaw/pitch maths (pipeline\spherical.py).
+   - Local server with HTTP Range + HTTP/1.1 (needed for video seeking on Windows).
+
+14. GIS EXPORT AND VALIDATION  (export_overlays.py, make_validation.py, viewer\validate.html)
+   - GeoJSON of persistent entities (track ID, frames, time, confidence); route position
+     from an assumed walking pace until anchor points arrive (no GPS in the videos).
+   - Hand-count page: 30 frames, your count vs the model's count (target +-15%).

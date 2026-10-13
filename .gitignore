@@ -1,0 +1,14 @@
+# raw media and caches (see CLAUDE.md: compute once, cache everything)
+data/raw/
+data/interim/
+*.zip
+*.insv
+*.pt
+.venv/
+__pycache__/
+*.pyc
+data/
+models/
+*.zip
+.venv-imu/
+
