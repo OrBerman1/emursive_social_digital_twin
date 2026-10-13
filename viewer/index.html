@@ -205,7 +205,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <dl class="kv" id="fdList"></dl>
         <div class="note">Each entry is a tracked display or stack, not single items. Found by YOLOv8x (Open Images V7) + COCO produce, named by CLIP from a market vocabulary (sample check: ~80% right when confident). 🥗 Produce (unsure) = food, item not named confidently.</div>
       </section>
-      <section id="wssec">
+      <section id="wssec" hidden>
         <div class="lbl">Waste on the floor in view <em>on the walkway only</em></div>
         <dl class="kv" id="wsList"></dl>
         <dl class="kv"><dt>Here (this 10 m of route)</dt><dd id="wsHere">—</dd><dt>Walk average per 10 m</dt><dd id="wsAvg">—</dd></dl>
@@ -226,7 +226,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <label><input type="checkbox" id="Ll2" checked>Level-2 objects</label>
           <label><input type="checkbox" id="Ltx" checked>Text on signs (OCR)</label>
           <label><input type="checkbox" id="Lfd" checked>🍅 Food on display</label>
-          <label><input type="checkbox" id="Lws" checked>🗑️ Waste on the floor</label>
+          <label hidden><input type="checkbox" id="Lws">🗑️ Waste on the floor</label>
           <label><input type="checkbox" id="Ldp" checked>🖼️ People on signs (possible_rabi_sign)</label>
           <label><input type="checkbox" id="Lmin" checked>Hide tracks &lt; 1 s</label>
           <label><input type="checkbox" id="Lvar" checked>Stabilised video (offline)</label>
@@ -825,6 +825,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
   const GEO = { shops: null, walks: {} };
   const WASTE = {};
+  const SHOW_WASTE = false;   // waste results are kept (waste.py) but not shown until detection is good enough (team decision)
   const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
                       "Bakery": "#d1a865", "Restaurant": "#e07b9b", "Drinks": "#6aa7d6", "Electronics": "#9aa3a1", "Jewelery": "#cfc06a", "Cafe": "#a0785a" };
   const tradeCol = t => TRADE_COL[t] || "#cfd8d6";
@@ -834,7 +835,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       GEO.shops = (await (await fetch("../data/processed/shops.json")).json()).shops;
       for (const w of ["walk1", "walk2"]) {
         try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
-        try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
+        if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
       }
     } catch (e) { return; }
     if (!window.L || !GEO.shops) return;
@@ -909,7 +910,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
       });
       const used = Object.keys(TRADE_COL);
-      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span><i style="background:${C.waste}"></i>waste on the floor</span>`;
+      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
       $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])

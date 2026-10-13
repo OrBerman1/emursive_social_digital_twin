@@ -1,0 +1,693 @@
+{
+ "_note": "Vision review (Claude, 13 Oct 2026) of stall frontage crops made by pipeline/stall_materials.py (best side view, 2-8 m). facade/structure use the survey vocabulary (Facade_Mat: Open/Glass/Metal; Skeleton_Mat: steel/blocks/cement); materials = visible materials from the team's coding-scheme vocabulary. null = store not visible (operator/street).",
+ "stores": {
+  "85": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame"
+   ]
+  },
+  "115": null,
+  "86": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame"
+   ]
+  },
+  "118": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "119": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "120": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "121": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "122": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "plastic crates as display"
+   ]
+  },
+  "124": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "126": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter",
+    "wood / timber"
+   ]
+  },
+  "125": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "127": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "129": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame"
+   ]
+  },
+  "128": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "wood / timber"
+   ]
+  },
+  "130": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "131": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "132": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "133": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass"
+   ]
+  },
+  "134": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "135": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "136": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "138": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "139": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "140": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "141": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "142": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "143": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "144": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "cardboard boxes"
+   ]
+  },
+  "145": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "cardboard boxes"
+   ]
+  },
+  "147": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "cardboard boxes"
+   ]
+  },
+  "146": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "150": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles"
+   ]
+  },
+  "152": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles"
+   ]
+  },
+  "236": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "238": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "240": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass"
+   ]
+  },
+  "235": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "237": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "239": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "153": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "155": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "158": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "154": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display"
+   ]
+  },
+  "163": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "metal roller shutter"
+   ]
+  },
+  "156": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic sheeting"
+   ]
+  },
+  "157": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "166": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic sheeting",
+    "plastic crates as display"
+   ]
+  },
+  "160": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "168": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "cardboard boxes"
+   ]
+  },
+  "161": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter",
+    "wood / timber"
+   ]
+  },
+  "162": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "171": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "164": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "165": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "172": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "167": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "wood / timber"
+   ]
+  },
+  "169": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass"
+   ]
+  },
+  "170": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "173": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "174": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "175": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "176": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "177": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display"
+   ]
+  },
+  "178": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "180": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "181": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "cardboard boxes"
+   ]
+  },
+  "192": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame"
+   ]
+  },
+  "187": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame"
+   ]
+  },
+  "188": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame"
+   ]
+  },
+  "190": null,
+  "189": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display"
+   ]
+  },
+  "12": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning"
+   ]
+  },
+  "191": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display"
+   ]
+  },
+  "11": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "cardboard boxes",
+    "wood / timber"
+   ]
+  },
+  "10": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": []
+  },
+  "183": null,
+  "182": null,
+  "193": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "corrugated metal",
+    "steel frame"
+   ]
+  },
+  "194": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "corrugated metal",
+    "steel frame"
+   ]
+  },
+  "195": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame"
+   ]
+  },
+  "196": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "197": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "77": null,
+  "249": null,
+  "198": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "ceramic tiles"
+   ]
+  },
+  "199": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles",
+    "wood / timber"
+   ]
+  },
+  "230": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles",
+    "wood / timber"
+   ]
+  },
+  "200": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles"
+   ]
+  },
+  "201": null,
+  "229": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "203": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "202": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles"
+   ]
+  },
+  "204": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "205": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "206": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "metal roller shutter"
+   ]
+  },
+  "208": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "metal roller shutter"
+   ]
+  },
+  "209": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass"
+   ]
+  },
+  "210": {
+   "facade": "Metal",
+   "structure": "blocks",
+   "materials": []
+  },
+  "211": null
+ }
+}

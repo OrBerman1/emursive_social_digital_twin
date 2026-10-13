@@ -276,8 +276,31 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      route position = camera chainage; density = items per 10 m.
    - Result: walk 1: 19 items (12 cardboard, 2 plastic bags, 2 bottles/cans, 2 organic, 1 garbage bag),
      max 3 per 10 m; walk 2: 11 items (7 cardboard, 2 paper & litter, 1 bottle/can, 1 organic).
+   - STATUS: results saved (waste_stab.json, waste.parquet) but NOT shown in the viewer (user decision 13 Oct:
+     not good enough yet). Viewer flag SHOW_WASTE = false.
    - Visual checks (contact sheets): first version 35-40% correct (carried bags, bins, cafe tables); after
      the person-overlap, floor-under and look-alike filters ~67% (walk 1, 14/21 before merging) and ~73%
      (walk 2, 8/11). Remaining errors: goods for sale on the floor (detergent bottles, crates), a bag hanging
      at a stall. Recall not measured: small litter (cigarette butts, wrappers) is below the detector's
      resolution at 5 fps / 1024 px tiles.
+
+20. STALL MATERIALS (what the stalls are made of)  (stall_materials.py; config\stall_review.json)  - not shown yet
+   - Crops: per GIS store, the best side views (store 2-8 m away, 40-140 deg off the walking direction, so the
+     frontage is visible and the operator is behind) within +-8 s of the closest approach; 3 undistorted crops,
+     width scaled to the distance. v1 (closest-approach frame only) often showed the street or the operator.
+   - CLIP ViT-L/14 zero-shot on the survey questions (facade Open/Glass/Metal; structure steel/blocks/cement)
+     and 8 detailed materials. vs survey: facade 82.7%, structure 83.5% (99 stores) - BELOW the majority
+     baseline (always Open / steel: 93% / 97% among visible stores); detailed materials almost never fire.
+   - Vision review (Claude, 5 contact sheets): facade, structure and visible materials for 99 stores; 91 show
+     the store. Materials seen: steel frame 50, glass 28, metal roller shutter 17, fabric awning 9, plastic
+     crates 8, ceramic tiles 7, wood 7, cardboard 6, corrugated metal 2, plastic sheeting 2.
+     Agreement with the survey: facade 78%, structure 59%.
+   - Why the disagreement (checked store by store): (1) store association - stores are 2-3 m wide and densely
+     packed while the route is ~2-3 m accurate, so several stores' crops show the same dominant frontage (5
+     stores -> the glass "BAR" front, 6 -> the Pizuchei Shadi glass shop); (2) definitions - block-built butcher
+     shops with glass counters and steel shutters are coded "Open / steel" in the survey, so the survey's
+     Skeleton_Mat / Facade_Mat seem to mean something else (or are defaults).
+   - Next: associate crops to stores by shop names read on signs (OCR already reads e.g. "פיצוחי שאדי"); ask
+     Boaz for the survey definitions; or report materials per frontage segment along the route instead of
+     per GIS store.
+
