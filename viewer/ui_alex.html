@@ -6,11 +6,11 @@
 <title>Shuk HaTikvah · 360° Exploration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 /* ui_alex: full-bleed 360 stage with floating UI. The view follows the walking direction until the user drags.
-   Entities are marked with a pointer dot + leader line to a dark info window (no boxes). Bottom right: a heading-up
-   map dial (people + trails, objects, view cone) with the compass ring built in; aerial imagery once the walk is
-   placed on the map (data/processed/<walk>/georef.json). */
+   Entities are marked with a pointer dot + leader line to a dark info window (no boxes). Bottom right: a round
+   north-up mini map like the Lens design; live once the walk is placed on the map (data/processed/<walk>/georef.json). */
 :root {
   --person: #f5c518; --object: #ef4b5f; --space: #3d8bff; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
   --glass: rgba(255,255,255,.92); --shadow: 0 10px 30px rgba(20,25,40,.18);
@@ -98,10 +98,13 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .note { color: var(--win-soft); font-size: 11px; padding-top: 8px; }
 .signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
 
-/* ---- map dial: heading-up map with the compass ring ---- */
-.dial { position: absolute; right: 18px; bottom: 120px; width: 262px; height: 262px; z-index: 9; border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer; }
-.dial canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
-.dial-cap { white-space: pre-line; position: absolute; right: 18px; bottom: 84px; width: 262px; text-align: center; color: #fff; font-size: 11.5px; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; z-index: 9; }
+/* ---- round mini map (Lens look) ---- */
+.mini { position: absolute; right: 18px; bottom: 130px; width: 230px; height: 230px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: var(--shadow); background: #e5e9ee; z-index: 9; }
+.mini #mm { position: absolute; inset: 0; background: #e5e9ee; }
+.soft-tiles { filter: grayscale(.8) brightness(1.05); }
+.mini .n { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 500; font: 800 13px var(--sans); color: var(--ink); background: rgba(255,255,255,.95); border-radius: 999px; width: 26px; height: 26px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.15); pointer-events: none; }
+.mini .you svg { width: 60px; height: 60px; overflow: visible; }
+.mini-cap { white-space: pre-line; position: absolute; right: 8px; bottom: 86px; width: 250px; text-align: center; color: #fff; font-size: 11px; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; z-index: 9; }
 
 /* ---- bottom transport ---- */
 .transport { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px; width: min(1340px, calc(100% - 40px)); height: 60px; border-radius: 999px; display: flex; align-items: center; gap: 14px; padding: 0 22px 0 10px; z-index: 10; }
@@ -179,8 +182,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg></span><span class="lbl">Space</span><span class="n" id="nS">0</span></button>
   </div>
 
-  <div class="dial" id="dialBox" data-no-drag title="Map: heading up. Click a dot to open its card."><canvas id="dial" width="560" height="560"></canvas></div>
-  <div class="dial-cap" id="dialCap"></div>
+  <div class="mini" data-no-drag aria-label="Map: your position on the walk"><div id="mm"></div><span class="n">N</span></div>
+  <div class="mini-cap" id="mmCap"></div>
 
   <div class="transport glass" data-no-drag>
     <button class="play" id="play" aria-label="Play"><svg id="playIc" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></button>
@@ -201,8 +204,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="decor"><span>Decor (lamps, flags)</span></label>
     <label><input type="checkbox" data-show="space" checked><span>Space: readable signs</span></label>
     <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
-    <label><input type="checkbox" data-show="trails" checked><span>Trails on the map</span></label>
-    <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
+        <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
   </div>
   <div class="pop glass" id="searchPop" data-no-drag hidden>
     <h4>Find a person</h4>
@@ -218,6 +220,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="toast" id="toast" hidden></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="engine.js"></script>
 <script>
 (() => {
@@ -287,7 +290,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
-    buildMotion(d); buildMarks(d); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
 
@@ -406,7 +409,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const overlap = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
   function layoutCards(st, c, list) {
     const k = E.k, Wc = stage.clientWidth, Hc = stage.clientHeight;
-    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [Wc - 300, Hc - 410, Wc, Hc], [0, Hc - 92, Wc, Hc]];
+    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [Wc - 270, Hc - 400, Wc, Hc], [0, Hc - 92, Wc, Hc]];
     const placed = [], used = new Set();
     for (const it of list) {
       const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
@@ -442,8 +445,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else nS++; }
       if (show[g]) shown.push([e, g]);
     }
-    const now = performance.now();
-    if (now - autoAt > 1500) {                        // re-choose the auto info windows every 1.5 s to stay calm
+    const now = performance.now(), vis = new Set(shown.map(([e]) => keyOf(e))), alive = auto.filter(k => vis.has(k)).length;
+    // re-choose the auto info windows every 1.5 s to stay calm, sooner when the chosen ones have left the view
+    if (now - autoAt > 1500 || (alive < Math.min(2, shown.length) && now - autoAt > 300)) {
       autoAt = now;
       const big = e => (e.rect[2] - e.rect[0]) * (e.rect[3] - e.rect[1]);
       const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, 3);
@@ -472,114 +476,44 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (show.labels) for (const key of auto) if (!pinnedKeys.has(key) && byKey.has(key)) { const [e, g] = byKey.get(key); list.push({ e, g, full: false }); }
     layoutCards(st, c, list);
     $("nP").textContent = nP; $("nO").textContent = nO; $("nS").textContent = nS;
-    drawDial(st); updateStats(st);
+    updateStats(st);
   };
   E.onHover = h => { hover = h && groupOf(h) ? h : null; stage.style.cursor = hover ? "pointer" : ""; };
   E.onClick = h => { if (!h || !groupOf(h)) return; const key = keyOf(h); if (isPinned(key)) unpin(key); else pin({ kind: h.kind, id: h.id }); };
 
-  // ---- map dial: heading-up (view direction = up), camera low in the circle, compass ring around ----
-  // Aerial imagery (Esri World Imagery) is drawn under it when the walk is placed on the map (georef.json).
-  const tiles = new Map();
-  function tile(z, x, y) {
-    const key = `${z}/${x}/${y}`; let t = tiles.get(key);
-    if (!t) { t = new Image(); t.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`; tiles.set(key, t); }
-    return t.complete && t.naturalWidth ? t : null;
-  }
-  let dialHits = [];
-  function drawDial(st) {
-    const cv = $("dial"), c = cv.getContext("2d"), S = cv.width, o = S / 2, RING = 40, Ri = o - RING, cx = o, cy = o + Ri * 0.38, s = Ri / 15;   // px per metre
-    const d = st.data, fi = st.fi, F = d.frames[fi], geo = st.cam, h = E.yaw * D2R;
-    dialHits = [];
-    c.clearRect(0, 0, S, S);
-    c.save(); c.beginPath(); c.arc(o, o, Ri, 0, 7); c.clip();
-    // background
-    if (geo) {
-      const z = 19, lat = geo.lat, mpp = 40075016.686 * Math.cos(lat * D2R) / (256 * 2 ** z), k = s * mpp;   // canvas px per tile px
-      const n = 2 ** z, X = (geo.lon + 180) / 360 * n, Y = (1 - Math.log(Math.tan(lat * D2R) + 1 / Math.cos(lat * D2R)) / Math.PI) / 2 * n;
-      c.fillStyle = "#3b4150"; c.fillRect(0, 0, S, S);
-      c.save(); c.translate(cx, cy); c.rotate(-geo.bearing * D2R);
-      const span = Math.ceil(S / (256 * k)) + 1;
-      for (let ty = Math.floor(Y) - span; ty <= Math.floor(Y) + span; ty++) for (let tx = Math.floor(X) - span; tx <= Math.floor(X) + span; tx++) {
-        const im = tile(z, tx, ty); if (im) c.drawImage(im, (tx - X) * 256 * k, (ty - Y) * 256 * k, 256 * k + 1, 256 * k + 1);
-      }
-      c.restore();
-      c.fillStyle = "rgba(10,14,22,.18)"; c.fillRect(0, 0, S, S);
-    } else {
-      const g = c.createRadialGradient(cx, cy, 0, cx, cy, Ri * 1.6); g.addColorStop(0, "#39414f"); g.addColorStop(1, "#1b2029"); c.fillStyle = g; c.fillRect(0, 0, S, S);
-      // a 5 m ground grid that moves with the walk
-      const cam = camAt(fi), G = 5; c.strokeStyle = "rgba(255,255,255,.07)"; c.lineWidth = 2;
-      c.save(); c.translate(cx, cy); c.rotate(-h);
-      for (let gx = Math.floor((cam[0] - 30) / G) * G; gx <= cam[0] + 30; gx += G) { c.beginPath(); c.moveTo((gx - cam[0]) * s, -30 * s); c.lineTo((gx - cam[0]) * s, 30 * s); c.stroke(); }
-      for (let gy = Math.floor((cam[1] - 30) / G) * G; gy <= cam[1] + 30; gy += G) { c.beginPath(); c.moveTo(-30 * s, -(gy - cam[1]) * s); c.lineTo(30 * s, -(gy - cam[1]) * s); c.stroke(); }
-      c.restore();
-    }
-    // world (m) -> dial px, heading-up
-    const cam = camAt(fi), toDial = (wx, wy) => { const dx = wx - cam[0], dy = wy - cam[1]; return [cx + (dx * Math.cos(h) - dy * Math.sin(h)) * s, cy - (dx * Math.sin(h) + dy * Math.cos(h)) * s]; };
-    const polar = (yw, dist) => [cx + Math.sin((yw - E.yaw) * D2R) * dist * s, cy - Math.cos((yw - E.yaw) * D2R) * dist * s];
-    // view cone
-    const half = E.fov / 2 * D2R, L = 13 * s, cg = c.createRadialGradient(cx, cy, 0, cx, cy, L);
-    cg.addColorStop(0, "rgba(90,175,255,.55)"); cg.addColorStop(1, "rgba(90,175,255,.06)");
-    c.fillStyle = cg; c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, L, -Math.PI / 2 - half, -Math.PI / 2 + half); c.closePath(); c.fill();
-    c.strokeStyle = "rgba(140,200,255,.8)"; c.lineWidth = 2;
-    for (const rr of [0.45, 0.8]) { c.beginPath(); c.arc(cx, cy, L * rr, -Math.PI / 2 - half, -Math.PI / 2 + half); c.stroke(); }
-    c.setLineDash([6, 8]); c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(-half) * L * 1.15, cy - Math.cos(half) * L * 1.15); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(half) * L * 1.15, cy - Math.cos(half) * L * 1.15); c.stroke(); c.setLineDash([]);
-    // walk path behind the camera
-    c.strokeStyle = "rgba(90,175,255,.9)"; c.lineWidth = 3; c.setLineDash([8, 8]); c.beginPath();
-    for (let f = Math.max(0, fi - 60); f <= fi; f += 2) { const p = toDial(...camAt(f)); f === Math.max(0, fi - 60) ? c.moveTo(...p) : c.lineTo(...p); } c.stroke(); c.setLineDash([]);
-    if (F) {
-      // objects: red squares (distance from the box bottom on the ground when not stored)
-      if (show.object) {
-        const hcam = d.camera_height_m || 1.3, sq = (yw, dist) => { const [x, y] = polar(yw, dist); c.fillStyle = COL.object; c.strokeStyle = "#fff"; c.lineWidth = 2.5; c.beginPath(); c.rect(x - 9, y - 9, 18, 18); c.fill(); c.stroke(); };
-        for (const x of F.l2) if (x[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(x[0]) && x[7] && x[7] < 25) sq(x[2], x[7]);
-        for (const x of F.o) if (x[1] >= E.conf && x[6] < -3) { const dist = hcam / Math.tan(-x[6] * D2R); if (dist < 25) sq(x[2], dist); }
-      }
-      // people: trails (last 5 s) + dots
-      if (show.person) for (const x of F.p) {
-        if (x[1] < E.conf || !x[7] || ((d.tracks[x[0]] || [])[2] || 0) < E.minLen) continue;
-        const m = PP && PP.get(x[0]);
-        if (show.trails && m) {
-          c.strokeStyle = "rgba(245,197,24,.9)"; c.lineWidth = 3.5; c.setLineDash([7, 7]); c.beginPath(); let started = false;
-          for (let f = fi - 25; f <= fi; f++) { const p = m.get(f); if (!p) continue; const q = toDial(p[0], p[1]); started ? c.lineTo(...q) : c.moveTo(...q); started = true; }
-          c.stroke(); c.setLineDash([]);
-        }
-        const [px, py] = polar(x[2], x[7]), pin_ = isPinned(`person:${x[0]}`);
-        c.fillStyle = COL.person; c.strokeStyle = pin_ ? "#fff" : "#3a2f00"; c.lineWidth = pin_ ? 5 : 2.5; c.beginPath(); c.arc(px, py, 11, 0, 7); c.fill(); c.stroke();
-        dialHits.push([px, py, { kind: "person", id: x[0] }]);
-      }
-    }
-    // camera
-    c.fillStyle = "#4aa3ff"; c.strokeStyle = "#fff"; c.lineWidth = 5; c.beginPath(); c.arc(cx, cy, 15, 0, 7); c.fill(); c.stroke();
-    c.restore();
-    // compass ring
-    c.lineWidth = RING; c.strokeStyle = "rgba(255,255,255,.94)"; c.beginPath(); c.arc(o, o, Ri + RING / 2, 0, 7); c.stroke();
-    c.strokeStyle = "rgba(0,0,0,.08)"; c.lineWidth = 2; c.beginPath(); c.arc(o, o, Ri, 0, 7); c.stroke();
-    const ringAt = deg => [o + Math.sin(deg * D2R) * (Ri + RING / 2), o - Math.cos(deg * D2R) * (Ri + RING / 2)];
-    // the ring is centred on the circle while the camera sits lower; directions are drawn as seen from the camera position projected to the ring
-    const dirOnRing = rel => { const a = rel * D2R, dx = Math.sin(a), dy = -Math.cos(a), bx = cx - o, by = cy - o, R0 = Ri + RING / 2;
-      const b = bx * dx + by * dy, t = -b + Math.sqrt(b * b - (bx * bx + by * by - R0 * R0)); return [cx + dx * t, cy + dy * t]; };
-    c.strokeStyle = "#9aa2b1"; c.lineWidth = 2;
-    const base = geo ? -geo.bearing : wrap(fwdAt(fi) - E.yaw);
-    for (let a = 0; a < 360; a += 15) { const rel = a + base; const [x, y] = dirOnRing(rel), [ux, uy] = [(x - o) / (Ri + RING / 2), (y - o) / (Ri + RING / 2)], L2 = a % 90 === 0 ? 0 : (a % 45 === 0 ? 9 : 5);
-      if (L2) { c.beginPath(); c.moveTo(x - ux * L2, y - uy * L2); c.lineTo(x + ux * L2, y + uy * L2); c.stroke(); } }
-    c.textAlign = "center"; c.textBaseline = "middle";
-    if (geo) {
-      [["N", 0], ["E", 90], ["S", 180], ["W", 270]].forEach(([t, a]) => { const [x, y] = dirOnRing(a - geo.bearing); c.fillStyle = t === "N" ? "#e8475f" : "#1d2433"; c.font = "800 30px Inter, sans-serif"; c.fillText(t, x, y); });
-    } else {
-      const rel = wrap(fwdAt(fi) - E.yaw);
-      [["AHEAD", rel, "#2f7cf6"], ["BACK", rel + 180, "#4b5365"], ["L", rel - 90, "#4b5365"], ["R", rel + 90, "#4b5365"]].forEach(([t, a, col]) => {
-        const [x, y] = dirOnRing(a); c.fillStyle = col; c.font = `800 ${t.length > 1 ? 22 : 28}px Inter, sans-serif`; c.fillText(t, x, y); });
-    }
-    // view marker at the top of the ring
-    c.fillStyle = "#2f7cf6"; c.beginPath(); c.moveTo(o, RING + 4); c.lineTo(o + 11, RING + 20); c.lineTo(o - 11, RING + 20); c.closePath(); c.fill();   // view marker, inside the ring
-    const rel = Math.round(wrap(E.yaw - fwdAt(fi)));
-    $("dialCap").textContent = (geo ? `facing ${Math.round(geo.bearing)}° · ` : "") + (follow ? "following the walking direction" : Math.abs(rel) < 8 ? "looking ahead" : `${Math.abs(rel)}° ${rel > 0 ? "right" : "left"} of the walking direction`) +
-      (geo ? "" : "\naerial map: needs the shop table");
-  }
-  $("dial").addEventListener("click", ev => {
-    const r = $("dial").getBoundingClientRect(), k = $("dial").width / r.width, x = (ev.clientX - r.left) * k, y = (ev.clientY - r.top) * k;
-    const hit = dialHits.find(([hx, hy]) => Math.hypot(hx - x, hy - y) < 16);
-    if (hit) { const key = `${hit[2].kind}:${hit[2].id}`; isPinned(key) ? unpin(key) : pin(hit[2]); }
+  // ---- round mini map (same look as the Lens design): north-up OSM streets + buildings, "N" badge, you + view cone ----
+  // Live position, view bearing and nearby people need data/processed/<walk>/georef.json; without it the map sits on
+  // the market centre (as in Lens) and says so in the caption.
+  const MARKET = [32.0527, 34.7903];
+  let mm = null, mmMe = null, mmRoute = null, mmDots = null;
+  const YOU = `<svg viewBox="0 0 60 60" aria-hidden="true"><g id="cone"><path d="M30 30 L16 4 A30 30 0 0 1 44 4 Z" fill="rgba(47,124,246,.32)" stroke="rgba(47,124,246,.75)" stroke-width="1"/></g><circle cx="30" cy="30" r="6.5" fill="#1d2433" stroke="#fff" stroke-width="3"/></svg>`;
+  const offset = (lat, lon, brg, m) => [lat + m * Math.cos(brg * D2R) / 110574, lon + m * Math.sin(brg * D2R) / (111320 * Math.cos(lat * D2R))];
+  E.ready.then(() => {
+    mm = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false }).setView(MARKET, 18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, className: "soft-tiles" }).addTo(mm);
+    mmDots = L.layerGroup().addTo(mm);
+    mmMe = L.marker(MARKET, { icon: L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30], html: YOU }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(mm);
+    mapRoute();
   });
+  function mapRoute() {
+    if (!mm) return; if (mmRoute) { mmRoute.remove(); mmRoute = null; }
+    const g = E.geo.walks[E.walk]; if (!g) { mm.setView(MARKET, 18); mmMe.setLatLng(MARKET); return; }
+    mmRoute = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(q => q[0] != null), { color: COL.person, weight: 4, opacity: .55, lineCap: "round" }).addTo(mm);
+  }
+  setInterval(() => {
+    const st = E.state; if (!st || !mm) return;
+    const cone = mmMe.getElement() && mmMe.getElement().querySelector("#cone"), rel = Math.round(wrap(E.yaw - fwdAt(st.fi)));
+    const how = follow ? "following the walking direction" : Math.abs(rel) < 8 ? "looking ahead" : `${Math.abs(rel)}° ${rel > 0 ? "right" : "left"} of the walking direction`;
+    mmDots.clearLayers();
+    if (!st.cam) { $("mmCap").textContent = `${how}\napprox. position · needs the shop table`; return; }
+    const { lat, lon, bearing, yaw0 } = st.cam;
+    mmMe.setLatLng([lat, lon]); mm.panTo([lat, lon], { animate: false });
+    if (cone) cone.setAttribute("transform", `rotate(${bearing.toFixed(1)} 30 30)`);
+    const F = st.data.frames[st.fi];
+    if (F && show.person) for (const x of F.p) if (x[7] && x[1] >= E.conf)
+      L.circleMarker(offset(lat, lon, yaw0 + x[2], x[7]), { radius: 4, weight: 1.5, color: "#3a2f00", fillColor: COL.person, fillOpacity: 1, interactive: false }).addTo(mmDots);
+    $("mmCap").textContent = `facing ${Math.round(bearing)}° · ${how}`;
+  }, 150);
 
   // ---- stats popover ----
   function updateStats(st) {
