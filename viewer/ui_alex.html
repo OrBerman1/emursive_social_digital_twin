@@ -140,33 +140,34 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=range] { width: 100%; accent-color: var(--space); }
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
+#statsNote { font-size: 13px; text-align: center; }
 /* statistics panel: People / Objects / Places, donuts that follow the walk + a trend along the whole walk */
-.pop.stats { width: 340px; max-height: calc(100% - 150px); overflow: auto; }
+.pop.stats { width: 380px; max-height: calc(100% - 150px); overflow: auto; padding: 16px 18px; }
 .seg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; margin-bottom: 10px; }
-.seg button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 6px 4px; font-weight: 600; font-size: 12.5px; color: var(--soft); cursor: pointer; display: flex; gap: 6px; align-items: center; justify-content: center; }
+.seg button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 4px; font-weight: 600; font-size: 14.5px; color: var(--soft); cursor: pointer; display: flex; gap: 6px; align-items: center; justify-content: center; }
 .seg button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .donut { display: block; width: 100%; height: auto; overflow: visible; }
-.donut .ctr { font: 700 30px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
-.donut .ctr2 { font: 500 11px var(--sans); fill: var(--soft); }
-.donut .lb { font: 600 11px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
+.donut .ctr { font: 700 40px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
+.donut .ctr2 { font: 500 14px var(--sans); fill: var(--soft); }
+.donut .lb { font: 700 17px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
 .donut .lb tspan.n { font-weight: 700; }
 .donut .lb tspan.k { fill: #52514e; font-weight: 500; }
 .donut path { cursor: default; transition: opacity .15s; }
 .donut path:hover { opacity: .8; }
-.dt { font-weight: 700; font-size: 12.5px; margin: 6px 0 0; display: flex; justify-content: space-between; }
-.dt small { font-weight: 500; color: var(--soft); }
-.leg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: #52514e; margin: 2px 0 8px; }
-.leg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.dt { font-weight: 700; font-size: 16px; margin: 8px 0 0; display: flex; justify-content: space-between; align-items: baseline; }
+.dt small { font-weight: 500; font-size: 13px; color: var(--soft); }
+.leg { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: 15px; color: #3b3a37; margin: 4px 0 14px; }
+.leg i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
 .trend { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
-.trend .tlbl { font-size: 11.5px; color: var(--soft); margin-bottom: 4px; }
-.trend svg { width: 100%; height: 56px; display: block; cursor: crosshair; }
-.tip2 { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
-.signs { font-size: 13px; margin: 0 0 6px; }
+.trend .tlbl { font-size: 13.5px; color: var(--soft); margin-bottom: 6px; }
+.trend svg { width: 100%; height: 64px; display: block; cursor: crosshair; }
+.tip2 { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 13px; padding: 2px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.signs { font-size: 15px; margin: 0 0 8px; }
 .signs div { padding: 4px 0; border-bottom: 1px solid var(--line); unicode-bidi: plaintext; direction: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.nums summary { cursor: pointer; font-size: 12px; color: var(--soft); padding-top: 8px; }
-.stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 12.5px; padding-top: 6px; }
+.nums summary { cursor: pointer; font-size: 13.5px; color: var(--soft); padding-top: 10px; }
+.stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 14.5px; padding-top: 8px; }
 .stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-.dtip { position: fixed; background: var(--ink); color: #fff; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
+.dtip { position: fixed; background: var(--ink); color: #fff; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 </style>
 </head>
@@ -619,7 +620,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
   // donut with a 2px surface gap between segments, centre number, direct labels around
   function donut(id, segs, centre, sub) {
-    const W = 300, H = 178, cx = W / 2, cy = H / 2, R = 62, r = 42, tot = segs.reduce((a, s) => a + s.v, 0);
+    const W = 300, H = 200, cx = W / 2, cy = H / 2, R = 74, r = 50, tot = segs.reduce((a, s) => a + s.v, 0);
     const arc = (a0, a1, rr) => [cx + rr * Math.sin(a0), cy - rr * Math.cos(a0), cx + rr * Math.sin(a1), cy - rr * Math.cos(a1)];
     let out = `<svg class="donut" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sub)}: ${segs.map(s => `${s.label} ${Math.round(s.n)}`).join(", ")}">`;
     if (tot <= 0.01) out += `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="#e7e9ef" stroke-width="${R - r}"/>`;
@@ -629,9 +630,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const span = sg.v / tot * Math.PI * 2, a0 = a, a1 = a + Math.min(span, Math.PI * 2 - 1e-4); a += span;
       const large = a1 - a0 > Math.PI ? 1 : 0, [x0, y0, x1, y1] = arc(a0, a1, R), [x2, y2, x3, y3] = arc(a1, a0, r);
       out += `<path d="M${x0} ${y0}A${R} ${R} 0 ${large} 1 ${x1} ${y1}L${x2} ${y2}A${r} ${r} 0 ${large} 0 ${x3} ${y3}Z" fill="${sg.col}" stroke="#fcfcfb" stroke-width="2" stroke-linejoin="round" data-tip="${esc(sg.label)}: ${Math.round(sg.n)} (${Math.round(sg.v / tot * 100)}%)"/>`;
-      if (span > 0.22 && Math.round(sg.n) > 0) {        // direct label outside the segment
-        const m = (a0 + a1) / 2, lx = cx + (R + 12) * Math.sin(m), ly = cy - (R + 12) * Math.cos(m), anchor = Math.sin(m) > 0.15 ? "start" : Math.sin(m) < -0.15 ? "end" : "middle";
-        out += `<text class="lb" x="${lx}" y="${ly + 4}" text-anchor="${anchor}"><tspan class="n">${Math.round(sg.n)}</tspan> <tspan class="k">${esc(sg.label.length > 13 ? sg.label.slice(0, 12) + "…" : sg.label)}</tspan></text>`;
+      if (span > 0.16 && Math.round(sg.n) > 0) {        // its number outside the segment; names are in the legend below
+        const m = (a0 + a1) / 2, lx = cx + (R + 14) * Math.sin(m), ly = cy - (R + 14) * Math.cos(m), anchor = Math.sin(m) > 0.15 ? "start" : Math.sin(m) < -0.15 ? "end" : "middle";
+        out += `<text class="lb" x="${lx}" y="${ly + 6}" text-anchor="${anchor}">${Math.round(sg.n)}</text>`;
       }
     }
     out += `<text class="ctr" x="${cx}" y="${cy + 6}" text-anchor="middle">${centre}</text><text class="ctr2" x="${cx}" y="${cy + 22}" text-anchor="middle">${esc(sub)}</text></svg>`;
@@ -650,15 +651,15 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       html = `<div class="dt">Gender <small>perceived · ${st.uniqueSoFar} unique so far</small></div>${donut("g", g, n, "in view")}${legend(g)}` +
              `<div class="dt">Age group <small>perceived</small></div>${donut("a", a, n, "in view")}${legend(a)}`;
       rows = [...GENDER.map(([k, l]) => [`${l} (perceived)`, sx[k] || 0]), ...AGEC.map(([k, l]) => [`${l === "Uncertain" ? "Age uncertain" : l}`, ag[k] || 0])];
-      note = "Gender and age group are perceived estimates from video, shown as aggregates only.";
+      note = "Perceived estimates, aggregates only.";
     } else if (tab === "object") {
       const byCls = {}; let n = 0;
       for (const e of st.entities) if (e.alpha >= 0.5 && groupOf(e) === "object") { n++; byCls[e.cls] = (byCls[e.cls] || 0) + 1; }
       const top = new Set(TOPOBJ.map(t => t[0])), counts = { ...byCls, __other: Object.entries(byCls).filter(([c]) => !top.has(c)).reduce((a, [, v]) => a + v, 0) };
       const segs = segsOf("o", [...TOPOBJ, ["__other", "Other", GREY]], counts);
-      html = `<div class="dt">Objects in view <small>5 most common on this walk + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
+      html = `<div class="dt">Objects in view <small>top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
       rows = segs.map(s => [s.label, s.n]);
-      note = "Detected objects and market items (decor such as lamps and flags excluded). Colours stay with each type for the whole walk.";
+      note = "Decor (lamps, flags) excluded.";
     } else {
       const d = st.data, read = [], counts = {};
       const fi = st.fi; for (let f = 0; f <= fi; f++) for (const e of d.frames[f].s || []) { const info = d.signs[e[0]]; if (info && info[3] && !read.some(x => x.id === e[0])) read.push({ id: e[0], text: info[0], lang: info[1] }); }
@@ -667,7 +668,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       html = `<div class="dt">Signs read so far <small>${st.counts.signsRead.length} in view now</small></div>${donut("l", segs, read.length, "read")}${legend(segs)}` +
              `<div class="dt">Latest signs</div><div class="signs">${read.slice(-4).reverse().map(r => `<div dir="auto">${esc(r.text)}</div>`).join("") || "<div>—</div>"}</div>`;
       rows = segs.map(s => [s.label, s.n]);
-      note = "Places = readable signs (OCR). Most signs are only briefly in view, so this tab counts what has been read so far on the walk.";
+      note = "Readable signs (OCR), counted as the walk goes.";
     }
     $("statsBody").innerHTML = html; $("statsNote").textContent = note;
     $("sGrid").innerHTML = rows.map(([l, v]) => `<span>${esc(l)}</span><span>${Math.round(v)}</span>`).join("");
@@ -683,7 +684,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const line = pts.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
     $("trend").innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` +
       `<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="#1d2433" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
-    $("trendLbl").textContent = { person: "People in view along the walk", object: "Objects in view along the walk", space: "Signs read along the walk (cumulative)" }[tab] + ` · max ${mx}`;
+    $("trendLbl").textContent = { person: "Along the walk", object: "Along the walk", space: "Along the walk" }[tab] + ` · max ${mx}`;
     $("trend").dataset.pts = JSON.stringify(pts);
   }
   $("trend").addEventListener("mousemove", ev => {
