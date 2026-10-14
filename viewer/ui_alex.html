@@ -169,6 +169,58 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .jvsend { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--space); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
 .jvsend:disabled { opacity: .4; cursor: default; }
 
+/* ---- full map (click the round map): stores, crowds, routes, paths, speed map, frontage, segment summary ---- */
+.mini { cursor: pointer; } .mini:hover { box-shadow: 0 0 0 4px rgba(61,139,255,.35), var(--shadow); }
+.mapx { position: absolute; inset: 0; z-index: 44; background: #e5e9ee; }
+.mapx #fmap { position: absolute; inset: 0; }
+.mapx .you svg { width: 60px; height: 60px; overflow: visible; }
+.mapx .mbar { position: absolute; left: 16px; top: 16px; z-index: 600; border-radius: 16px; padding: 6px; display: flex; gap: 4px; align-items: center; }
+.mapx .mbar b { font-size: 14.5px; padding: 0 10px 0 8px; }
+.mapx .mbar button { border: 0; background: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--ink); display: flex; gap: 6px; align-items: center; }
+.mapx .mbar button:hover, .mapx .mbar button[aria-pressed="true"] { background: #eef2fb; color: var(--space); }
+.mapx .mclose { position: absolute; right: 16px; top: 16px; z-index: 600; width: 42px; height: 42px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+.mapx .minfo { color: var(--soft); font-size: 12.5px; padding: 0 10px; font-variant-numeric: tabular-nums; }
+.mapx .mside { position: absolute; right: 16px; top: 72px; bottom: 16px; width: min(360px, calc(100% - 32px)); z-index: 600; border-radius: 16px; overflow-y: auto; padding: 14px 16px; }
+.mapx .mside h4 { margin: 0 0 8px; font-size: 14.5px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mapx .mside h5 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--soft); display: flex; justify-content: space-between; }
+.mapx .mside h5 button { border: 0; background: none; color: var(--space); cursor: pointer; font-size: 11.5px; font-weight: 600; }
+.mapx .mside label { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; font-size: 13.5px; }
+.mapx .mside input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--space); }
+.mapx .mside select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; font: inherit; background: #fff; color: var(--ink); }
+.mapx .fchips { display: flex; flex-wrap: wrap; gap: 5px; }
+.mapx .fchips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 9px; font-size: 12px; cursor: pointer; display: flex; gap: 5px; align-items: center; color: var(--ink); }
+.mapx .fchips button[aria-pressed="false"] { opacity: .4; text-decoration: line-through; }
+.mapx .fchips i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.mapx .fchips small { color: var(--soft); }
+.mapx .mside details summary { cursor: pointer; color: var(--soft); font-size: 12.5px; padding: 6px 0; }
+.mapx .sl { display: grid; grid-template-columns: 1fr 60px; gap: 2px 8px; align-items: center; font-size: 12.5px; padding: 2px 0; }
+.mapx .sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--space); }
+.mapx .sl output { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.mapx .mleg { position: absolute; left: 16px; bottom: 16px; z-index: 600; border-radius: 14px; padding: 10px 14px; max-width: min(520px, calc(100% - 420px)); display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; }
+.mapx .mleg i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.25); }
+.mapx .mleg .soft { color: var(--soft); width: 100%; }
+.mapx .ramp { width: 220px; height: 10px; border-radius: 999px; margin: 4px 0 2px; }
+.mapx .rampx { display: flex; justify-content: space-between; color: var(--soft); font-size: 11.5px; width: 220px; }
+.mapx .mhint { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); z-index: 650; background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 13px; }
+.mapx.selecting #fmap { cursor: crosshair; }
+.mapx .segp .kv2 { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: 13px; } .mapx .segp .kv2 dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; } .mapx .segp .kv2 dt { color: #3b4250; }
+.mapx .segp .tags { display: flex; flex-wrap: wrap; gap: 4px; } .mapx .segp .tags span { background: #eef0f4; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+.mapx .segp ul { margin: 4px 0; padding-left: 18px; font-size: 12.5px; max-height: 140px; overflow-y: auto; }
+.mapx .segp .note { color: var(--soft); font-size: 11.5px; padding-top: 10px; }
+.mapx .segp .btns { display: flex; gap: 6px; }
+.mapx .segp .btns button, .mapx .pbtn { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 12.5px; cursor: pointer; color: var(--ink); }
+.mapx .segp .btns button.primary { background: var(--space); border-color: var(--space); color: #fff; }
+.crowd-dot div { display: grid; place-items: center; border-radius: 50%; background: var(--person); color: #1a1a1a; font: 700 12px var(--sans); border: 2.5px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.seg-ab { width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #fff; font: 700 12px var(--sans); display: grid; place-items: center; border: 2.5px solid #fff; }
+.fm-pin { font-size: 15px; line-height: 15px; filter: drop-shadow(0 0 2px rgba(0,0,0,.6)); }
+.leaflet-popup-content-wrapper { border-radius: 14px; box-shadow: var(--shadow); font: 13px/1.45 var(--sans); }
+.leaflet-popup-content { margin: 12px 14px; } .leaflet-popup-content b.t { font-size: 14px; display: block; margin-bottom: 4px; }
+.leaflet-popup-content .go { margin-top: 8px; border: 0; background: var(--space); color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 600; cursor: pointer; }
+.leaflet-popup-content .muted { color: var(--soft); }
+.leaflet-popup-content img.fm { width: 220px; border-radius: 10px; display: block; margin: 6px 0; }
+.leaflet-popup-content table { border-collapse: collapse; width: 100%; font-size: 12.5px; } .leaflet-popup-content td { padding: 2px 0; } .leaflet-popup-content td + td { text-align: right; font-weight: 600; }
+.bar2 { display: flex; height: 8px; border-radius: 999px; overflow: hidden; margin: 4px 0; }
+
 /* ---- popovers ---- */
 .pop { position: absolute; left: 70px; top: 54px; width: 290px; border-radius: 16px; padding: 14px 16px; z-index: 30; }
 .pop h4 { margin: 0 0 10px; font-size: 14px; }
@@ -271,7 +323,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 3.5 21 19.5H3z" fill="var(--space)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="lbl">Places</span><span class="n" id="nS">0</span></button>
   </div>
 
-  <div class="mini" data-no-drag aria-label="Map: your position on the walk"><div id="mm"></div><span class="n">N</span></div>
+  <div class="mini" data-no-drag aria-label="Map: your position on the walk. Click for the full map." title="Click: full map"><div id="mm"></div><span class="n">N</span></div>
   <div class="mini-cap" id="mmCap"></div>
 
   <div class="transport glass" data-no-drag>
@@ -319,6 +371,27 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <textarea id="markText" dir="auto" placeholder="A note about this moment…"></textarea>
     <div class="sw" id="markSw" aria-label="Colour"></div>
     <div class="pbtns"><button class="danger" id="markDel" hidden>Delete</button><span class="st" id="markSt"></span><button id="markCancel">Cancel</button><button class="primary" id="markSave">Save</button></div>
+  </div>
+  <div class="mapx" id="mapx" data-no-drag hidden>
+    <div id="fmap"></div>
+    <div class="mbar glass"><b>Map</b>
+      <button id="mxLayers" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>Layers &amp; filters</button>
+      <button id="mxSeg" aria-pressed="false" title="Pick a start and an end store: summary of everything between them"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="6" r="2.5"/><path d="M7 16.5 17 7.5" stroke-dasharray="3 2.5"/></svg>Select segment</button>
+      <span class="minfo" id="mxInfo"></span></div>
+    <button class="mclose glass" id="mxClose" aria-label="Close the map"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="mhint" id="mxHint" hidden></div>
+    <div class="mside glass" id="mxPanel" hidden>
+      <h4>Layers &amp; filters <button class="pbtn" id="mxReset">Reset</button></h4>
+      <div id="mxLayersList"></div>
+      <h5>Colour stores by</h5><select id="mxColour"></select>
+      <h5>Show stores <span id="mxShown"></span></h5><div id="mxFilters"></div>
+      <details id="mxSpeedSet"><summary>Speed map settings</summary>
+        <div class="sl"><span>Smoothing</span><output id="spCellV"></output><input type="range" id="spCell" min="2" max="8" step="1" value="3"></div>
+        <div class="sl"><span>Shown where at least</span><output id="spMinV"></output><input type="range" id="spMin" min="1" max="8" step="1" value="3"></div></details>
+      <details><summary>Crowd rule</summary><div id="mxCrowdSet"></div><button class="pbtn" id="cpReset" style="margin-top:6px">Reset crowd rule</button></details>
+    </div>
+    <div class="mside glass segp" id="mxSegPanel" hidden></div>
+    <div class="mleg glass" id="mxLegend"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
   <input type="file" id="atFile" multiple hidden>
@@ -954,6 +1027,437 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
   }));
   $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
+
+  // ---- full map (click the round map): stores from the team's GIS table, crowds, routes, people's paths, speed map,
+  //      frontage materials, segment summary (ported from the base viewer; same data, same rules) ----
+  const MX = { map: null, layers: {}, stores: [], me: null, on: {}, colour: "Main_Trade", off: {} };
+  const MX_LAYERS = [["stores", "Stores", true], ["crowds", "Crowds", true], ["routes", "Walk routes", false],
+                     ["frontage", "Frontage materials (experimental)", false], ["paths", "People's paths (whole walk)", false], ["speed", "Speed map (mean walking speed)", false]];
+  const MX_FIELDS = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"], ["Facade_Mat", "Facade"],
+                     ["Skeleton_Mat", "Structure"], ["Informal_Vendor", "Informal vendor"], ["Gen_Status", "Generation"], ["_seen", "Seen on a walk"]];
+  const MX_COLOUR = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"], ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"]];
+  const OKABE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#7f7f7f"], NOCOL = "#cfd5de";   // no yellow: yellow = people / crowds
+  MX.on = Object.fromEntries(MX_LAYERS.map(([k, , d]) => [k, d]));
+  try { const sv = JSON.parse(localStorage.getItem("uaMapLayers") || "null"); if (sv) { Object.assign(MX.on, sv.on || {}); MX.colour = sv.colour || MX.colour; MX.off = sv.off || {}; } } catch (e) {}
+  const mxSave = () => { try { localStorage.setItem("uaMapLayers", JSON.stringify({ on: MX.on, colour: MX.colour, off: MX.off })); } catch (e) {} };
+  const shops = () => E.geo.shops || [];
+  const mxVal = (sh, f) => { const v = f === "_seen" ? (sh.seen ? "yes" : "no") : sh[f]; return v == null || String(v).trim() === "" ? "unknown" : (typeof v === "number" ? String(Math.round(v)) : String(v).trim()); };
+  function mxColourMap() {
+    const cnt = {}; for (const sh of shops()) { const v = mxVal(sh, MX.colour); if (v !== "unknown") cnt[v] = (cnt[v] || 0) + 1; }
+    const vals = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]), m = Object.fromEntries(vals.slice(0, OKABE.length).map((v, i) => [v, OKABE[i]]));
+    return v => m[v] || NOCOL;
+  }
+  const walkLong = w => `${cap(E.walkShort(w))} · ${E.walkLabel(w)}`;
+  const WALK_COL = ["#1d2433", "#3d8bff", "#ef4b5f", "#009E73"];
+  const walkCol = w => WALK_COL[Math.max(0, E.walkIds().indexOf(w)) % WALK_COL.length];
+  const mxData = {};                                                   // other walks' overlays + motion, loaded once
+  async function walkData(w) {
+    if (w === E.walk && E.data) return { d: E.data, mo: E.motion };
+    if (!mxData[w]) {
+      const P = E.project.processed; let d, mo = null;
+      try { d = await J(`${P}/${w}/overlays_stab.json`); } catch (e) { d = await J(`${P}/${w}/overlays.json`); }
+      try { mo = await J(`${P}/${w}/motion_stab.json`); } catch (e) {}
+      mxData[w] = { d, mo };
+    }
+    return mxData[w];
+  }
+  function mxOpen() {
+    if (!shops().length && !Object.keys(E.geo.walks).length) { toast("No map for this project yet: it needs a store table and anchor points"); return; }
+    $("mapx").hidden = false; if (E.playing) setPlay(E.play(false));
+    if (!MX.map) mxBuild();
+    const centre = () => { const st = E.state, g = E.geo.walks[E.walk]; MX.map.invalidateSize();          // the moment shown now (fresh after a seek)
+      if (st && g && g.lat[st.fi] != null) MX.map.setView([g.lat[st.fi], g.lon[st.fi]], 19, { animate: false }); mxMe(); };
+    centre(); requestAnimationFrame(() => setTimeout(centre, 120));
+  }
+  const mxClose = () => { $("mapx").hidden = true; segMode(false); };
+  function mxBuild() {
+    const map = MX.map = L.map("fmap", { zoomSnap: 0.5, maxZoom: 22, zoomControl: false });
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19, className: "soft-tiles",
+      attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey" }).addTo(map);
+    for (const k of ["stores", "crowds", "routes", "frontage", "paths", "speed"]) MX.layers[k] = L.layerGroup();
+    for (const [w, g] of Object.entries(E.geo.walks))
+      L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(q => q[0] != null), { color: walkCol(w), weight: 5, opacity: .8 }).bindTooltip(walkLong(w), { sticky: true }).addTo(MX.layers.routes);
+    for (const sh of shops()) {
+      const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#fff", fillColor: NOCOL, fillOpacity: sh.seen ? .95 : .45 });
+      MX.stores.push({ sh, m });
+      const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Shop type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Patronage", sh.Patronage],
+                    ["Facade", sh.Facade_Mat], ["Structure", sh.Skeleton_Mat], ["Established", sh.Est_Year ? Math.round(sh.Est_Year) : null],
+                    ["Generation", sh.Gen_Status ? Math.round(sh.Gen_Status) : null], ["Informal vendor", sh.Informal_Vendor]].filter(x => x[1]);
+      m.bindPopup(`<b class="t">${esc(sh.name)}</b><table>${info.map(([a, b]) => `<tr><td class="muted">${a}</td><td>${esc(b)}</td></tr>`).join("")}</table>` +
+        (sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video · ${esc(E.walkShort(sh.seen.walk))}, ${fmt(sh.seen.frame / 5)}</button>` : `<div class="muted" style="padding-top:6px">Not passed on the recorded walks.</div>`));
+      m.off("click", m._openPopup, m); m.on("click", () => { if (SEG.on) segPick(sh); else m.openPopup(); });
+      m.bindTooltip(esc(sh.name));
+    }
+    for (const p of E.geo.frontage)
+      L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "", html: `<div class="fm-pin">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
+        .bindPopup(`<b class="t">🧱 Frontage materials <span class="muted">· experimental</span></b><img class="fm" src="${E.project.processed}/${esc(p.crop)}" alt="">` +
+          `Facade ${esc(p.facade)} · structure ${esc(p.structure)}<br>${esc((p.materials || []).join(", ") || "—")}<br><span class="muted">${esc(E.walkShort(p.walk))} · ${p.chainage_m} m along the route</span>` +
+          `<br><button class="go" data-fm="${p.id}">▶ Go to video</button>`).addTo(MX.layers.frontage);
+    map.on("popupopen", ev => {
+      const b = ev.popup.getElement().querySelector(".go"); if (!b) return;
+      b.addEventListener("click", async () => {
+        if (b.dataset.crowd) { const [w, id] = b.dataset.crowd.split(":"); const c = (CROWDS[w] || []).find(x => String(x.id) === id); if (c) goTo(c.walk, c.view_frame, c.view_yaw); return; }
+        if (b.dataset.fm) { const p = E.geo.frontage.find(x => String(x.id) === b.dataset.fm); if (p) { await goTo(p.walk, p.frame, p.yaw); pin({ kind: "frontage", id: p.id }); } return; }
+        const sh = shops().find(x => String(x.OBJECTID) === b.dataset.oid); if (sh && sh.seen) goTo(sh.seen.walk, sh.seen.frame, sh.seen.yaw);
+      });
+    });
+    MX.me = L.marker([0, 0], { icon: L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30], html: YOU }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
+    const all = shops().map(x => [x.lat, x.lon]); if (all.length) map.fitBounds(all, { padding: [30, 30] });
+    mxPanel(); crowdUI(); mxApply(); crowdsRefresh();
+  }
+  async function goTo(w, f, yaw) {
+    mxClose(); if (w !== E.walk) await selectWalk(w);
+    setFollow(false); E.seekFrame(f); if (yaw != null) E.look(yaw, -4);
+  }
+  function mxMe() {
+    const st = E.state, g = E.geo.walks[E.walk]; if (!MX.me || !st || !g || g.lat[st.fi] == null) return;
+    MX.me.setLatLng([g.lat[st.fi], g.lon[st.fi]]);
+    const cone = MX.me.getElement() && MX.me.getElement().querySelector("#cone"); if (cone) cone.setAttribute("transform", `rotate(${((g.yaw0_bearing_deg[st.fi] + E.yaw) % 360).toFixed(1)} 30 30)`);
+  }
+  function mxPanel() {
+    $("mxLayersList").innerHTML = MX_LAYERS.map(([k, lab]) => `<label><input type="checkbox" data-layer="${k}" ${MX.on[k] ? "checked" : ""}><span>${lab}</span></label>`).join("");
+    $("mxColour").innerHTML = MX_COLOUR.map(([f, lab]) => `<option value="${f}" ${f === MX.colour ? "selected" : ""}>${lab}</option>`).join("");
+    const col = mxColourMap();
+    $("mxFilters").innerHTML = MX_FIELDS.map(([f, lab]) => {
+      const cnt = {}; for (const sh of shops()) { const v = mxVal(sh, f); cnt[v] = (cnt[v] || 0) + 1; }
+      const vals = Object.entries(cnt).sort((a, b) => b[1] - a[1]), off = new Set(MX.off[f] || []);
+      const chip = ([v, n]) => `<button data-f="${f}" data-v="${esc(v)}" aria-pressed="${!off.has(v)}">${f === MX.colour ? `<i style="background:${col(v)}"></i>` : ""}${esc(v)}<small>${n}</small></button>`;
+      return `<h5>${lab}<span><button data-all="${f}">all</button><button data-none="${f}">none</button></span></h5><div class="fchips">${vals.slice(0, 14).map(chip).join("")}</div>` +
+        (vals.length > 14 ? `<details><summary>${vals.length - 14} more</summary><div class="fchips">${vals.slice(14).map(chip).join("")}</div></details>` : "");
+    }).join("");
+  }
+  function mxApply() {
+    if (!MX.map) { mxSave(); return; }
+    for (const [k] of MX_LAYERS) { const lay = MX.layers[k]; if (MX.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(MX.map); else lay.remove(); }
+    const col = mxColourMap(); let n = 0;
+    for (const { sh, m } of MX.stores) {
+      const ok = MX_FIELDS.every(([f]) => !(MX.off[f] || []).includes(mxVal(sh, f)));
+      m.setStyle({ fillColor: col(mxVal(sh, MX.colour)) });
+      if (ok) { m.addTo(MX.layers.stores); n++; } else MX.layers.stores.removeLayer(m);
+    }
+    $("mxShown").textContent = `${n} / ${shops().length}`;
+    $("mxInfo").textContent = MX.on.stores ? `${n} of ${shops().length} stores` : "";
+    if (MX.on.paths) mxPaths();
+    if (MX.on.speed) mxSpeed();
+    mxLegend(col); mxSave();
+  }
+  function mxLegend(col) {
+    const parts = [];
+    if (MX.on.stores) {
+      const lab = (MX_COLOUR.find(c => c[0] === MX.colour) || [, ""])[1].toLowerCase(), vals = new Set(MX.stores.filter(x => MX.layers.stores.hasLayer(x.m)).map(x => mxVal(x.sh, MX.colour)));
+      const coloured = [...vals].filter(v => col(v) !== NOCOL);
+      parts.push(`<span class="soft">Stores by ${lab} · solid = passed on a walk</span>`, ...coloured.map(v => `<span><i style="background:${col(v)}"></i>${esc(v)}</span>`));
+      if (coloured.length < vals.size) parts.push(`<span><i style="background:${NOCOL}"></i>other / unknown</span>`);
+    }
+    if (MX.on.crowds) parts.push(`<span><i style="background:var(--person)"></i>crowd · number = most people at once</span>`);
+    if (MX.on.routes) parts.push(...Object.keys(E.geo.walks).map(w => `<span><i style="background:${walkCol(w)}"></i>${esc(walkLong(w))}</span>`));
+    if (MX.on.frontage) parts.push(`<span>🧱 frontage materials</span>`);
+    if (MX.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths</span>`);
+    if (MX.on.speed) parts.push(`<span class="soft">Mean walking speed${mxSpeedInfo ? " · " + esc(mxSpeedInfo) : ""}</span><span><div class="ramp" style="background:linear-gradient(90deg,${SPEED_RAMP.join(",")})"></div><div class="rampx"><span>0</span><span>0.75</span><span>1.5+ m/s</span></div></span>`);
+    $("mxLegend").innerHTML = parts.join("") || `<span class="soft">Nothing shown · open Layers &amp; filters</span>`;
+  }
+  $("mxPanel").addEventListener("change", ev => {
+    const t = ev.target;
+    if (t.dataset.layer) { MX.on[t.dataset.layer] = t.checked; mxApply(); }
+    if (t.id === "mxColour") { MX.colour = t.value; mxPanel(); mxApply(); }
+  });
+  $("mxPanel").addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if (!b) return;
+    if (b.dataset.f) { const f = b.dataset.f, v = b.dataset.v, off = new Set(MX.off[f] || []); off.has(v) ? off.delete(v) : off.add(v); MX.off[f] = [...off]; b.setAttribute("aria-pressed", String(!off.has(v))); mxApply(); }
+    else if (b.dataset.all) { MX.off[b.dataset.all] = []; mxPanel(); mxApply(); }
+    else if (b.dataset.none) { const f = b.dataset.none; MX.off[f] = [...new Set(shops().map(sh => mxVal(sh, f)))]; mxPanel(); mxApply(); }
+    else if (b.id === "mxReset") { MX.on = Object.fromEntries(MX_LAYERS.map(([k, , d]) => [k, d])); MX.colour = "Main_Trade"; MX.off = {}; mxPanel(); mxApply(); }
+  });
+  $("mxLayers").addEventListener("click", () => { const open = $("mxPanel").hidden; $("mxPanel").hidden = !open; $("mxLayers").setAttribute("aria-pressed", String(open)); if (open) $("mxSegPanel").hidden = true; });
+  $("mxClose").addEventListener("click", mxClose);
+  document.querySelector(".mini").addEventListener("click", mxOpen);
+  setInterval(() => { if (!$("mapx").hidden) mxMe(); }, 200);
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("mapx").hidden) { if (SEG.on) segMode(false); else mxClose(); } });
+
+  // ---- people's paths and the speed map (motion.py positions, camera motion removed) ----
+  let mxPathsDone = false;
+  async function mxPaths() {
+    if (mxPathsDone) return; mxPathsDone = true;
+    for (const w of Object.keys(E.geo.walks)) {
+      const { mo } = await walkData(w); if (!mo || !mo.tracks) continue;
+      for (const m of Object.values(mo.tracks)) { const pts = []; m.lat.forEach((a, i) => { if (a != null) pts.push([a, m.lon[i]]); });
+        if (pts.length > 1) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(MX.layers.paths); }
+    }
+  }
+  const SPEED_RAMP = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];   // viridis: slow -> fast
+  const SP = { cell: 3, minPeople: 3, max: 1.5 };
+  let mxSpeedKey = "", mxSpeedInfo = "";
+  async function mxSpeed() {
+    const key = `${SP.cell}|${SP.minPeople}`; if (key === mxSpeedKey && MX.layers.speed.getLayers().length) return; mxSpeedKey = key;
+    const g0 = Object.values(E.geo.walks)[0]; if (!g0) return;
+    const lat0 = g0.lat.find(x => x != null), lon0 = g0.lon.find(x => x != null), kx = 111320 * Math.cos(lat0 * D2R), ky = 110574, people = [];
+    for (const w of Object.keys(E.geo.walks)) {
+      const { mo } = await walkData(w); if (!mo || !mo.tracks) continue;
+      for (const m of Object.values(mo.tracks)) { const pts = []; let lx = 1e9, ly = 1e9;
+        m.lat.forEach((a, i) => { const v = m.spd[i]; if (a == null || v == null) return; const x = (m.lon[i] - lon0) * kx, y = (a - lat0) * ky; if (Math.hypot(x - lx, y - ly) < 1) return; lx = x; ly = y; pts.push([x, y, v]); });
+        if (pts.length) people.push(pts); }
+    }
+    MX.layers.speed.clearLayers(); if (!people.length) { mxSpeedInfo = "no motion data"; mxLegend(mxColourMap()); return; }
+    const sig = SP.cell, R = Math.ceil(3 * sig), res = 0.5; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const pts of people) for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    x0 -= R; y0 -= R; x1 += R; y1 += R;
+    const W = Math.ceil((x1 - x0) / res), H = Math.ceil((y1 - y0) / res), num = new Float32Array(W * H), den = new Float32Array(W * H), pw = new Float32Array(W * H), pv = new Float32Array(W * H), touched = [];
+    const r = Math.ceil(R / res), k2 = -0.5 / (sig * sig);
+    for (const pts of people) {                                        // each person counts once per pixel (their nearest sample)
+      touched.length = 0;
+      for (const [x, y, v] of pts) { const cx = Math.floor((x - x0) / res), cy = Math.floor((y - y0) / res);
+        for (let j = Math.max(0, cy - r); j <= Math.min(H - 1, cy + r); j++) for (let i = Math.max(0, cx - r); i <= Math.min(W - 1, cx + r); i++) {
+          const dx = x0 + (i + .5) * res - x, dy = y0 + (j + .5) * res - y, wt = Math.exp((dx * dx + dy * dy) * k2); if (wt < 0.01) continue;
+          const q = j * W + i; if (pw[q] === 0) touched.push(q); if (wt > pw[q]) { pw[q] = wt; pv[q] = v; } } }
+      for (const q of touched) { num[q] += pw[q] * pv[q]; den[q] += pw[q]; pw[q] = 0; }
+    }
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const cx2 = cv.getContext("2d"), img = cx2.createImageData(W, H);
+    const lo = Math.max(0.5, SP.minPeople - 1.5), hi = SP.minPeople; let painted = 0, sum = 0;
+    const rgb = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
+      const a1 = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b1 = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16)); return a1.map((v, k) => Math.round(v + (b1[k] - v) * f)); };
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const q = j * W + i, d = den[q]; if (d < lo) continue;
+      const v = num[q] / d, c = rgb(v / SP.max), al = Math.min(1, (d - lo) / Math.max(0.01, hi - lo)), o = ((H - 1 - j) * W + i) * 4;
+      img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = Math.round(200 * al); if (al >= 1) { painted++; sum += v; }
+    }
+    cx2.putImageData(img, 0, 0);
+    L.imageOverlay(cv.toDataURL("image/png"), [[lat0 + y0 / ky, lon0 + x0 / kx], [lat0 + (y0 + H * res) / ky, lon0 + (x0 + W * res) / kx]], { opacity: .85, interactive: false }).addTo(MX.layers.speed);
+    mxSpeedInfo = painted ? `${people.length} people · area mean ${(sum / painted).toFixed(2)} m/s` : "not enough people for this setting";
+    mxLegend(mxColourMap());
+  }
+  const spSync = () => { $("spCellV").textContent = `${SP.cell} m`; $("spMinV").textContent = `${SP.minPeople} people`; };
+  spSync();
+  $("spCell").addEventListener("change", () => { SP.cell = +$("spCell").value; spSync(); if (MX.on.speed) mxSpeed(); });
+  $("spMin").addEventListener("change", () => { SP.minPeople = +$("spMin").value; spSync(); if (MX.on.speed) mxSpeed(); });
+
+  // ---- crowds, computed live (port of pipeline/crowds.py; the rule is adjustable) ----
+  const CROWD_DEF = { minPeople: 4, maxDist: 8, sizeRatio: 0.7, gapFrac: 0.25, linkM: 2, minDur: 1, mergeM: 4, mergeT: 5 }, CP = { ...CROWD_DEF }, CROWDS = {};
+  const CP_UI = [["minPeople", "At least (people)", 3, 8, 1, v => `${v}`], ["maxDist", "Within (m of the camera)", 3, 15, 1, v => `${v} m`], ["sizeRatio", "Similar size (ratio)", .4, .95, .05, v => (+v).toFixed(2)],
+                 ["gapFrac", "Gap between boxes", 0, 1, .05, v => (+v).toFixed(2)], ["linkM", "Neighbours within", .5, 5, .5, v => `${v} m`], ["minDur", "Lasts at least", .2, 5, .2, v => `${(+v).toFixed(1)} s`],
+                 ["mergeM", "Merge if within", 1, 10, 1, v => `${v} m`], ["mergeT", "… and within", 1, 15, 1, v => `${v} s`]];
+  function crowdUI() {
+    $("mxCrowdSet").innerHTML = CP_UI.map(([k, lab, mn, mx, st]) => `<div class="sl"><span>${lab}</span><output id="cv_${k}"></output><input type="range" data-cp="${k}" min="${mn}" max="${mx}" step="${st}"></div>`).join("");
+    cpSync();
+  }
+  function cpSync() { for (const [k, , , , , f] of CP_UI) { const i = document.querySelector(`[data-cp="${k}"]`); if (i) { i.value = CP[k]; $(`cv_${k}`).textContent = f(CP[k]); } } }
+  let cpTimer = null;
+  $("mxCrowdSet").addEventListener("input", ev => { const k = ev.target.dataset.cp; if (!k) return; CP[k] = +ev.target.value; cpSync(); clearTimeout(cpTimer); cpTimer = setTimeout(crowdsRefresh, 150); });
+  $("cpReset").addEventListener("click", () => { Object.assign(CP, CROWD_DEF); cpSync(); crowdsRefresh(); });
+  const median = a => { const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  function crowdsCompute(walk, d, mo) {
+    const g = E.geo.walks[walk]; if (!g || !d) return [];
+    const fps = d.fps || 5, minLen = E.minLen, conf = E.conf, n = d.n_frames, i0 = g.lat.findIndex(v => v != null), kx = 111320 * Math.cos(g.lat[i0] * D2R), ky = 110574;
+    const mtr = id => { if (!mo || !mo.tracks) return null; const gid = mo.id2g ? (mo.id2g[id] ?? id) : id; return mo.tracks[gid] || null; };
+    const mAt = (id, f) => { const m = mtr(id); if (!m) return null; const i = f - m.f0; return (i >= 0 && i < m.lat.length && m.lat[i] != null) ? { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i] } : null; };
+    const pos = (e, f) => { const m = mAt(e[0], f); if (m) return [m.lat, m.lon]; if (e[7] == null || g.lat[f] == null) return null; const b = (g.yaw0_bearing_deg[f] + e[2]) * D2R;
+      return [g.lat[f] + e[7] * Math.cos(b) / ky, g.lon[f] + e[7] * Math.sin(b) / kx]; };
+    const area = e => Math.max(1e-6, (e[4] - e[3]) * (e[5] - e[6]));
+    let active = [], done = [];
+    for (let f = 0; f < n; f++) {
+      const F = d.frames[f]; if (!F) continue;
+      const rows = F.p.filter(e => { const t = d.tracks[e[0]] || []; return (t[3] || 0) >= conf && (t[2] || 0) >= minLen && e[7] != null && e[7] <= CP.maxDist; }).sort((a, b) => b[1] - a[1]);
+      const keep = [];
+      for (const e of rows) { let dup = false; for (const k of keep) { const dx = Math.min(e[4], k[4]) - Math.max(e[3], k[3]), dy = Math.min(e[5], k[5]) - Math.max(e[6], k[6]);
+        if (dx > 0 && dy > 0) { const it = dx * dy, a1 = area(e), a2 = area(k); if (it / (a1 + a2 - it) > 0.5 || it / Math.min(a1, a2) > 0.75) { dup = true; break; } } } if (!dup) keep.push(e); }
+      const m = keep.length; if (m < CP.minPeople) continue;
+      const par = [...Array(m).keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+      const w = keep.map(e => ((e[4] - e[3]) % 360 + 360) % 360), yc = keep.map((e, i) => e[3] + w[i] / 2), h = keep.map(e => e[5] - e[6]);
+      const gx = keep.map((e, i) => e[7] * Math.sin(yc[i] * D2R)), gy = keep.map((e, i) => e[7] * Math.cos(yc[i] * D2R));
+      for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
+        if (Math.min(h[i], h[j]) / Math.max(h[i], h[j], 1e-6) < CP.sizeRatio) continue;
+        const dc = Math.abs(((yc[i] - yc[j] + 540) % 360) - 180), gap = dc - (w[i] + w[j]) / 2; if (gap > CP.gapFrac * (w[i] + w[j]) / 2) continue;
+        if (Math.min(keep[i][5], keep[j][5]) < Math.max(keep[i][6], keep[j][6])) continue;
+        if (Math.hypot(gx[i] - gx[j], gy[i] - gy[j]) > CP.linkM) continue;
+        par[find(i)] = find(j);
+      }
+      const comp = new Map(); keep.forEach((e, i) => { const r = find(i); if (!comp.has(r)) comp.set(r, []); comp.get(r).push(e); });
+      const used = new Set();
+      for (const grp of comp.values()) {
+        if (grp.length < CP.minPeople) continue;
+        const ids = new Set(grp.map(e => e[0])); let best = null, bj = 0;
+        for (const c of active) { if (used.has(c) || f - c.last > 5) continue; let inter = 0; for (const x of ids) if (c.memLast.has(x)) inter++;
+          if (inter) { const jj = inter / (ids.size + c.memLast.size - inter); if (jj > bj) { best = c; bj = jj; } } }
+        if (!best) { best = { frames: [], memLast: new Set(), last: f }; active.push(best); }
+        best.frames.push([f, grp]); best.memLast = ids; best.last = f; used.add(best);
+      }
+      const still = []; for (const c of active) (f - c.last <= 5 ? still : done).push(c); active = still;
+    }
+    done = done.concat(active);
+    for (const c of done) { c.mem = new Set(c.frames.flatMap(([, g2]) => g2.map(e => e[0]))); c.f0 = c.frames[0][0]; c.f1 = c.frames[c.frames.length - 1][0];
+      const ps = c.frames.flatMap(([f, g2]) => g2.map(e => pos(e, f))).filter(Boolean); c.ctr = ps.length ? [median(ps.map(q => q[0])), median(ps.map(q => q[1]))] : null; }
+    const par = [...done.keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+    for (let i = 0; i < done.length; i++) for (let j = i + 1; j < done.length; j++) {
+      const a = done[i], b = done[j]; if (Math.max(a.f0, b.f0) - Math.min(a.f1, b.f1) > CP.mergeT * fps) continue;
+      let share = false; for (const x of a.mem) if (b.mem.has(x)) { share = true; break; }
+      const near = a.ctr && b.ctr && Math.hypot((a.ctr[1] - b.ctr[1]) * kx, (a.ctr[0] - b.ctr[0]) * ky) <= CP.mergeM; if (share || near) par[find(i)] = find(j);
+    }
+    const grpd = new Map(); done.forEach((c, i) => { const r = find(i); if (!grpd.has(r)) grpd.set(r, []); grpd.get(r).push(c); });
+    const out = [];
+    for (const cs of grpd.values()) {
+      const per = new Map(); for (const c of cs) for (const [f, g2] of c.frames) { if (!per.has(f)) per.set(f, new Map()); for (const e of g2) per.get(f).set(e[0], e); }
+      const frames = [...per.keys()].sort((a, b) => a - b).map(f => [f, [...per.get(f).values()]]), f0 = frames[0][0], f1 = frames[frames.length - 1][0];
+      if ((f1 - f0 + 1) / fps < CP.minDur) continue;
+      const sizes = frames.map(([, g2]) => g2.length), members = [...new Set(frames.flatMap(([, g2]) => g2.map(e => e[0])))];
+      const [fm, mm] = frames.reduce((a, b) => (b[1].length > a[1].length ? b : a));
+      const pts = frames.map(([f, g2]) => { const q = g2.map(e => pos(e, f)).filter(Boolean); return q.length ? [mean(q.map(x => x[0])), mean(q.map(x => x[1]))] : null; }).filter(Boolean);
+      if (!pts.length) continue;
+      const clat = median(pts.map(x => x[0])), clon = median(pts.map(x => x[1]));
+      const spd = members.map(id => { const v = frames.filter(([, g2]) => g2.some(e => e[0] === id)).map(([f]) => (mAt(id, f) || {}).spd).filter(x => x != null); return v.length ? median(v) : null; }).filter(x => x != null);
+      const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return o; };
+      const ys = mm.map(e => e[2] * D2R), vy = Math.atan2(mean(ys.map(Math.sin)), mean(ys.map(Math.cos))) / D2R, sm = spd.length ? mean(spd) : null;
+      out.push({ walk, lat: clat, lon: clon, t_start_s: +(f0 / fps).toFixed(1), duration_s: +((f1 - f0 + 1) / fps).toFixed(1),
+        people_median: Math.round(median(sizes)), people_max_at_once: Math.max(...sizes), people_unique: members.length,
+        speed_mean_m_s: sm, speed_std_m_s: sm == null ? null : Math.sqrt(mean(spd.map(v => (v - sm) ** 2))), speed_n: spd.length,
+        walking: spd.filter(v => v >= 0.5).length, standing: spd.filter(v => v <= 0.3).length,
+        age_group: tally(members.map(id => (d.tracks[id] || [])[6] || "uncertain")), perceived_gender: tally(members.map(id => (d.tracks[id] || [])[5] || "uncertain")),
+        view_frame: fm, view_yaw: +vy.toFixed(1) });
+    }
+    out.sort((a, b) => a.t_start_s - b.t_start_s);
+    out.forEach((c, i) => { c.id = i + 1; c.crowd_id = `C${walk.replace("walk", "")}-${String(i + 1).padStart(2, "0")}`; });
+    return out;
+  }
+  let crowdBusy = false;
+  async function crowdsRefresh() {
+    if (crowdBusy || !MX.map) return; crowdBusy = true;
+    try { for (const w of Object.keys(E.geo.walks)) { const { d, mo } = await walkData(w); CROWDS[w] = crowdsCompute(w, d, mo); } drawCrowds(); }
+    finally { crowdBusy = false; }
+  }
+  const AGE_HEX = { "child": "#86b6ef", "young adult 18-35": "#3987e5", "middle adult 36-60": "#1c5cab", "older adult 61+": "#0d366b", "uncertain": "#b9b8b2" };
+  const SEX_HEX = { man: "#2a78d6", woman: "#eb6834", uncertain: "#b9b8b2" };
+  function crowdHtml(c) {
+    const n = Object.values(c.age_group).reduce((a, b) => a + b, 0) || 1;
+    const bar = (o, hex) => `<div class="bar2">${Object.keys(hex).filter(k => o[k]).map(k => `<span style="width:${o[k] / n * 100}%;background:${hex[k]}" title="${k}: ${o[k]}"></span>`).join("")}</div>`;
+    const sp = c.speed_mean_m_s == null ? "—" : `${c.speed_mean_m_s.toFixed(2)} ± ${c.speed_std_m_s.toFixed(2)} m/s`;
+    return `<b class="t">Crowd ${c.crowd_id} · ${esc(E.walkShort(c.walk))} · ${fmt(c.t_start_s)}</b><table>
+      <tr><td>Most people at once</td><td>${c.people_max_at_once}</td></tr><tr><td>Typical size (median)</td><td>${c.people_median}</td></tr>
+      <tr><td>Different people over ${c.duration_s} s</td><td>${c.people_unique}</td></tr><tr><td>Speed mean ± std</td><td>${sp}</td></tr>
+      <tr><td>Walking / standing</td><td>${c.walking} / ${c.standing}</td></tr></table>
+      <div class="muted" style="padding-top:6px">Age group (perceived)</div>${bar(c.age_group, AGE_HEX)}<div class="muted">Gender (perceived)</div>${bar(c.perceived_gender, SEX_HEX)}
+      <div class="muted" style="font-size:11.5px">Heuristic: ≥ ${CP.minPeople} overlapping people of similar size; counts approximate; age / gender are estimates.</div>
+      <button class="go" data-crowd="${c.walk}:${c.id}">▶ Go to video</button>`;
+  }
+  function drawCrowds() {
+    MX.layers.crowds.clearLayers();
+    for (const list of Object.values(CROWDS)) for (const c of list) {
+      const sz = Math.round(20 + Math.min(20, c.people_max_at_once * 2));
+      L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-dot", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
+        .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`Crowd ${c.crowd_id} · ~${c.people_max_at_once} people`).addTo(MX.layers.crowds);
+    }
+  }
+
+  // ---- segment summary: pick a start and an end store, summarise everything between them (JSON / Excel) ----
+  const SEG = { on: false, a: null, b: null, layer: null, result: null };
+  function segMode(on) {
+    SEG.on = on; SEG.a = SEG.b = null; $("mxSeg").setAttribute("aria-pressed", String(on)); $("mapx").classList.toggle("selecting", on);
+    if (on) { $("mxPanel").hidden = true; $("mxLayers").setAttribute("aria-pressed", "false"); $("mxSegPanel").hidden = true; segClear(); MX.map && MX.map.closePopup(); }
+    if (MX.map) mxApply();
+    segHint();
+  }
+  function segHint() {
+    const h = $("mxHint"); if (!SEG.on) { h.hidden = true; return; }
+    h.hidden = false; h.innerHTML = SEG.a ? `② Click the <b>end</b> store · start: ${esc(SEG.a.name)} · Esc to cancel` : `① Click the <b>start</b> store · Esc to cancel`;
+  }
+  const segClear = () => { if (SEG.layer) { SEG.layer.remove(); SEG.layer = null; } };
+  function nearestF(walk, sh) {
+    const g = E.geo.walks[walk]; if (!g) return null; const kx = 111320 * Math.cos(sh.lat * D2R), ky = 110574; let best = null;
+    for (let i = 0; i < g.lat.length; i++) { if (g.lat[i] == null) continue; const dd = Math.hypot((g.lon[i] - sh.lon) * kx, (g.lat[i] - sh.lat) * ky); if (!best || dd < best.d) best = { f: i, d: dd }; }
+    return best;
+  }
+  async function segPick(sh) {
+    if (!SEG.a) { SEG.a = sh; segHint(); return; }
+    if (sh.OBJECTID === SEG.a.OBJECTID) return;
+    let pick = null;
+    for (const w of Object.keys(E.geo.walks)) { const na = nearestF(w, SEG.a), nb = nearestF(w, sh); if (!na || !nb) continue; const worst = Math.max(na.d, nb.d); if (!pick || worst < pick.worst) pick = { walk: w, na, nb, worst }; }
+    if (!pick || pick.worst > 30) { $("mxHint").innerHTML = `No recorded walk passes both stores (nearest ${pick ? Math.round(pick.worst) : "?"} m). Pick another <b>end</b> store, or Esc.`; return; }
+    const a = SEG.a, { d, mo } = await walkData(pick.walk);
+    SEG.result = segSummary(pick, a, sh, d, mo); segMode(false); segDraw(pick, a, sh); segShow(SEG.result);
+  }
+  function segDraw(pick, a, b) {
+    segClear(); const g = E.geo.walks[pick.walk], f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f), pts = [];
+    for (let i = f0; i <= f1; i++) if (g.lat[i] != null) pts.push([g.lat[i], g.lon[i]]);
+    SEG.layer = L.layerGroup().addTo(MX.map);
+    L.polyline(pts, { color: "#fff", weight: 12, opacity: .95, interactive: false }).addTo(SEG.layer);
+    L.polyline(pts, { color: "#3d8bff", weight: 6, interactive: false }).addTo(SEG.layer);
+    for (const [sh, t] of [[a, "A"], [b, "B"]]) L.marker([sh.lat, sh.lon], { interactive: false, icon: L.divIcon({ className: "", html: `<div class="seg-ab">${t}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(SEG.layer);
+    MX.map.fitBounds(L.latLngBounds(pts.concat([[a.lat, a.lon], [b.lat, b.lon]])).pad(0.3), { maxZoom: 20 });
+  }
+  function segSummary(pick, A, B, d, mo) {
+    const walk = pick.walk, g = E.geo.walks[walk], fps = d.fps || 5, f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f);
+    const [startSh, endSh] = pick.na.f <= pick.nb.f ? [A, B] : [B, A];
+    let len = 0; for (let i = f0 + 1; i <= f1; i++) if (g.lat[i] != null && g.lat[i - 1] != null) len += Math.hypot((g.lon[i] - g.lon[i - 1]) * 111320 * Math.cos(g.lat[i] * D2R), (g.lat[i] - g.lat[i - 1]) * 110574);
+    const minLen = E.minLen, conf = E.conf, l2conf = Math.max(0.15, conf - 0.2);
+    const people = new Map(), food = new Map(), foodPics = new Set(), signs = new Map(), objs = new Map(), l2 = new Map(), pictured = new Set(); let peak = 0, peakF = f0;
+    for (let f = f0; f <= f1; f++) {
+      const F = d.frames[f]; if (!F) continue; let n = 0;
+      for (const e of F.p) { if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue; n++; if (!people.has(e[0])) people.set(e[0], { first: f, last: f }); else people.get(e[0]).last = f; }
+      if (n > peak) { peak = n; peakF = f; }
+      for (const e of (F.fd || [])) { if (((d.food_len || {})[e[7]] || 0) < minLen) continue; if (e[0] === "Food picture (menu/sign)") foodPics.add(e[7]); else if (!food.has(e[7])) food.set(e[7], e[0]); }
+      for (const e of (F.s || [])) { const info = (d.signs || {})[e[0]]; if (info && info[3] && !signs.has(e[0])) signs.set(e[0], { text: info[0], lang: info[1], frame: f }); }
+      for (const e of F.o) if (e[1] >= conf && ((d.obj_len || {})[e[7]] || 0) >= minLen && !objs.has(e[7])) objs.set(e[7], e[0]);
+      for (const e of F.l2) if (e[1] >= l2conf && ((d.obj_len || {})[e[8]] || 0) >= minLen && !l2.has(e[8])) l2.set(e[8], e[0]);
+      for (const e of (F.dp || [])) pictured.add(e[0]);
+    }
+    const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); };
+    const plist = [...people].map(([id, r]) => { const t = d.tracks[id] || [], gid = mo && mo.id2g ? (mo.id2g[id] ?? id) : id, m = mo && mo.tracks ? mo.tracks[gid] : null;
+      return { id: `P-${String(id).padStart(4, "0")}`, age_group: t[6] || "uncertain", perceived_gender: t[5] || "uncertain", movement: m ? m.state : "unknown", median_speed_m_s: m ? m.med_spd : null, first_frame: r.first, last_frame: r.last }; });
+    const stores = [];
+    for (const sh of shops()) { const nn = nearestF(walk, sh); if (!nn || nn.d > 22 || nn.f < f0 || nn.f > f1) continue;
+      stores.push({ name: sh.name, trade: sh.Main_Trade, sub_category: sh.Sub_Category, shop_type: sh.Shop_Type, ownership: sh.Ownership, facade: sh.Facade_Mat, skeleton: sh.Skeleton_Mat, distance_m: +nn.d.toFixed(1), frame: nn.f, global_id: sh.GlobalID }); }
+    stores.sort((a, b) => a.frame - b.frame);
+    const fronts = E.geo.frontage.filter(p => p.walk === walk && p.frame >= f0 && p.frame <= f1), mat = {}; for (const p of fronts) for (const m of p.materials) mat[m] = (mat[m] || 0) + 1;
+    return {
+      segment: { project: E.project.id, walk, street: E.walkLabel(walk), from_store: startSh.name, to_store: endSh.name, frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
+                 duration_s: +((f1 - f0) / fps).toFixed(1), length_m: +len.toFixed(1), min_confidence: conf, exported: new Date().toISOString() },
+      stores: { count: stores.length, by_trade: tally(stores.map(x => x.trade || "unknown")), list: stores },
+      people: { unique: plist.length, per_100m: len > 0 ? +(plist.length / len * 100).toFixed(1) : null, peak_in_frame: peak, peak_frame: peakF,
+                age_group: tally(plist.map(x => x.age_group)), perceived_gender: tally(plist.map(x => x.perceived_gender)), movement: tally(plist.map(x => x.movement)), list: plist },
+      food: { displays: food.size, by_item: tally([...food.values()]), food_pictures_menu_or_sign: foodPics.size },
+      signs: { read: signs.size, list: [...signs.values()] }, objects: { by_class: tally([...objs.values()]) }, market_items: { by_class: tally([...l2.values()]) },
+      pictured_people_on_signs: pictured.size,
+      frontage_materials: { points: fronts.length, materials: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])),
+                            list: fronts.map(p => ({ id: p.id, facade: p.facade, structure: p.structure, materials: p.materials.join("; "), chainage_m: p.chainage_m, side: p.side })) },
+      notes: ["People are tracked IDs (one person can still be split into two IDs).", "Age group and perceived gender are CLIP estimates, not validated.",
+              "Food = tracked displays/stacks, not single items. Frontage materials are location-based (experimental)."],
+    };
+  }
+  function segShow(r) {
+    const s = r.segment, kv = o => Object.entries(o).map(([a, b]) => `<dt>${esc(a)}</dt><dd>${b}</dd>`).join("") || `<dt>none</dt><dd></dd>`;
+    $("mxSegPanel").innerHTML = `<h4><span>${esc(s.from_store)} → ${esc(s.to_store)}</span><span class="btns"><button class="primary" id="segJson">JSON</button><button class="primary" id="segXlsx">Excel</button><button id="segClose" aria-label="Close">✕</button></span></h4>
+      <dl class="kv2"><dt>Street</dt><dd>${esc(s.street)}</dd><dt>Length</dt><dd>${s.length_m} m</dd><dt>Video</dt><dd>${fmt(s.t_start_s)}–${fmt(s.t_end_s)}</dd></dl>
+      <h5>People</h5><dl class="kv2"><dt>Different people</dt><dd>${r.people.unique}</dd><dt>Per 100 m</dt><dd>${r.people.per_100m ?? "—"}</dd><dt>Most at once</dt><dd>${r.people.peak_in_frame}</dd></dl>
+      <h5>Age group (perceived)</h5><dl class="kv2">${kv(r.people.age_group)}</dl><h5>Gender (perceived)</h5><dl class="kv2">${kv(r.people.perceived_gender)}</dl><h5>Movement</h5><dl class="kv2">${kv(r.people.movement)}</dl>
+      <h5>Stores (${r.stores.count})</h5><div class="tags">${Object.entries(r.stores.by_trade).map(([t, n]) => `<span>${esc(t)} · ${n}</span>`).join("") || "none"}</div><ul>${r.stores.list.map(x => `<li>${esc(x.name)}</li>`).join("")}</ul>
+      <h5>Food on display (${r.food.displays})</h5><div class="tags">${Object.entries(r.food.by_item).map(([t, n]) => `<span>${ShukEngine.emojiOf(t)} ${esc(t)} · ${n}</span>`).join("") || "none"}</div>
+      <h5>Signs read (${r.signs.read})</h5><ul>${r.signs.list.slice(0, 40).map(x => `<li dir="auto">${esc(x.text)}</li>`).join("") || "<li>none</li>"}</ul>
+      <h5>Objects</h5><dl class="kv2">${kv(r.objects.by_class)}</dl><h5>Market items</h5><dl class="kv2">${kv(r.market_items.by_class)}</dl>
+      <h5>Frontage materials (${r.frontage_materials.points} points)</h5><dl class="kv2">${kv(r.frontage_materials.materials)}</dl>
+      <div class="note">${r.notes.join(" ")}</div>`;
+    $("mxSegPanel").hidden = false;
+  }
+  const segName = () => { const s = SEG.result.segment; return `shuk_segment_${s.walk}_${s.frame_start}-${s.frame_end}`.replace(/[^\w.-]+/g, "_"); };
+  function segDownload(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  const loadXlsx = () => window.XLSX ? Promise.resolve() : new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"; sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc); });
+  $("mxSegPanel").addEventListener("click", async ev => {
+    const id = (ev.target.closest("button") || {}).id; if (!id || !SEG.result) return;
+    if (id === "segClose") { $("mxSegPanel").hidden = true; segClear(); SEG.result = null; return; }
+    if (id === "segJson") segDownload(new Blob([JSON.stringify(SEG.result, null, 2)], { type: "application/json" }), segName() + ".json");
+    if (id === "segXlsx") {
+      try { await loadXlsx(); } catch (e) { toast("Excel library unavailable (offline?)"); return; }
+      const r = SEG.result, wb = XLSX.utils.book_new(), add = (rows, name) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ "": "none" }]), name);
+      const flat = (o, pre = "") => Object.entries(o).flatMap(([k, v]) => v && typeof v === "object" && !Array.isArray(v) ? flat(v, `${pre}${k} · `) : Array.isArray(v) ? [] : [{ field: pre + k, value: v }]);
+      add([...flat(r.segment, "segment · "), ...flat({ stores: { count: r.stores.count, by_trade: r.stores.by_trade } }),
+           ...flat({ people: { unique: r.people.unique, per_100m: r.people.per_100m, peak_in_frame: r.people.peak_in_frame, age_group: r.people.age_group, perceived_gender: r.people.perceived_gender, movement: r.people.movement } }),
+           ...flat({ food: { displays: r.food.displays, by_item: r.food.by_item } }), { field: "signs · read", value: r.signs.read },
+           ...flat({ objects: r.objects.by_class, market_items: r.market_items.by_class, frontage_materials: r.frontage_materials.materials }), ...r.notes.map(n => ({ field: "note", value: n }))], "Summary");
+      add(r.stores.list, "Stores"); add(r.people.list, "People"); add(Object.entries(r.food.by_item).map(([item, n]) => ({ item, displays: n })), "Food");
+      add(r.signs.list, "Signs"); add(r.frontage_materials.list, "Frontage");
+      XLSX.writeFile(wb, segName() + ".xlsx");
+    }
+  });
+  $("mxSeg").addEventListener("click", () => segMode(!SEG.on));
+  $("conf").addEventListener("change", () => crowdsRefresh());
 
   // ---- 📎 files attached to specific people (interviews, notes, photos): pipeline/attach_api.py via serve.py ----
   const AT = { list: [], busy: "", track: null, confirm: "" };
