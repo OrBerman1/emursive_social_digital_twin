@@ -242,6 +242,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
 .pop.layers-pop { max-height: calc(100% - 150px); overflow-y: auto; }
+.pcolrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink) !important; font-size: 13.5px !important; }
+.plegend { position: absolute; right: 16px; top: 76px; z-index: 7; border-radius: 999px; padding: 6px 14px; display: flex; gap: 12px; font-size: 12.5px; font-weight: 600; align-items: center; }
+.plegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+.plegend small { color: var(--soft); font-weight: 500; }
 .ichips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
 .ichips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink); display: flex; gap: 6px; align-items: center; }
 .ichips button[aria-pressed="true"] { background: #eef2fb; border-color: #cfdcf7; color: var(--space); font-weight: 600; }
@@ -413,6 +417,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 
   <div class="mini" data-no-drag aria-label="Map: your position on the walk. Click for the full map." title="Click: full map"><div id="mm"></div><span class="n">N</span></div>
   <div class="mini-cap" id="mmCap"></div>
+  <div class="plegend glass" id="pLegend" data-no-drag hidden></div>
 
   <div class="transport glass" data-no-drag>
     <button class="play" id="play" aria-label="Play"><svg id="playIc" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></button>
@@ -437,6 +442,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="pictured"><span>Pictured people on signs</span></label>
     <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
     <label><input type="checkbox" data-show="arrows"><span>Walking arrows for everyone</span></label>
+    <div class="row pcolrow">Colour people by <div class="tseg" id="pcolSeg"><button data-pc="none">—</button><button data-pc="gender">Gender</button><button data-pc="age">Age</button></div></div>
     <h4 style="margin-top:14px">Info windows show</h4>
     <div class="row" style="padding-top:0">People at once <b id="infoNLbl"></b><input type="range" id="infoN" min="0" max="6" step="1"></div>
     <div class="ichips" id="infoChips"></div>
@@ -587,13 +593,24 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   };
 
   // ---- legend shapes (video pointers, map, chips): people = yellow circle, objects = red square, places = blue triangle ----
-  function mark(c, g, x, y, r, lw) {
+  function mark(c, g, x, y, r, lw, fill) {
     c.beginPath();
     if (g === "person") c.arc(x, y, r, 0, 7);
     else if (g === "object") c.rect(x - r * .9, y - r * .9, r * 1.8, r * 1.8);
     else if (g === "food") { const q = r * 1.2; c.moveTo(x, y - q); c.lineTo(x + q, y); c.lineTo(x, y + q); c.lineTo(x - q, y); c.closePath(); }   // green diamond
     else { c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.15, y + r * .8); c.lineTo(x - r * 1.15, y + r * .8); c.closePath(); }
-    c.fillStyle = COL[g]; c.fill(); c.lineWidth = lw; c.strokeStyle = "#fff"; c.lineJoin = "round"; c.stroke();
+    c.fillStyle = fill || COL[g]; c.fill(); c.lineWidth = lw; c.strokeStyle = "#fff"; c.lineJoin = "round"; c.stroke();
+  }
+  // colour people by perceived gender or age group (same colours as the statistics donuts); remembered in this browser
+  let PCOL = "none"; try { PCOL = localStorage.getItem("ui_alex.pcol") || "none"; } catch (e) {}
+  const personFill = (sex, age) => { if (PCOL === "gender") return (GENDER.find(x => x[0] === sex) || GENDER[2])[2];
+    if (PCOL === "age") return (AGEC.find(x => x[0] === age) || AGEC[AGEC.length - 1])[2]; return null; };
+  function pcolUI() {
+    document.querySelectorAll("#pcolSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pc === PCOL)));
+    const defs = PCOL === "gender" ? GENDER : PCOL === "age" ? AGEC : null;
+    $("pLegend").hidden = !defs;
+    if (defs) $("pLegend").innerHTML = `<small>${PCOL === "gender" ? "Gender" : "Age group"} · perceived</small>` + defs.map(([, lab, col]) => `<span><i style="background:${col}"></i>${lab}</span>`).join("");
+    try { localStorage.setItem("ui_alex.pcol", PCOL); } catch (e) {}
   }
 
   // ---- pointer anchor: upper torso for people, centre for objects and signs ----
@@ -749,7 +766,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const overlap = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
   function layoutCards(st, c, list) {
     const k = E.k, Wc = stage.clientWidth, Hc = stage.clientHeight;
-    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [Wc - 270, Hc - 400, Wc, Hc], [0, Hc - 92, Wc, Hc]];
+    const blocked = [[0, 0, 70, 330], [Wc - 560, 0, Wc, $("pLegend").hidden ? 74 : 116], [Wc - 270, Hc - 400, Wc, Hc], [0, Hc - 92, Wc, Hc]];
     const placed = [], used = new Set();
     for (const it of list) {
       const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
@@ -803,7 +820,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const [x, y] = anchor(e), isPin = pinnedKeys.has(keyOf(e)), isHov = hover && keyOf(hover) === keyOf(e), r = (g === "person" ? 5.5 : 4.5) * k;
       c.globalAlpha = Math.min(1, e.alpha * 1.3);
       if (isPin || isHov) { c.fillStyle = COL[g] + "55"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
-      mark(c, g, x, y, r, 2.2 * k);
+      mark(c, g, x, y, r, 2.2 * k, g === "person" ? personFill(e.sex, e.age) : null);
       if (g === "person") {                                               // followed: ring in their colour; arrow = walking direction on the ground
         const fc = FOL.get(E.gidOf(e.id));
         if (fc) { c.strokeStyle = fc; c.lineWidth = 3 * k; c.beginPath(); c.arc(x, y, r * 2.1, 0, 7); c.stroke(); }
@@ -869,7 +886,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       else if (dist < b.dist) Object.assign(b, { dist, f, yw });
     };
     d.frames.forEach((F, f) => {
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7]);
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7], e[0]);
       for (const e of F.l2) if (!hidden(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
       for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { const pm = (e[5] + e[6]) / 2; note(`sign:${e[0]}`, "space", f, e[2], pm > 2 ? Math.max(2, Math.min(12, (2.8 - h) / Math.tan(pm * D2R))) : 6); }
@@ -902,7 +919,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       if (!show[m.g]) continue;
       const q = mm.latLngToContainerPoint([m.lat, m.lon]); if (q.x < -10 || q.y < -10 || q.x > W + 10 || q.y > H + 10) continue;
       const live = now.has(m.key);
-      c.globalAlpha = live ? 1 : 0.8; mark(c, m.g, q.x, q.y, live ? 5.5 : 3.6, live ? 1.8 : 1.2);
+      const tr = m.g === "person" ? (E.data.tracks[m.cls] || []) : null;
+      c.globalAlpha = live ? 1 : 0.8; mark(c, m.g, q.x, q.y, live ? 5.5 : 3.6, live ? 1.8 : 1.2, tr ? personFill(tr[5] || "uncertain", tr[6] || "uncertain") : null);
     }
     c.globalAlpha = 1;
     for (const [gid, col] of FOL) {                                      // followed people: where they are now
@@ -918,6 +936,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   // categorical slots blue/orange/aqua/yellow/magenta, age = one-hue ordinal ramp, "uncertain"/"other" = neutral grey.
   const SL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"], GREY = "#b9b8b2";
   const GENDER = [["man", "Men", SL[0]], ["woman", "Women", SL[1]], ["uncertain", "Uncertain", GREY]];
+  setTimeout(() => { $("pcolSeg").addEventListener("click", ev => { const b = ev.target.closest("button[data-pc]"); if (b) { PCOL = b.dataset.pc; pcolUI(); } }); pcolUI(); }, 0);
   const AGEC = [["child", "Child", "#86b6ef"], ["young adult 18-35", "Young adult", "#3987e5"], ["middle adult 36-60", "Adult", "#1c5cab"], ["older adult 61+", "Older adult", "#0d366b"], ["uncertain", "Uncertain", GREY]];
   const LANG = [["he", "Hebrew", SL[0]], ["en", "English", SL[1]], ["ar", "Arabic", SL[2]], ["other", "Other", GREY]];
   let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1, NAMES = null;   // donutH (+ side-by-side people) fitted so the panel never scrolls
