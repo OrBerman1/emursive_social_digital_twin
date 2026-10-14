@@ -503,8 +503,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       if (!full && placed.some(q => overlap(q, best))) { card.el.style.opacity = 0; continue; }
       placed.push(best); card.el.style.transform = `translate(${best[0]}px, ${best[1]}px)`; card.el.style.opacity = full ? 1 : Math.min(1, e.alpha * 1.4);
       const tx = Math.max(best[0], Math.min(best[2], ax)), ty = Math.max(best[1], Math.min(best[3], ay));
-      c.strokeStyle = COL[g]; c.lineWidth = 2 * k; c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke();
-      c.fillStyle = COL[g]; c.beginPath(); c.arc(tx * k, ty * k, 3 * k, 0, 7); c.fill();
+      // leader line: marker colour at the item, fading to transparent as it reaches the window (as if it goes behind it)
+      const lg = c.createLinearGradient(ax * k, ay * k, tx * k, ty * k);
+      lg.addColorStop(0, COL[g]); lg.addColorStop(0.35, COL[g] + "cc"); lg.addColorStop(1, COL[g] + "00");
+      c.strokeStyle = lg; c.lineWidth = 2 * k; c.lineCap = "round"; c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke();
     }
     for (const [key, card] of pool) if (!used.has(key)) { card.el.remove(); pool.delete(key); }
   }
