@@ -87,6 +87,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .cpop td { padding: 1px 4px; } .cpop td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .cpop .bar2 { display: flex; height: 8px; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; background: #ddd; }
 .cpop .muted { color: #777; font-size: 11.5px; }
+.mapfull .crowdbtn { position: absolute; right: 160px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .crowdbtn[aria-expanded="true"] { background: #ff6f3c; border-color: #ff6f3c; color: #fff; }
+.mapfull .crowdpanel { position: absolute; right: 10px; top: 50px; width: 330px; z-index: 1003; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--ink); display: grid; gap: 7px; font-size: 12.5px; }
+.crowdpanel b { font: 700 .95rem var(--display); }
+.crowdpanel label { display: grid; grid-template-columns: 1fr 56px; gap: 2px 8px; align-items: center; }
+.crowdpanel label input { grid-column: 1 / -1; accent-color: #ff6f3c; width: 100%; margin: 0; }
+.crowdpanel label span:last-of-type { text-align: right; font-family: var(--mono); }
+.crowdpanel .row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+.crowdpanel button { font: 600 12px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; cursor: pointer; }
 .mapfull .segbtn { position: absolute; right: 10px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
 .mapfull .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .mapfull .seghint { position: absolute; right: 10px; top: 50px; z-index: 1002; background: rgba(27,35,36,.95); border: 1px solid var(--accent); border-radius: 6px; padding: 7px 12px; font-size: 12.5px; color: var(--ink); }
@@ -273,6 +282,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div id="fullmap"></div>
     <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
     <div class="legend2" id="maplegend"></div>
+    <button class="crowdbtn" id="crowdBtn" aria-expanded="false" title="Crowd detection thresholds">👥 Crowd settings</button>
+    <div class="crowdpanel" id="crowdPanel" hidden>
+      <div class="row"><b>👥 Crowd detection</b><span class="muted" id="crowdCount"></span></div>
+      <label><span>Minimum people</span><span id="cvMin"></span><input type="range" id="cpMin" min="2" max="10" step="1"></label>
+      <label><span>Max distance from camera</span><span id="cvDist"></span><input type="range" id="cpDist" min="3" max="15" step="0.5"></label>
+      <label><span>Similar size (smaller/larger box)</span><span id="cvSize"></span><input type="range" id="cpSize" min="0.4" max="0.95" step="0.05"></label>
+      <label><span>Box gap allowed (× width)</span><span id="cvGap"></span><input type="range" id="cpGap" min="0" max="1" step="0.05"></label>
+      <label><span>Max ground distance between people</span><span id="cvLink"></span><input type="range" id="cpLink" min="0.5" max="5" step="0.25"></label>
+      <label><span>Minimum duration</span><span id="cvDur"></span><input type="range" id="cpDur" min="0.2" max="5" step="0.2"></label>
+      <label><span>Merge crowds closer than</span><span id="cvMergeM"></span><input type="range" id="cpMergeM" min="0" max="10" step="0.5"></label>
+      <label><span>… and less apart in time than</span><span id="cvMergeT"></span><input type="range" id="cpMergeT" min="0" max="15" step="0.5"></label>
+      <div class="row"><span class="muted">Uses the people filters of the viewer (confidence, hide &lt; 1 s).</span><button id="cpReset">Reset</button></div>
+    </div>
     <button class="segbtn" id="segBtn" aria-pressed="false" title="Select a stretch of the walk between two stores">🖱 Select segment</button>
     <div class="seghint" id="segHint" hidden></div>
     <div class="segpanel" id="segPanel" hidden>
@@ -531,6 +553,25 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       octx.globalAlpha = 1;
       S.hits.push({ kind: "p", id, r, b: bb, info: p });
       if (sel) anchor = r;
+    }
+    // selected crowd: outline its members and draw one frame around the group, with its ID and count
+    if (SELCROWD && SELCROWD.walk === S.walk) {
+      const c = SELCROWD;
+      if (fi < c.frame_start - 25 || fi > c.frame_end + 25) SELCROWD = null;
+      else {
+        let ff = fi; while (ff > c.frame_start && !c.framesMap.has(ff)) ff--;
+        const mem = c.framesMap.get(ff) || c.framesMap.get(c.frame_start);
+        const rs = S.hits.filter(h => h.kind === "p" && mem.has(h.id)).map(h => h.r);
+        if (rs.length) {
+          octx.setLineDash([]); octx.strokeStyle = "#ff6f3c"; octx.lineWidth = 2.5 * k;
+          for (const r of rs) octx.strokeRect(r[0] - 2 * k, r[1] - 2 * k, r[2] - r[0] + 4 * k, r[3] - r[1] + 4 * k);
+          const x0 = Math.min(...rs.map(r => r[0])) - 8 * k, y0 = Math.min(...rs.map(r => r[1])) - 8 * k, x1 = Math.max(...rs.map(r => r[2])) + 8 * k, y1 = Math.max(...rs.map(r => r[3])) + 8 * k;
+          octx.setLineDash([10 * k, 6 * k]); octx.lineWidth = 2 * k; octx.strokeRect(x0, y0, x1 - x0, y1 - y0); octx.setLineDash([]);
+          const lab = `👥 ${c.crowd_id} · ${rs.length} here now (max ${c.people_max_at_once})`;
+          octx.font = `600 ${13 * k}px "IBM Plex Sans", sans-serif`; const tw = octx.measureText(lab).width + 12 * k;
+          octx.fillStyle = "#ff6f3c"; octx.fillRect(x0, y0 - 22 * k, tw, 20 * k); octx.fillStyle = "#fff"; octx.fillText(lab, x0 + 6 * k, y0 - 7 * k);
+        }
+      }
     }
     // level-1 objects (tracked + smoothed in the pipeline)
     const oc = {}, l2c = {};
@@ -885,7 +926,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
   const GEO = { shops: null, walks: {} };
   const WASTE = {};
-  const CROWDS = {};                                                    // crowds per walk (pipeline/crowds.py)
+  const CROWDS = {};                                                    // crowds per walk, computed live (same algorithm as pipeline/crowds.py)
+  let CROWD_MINI = null, CROWD_FULL = null, SELCROWD = null;
   let FRONT = [];                                                       // frontage materials, location-based (pipeline/frontage.py)
   const SHOW_WASTE = false;   // waste results are kept (waste.py) but not shown until detection is good enough (team decision)
   const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
@@ -898,7 +940,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       for (const w of ["walk1", "walk2"]) {
         try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
         if (w === "walk1") try { const rf = await fetch("../data/processed/frontage_materials.json"); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
-        try { const rc = await fetch(`../data/processed/${w}/crowds_stab.json`); if (rc.ok) CROWDS[w] = await rc.json(); } catch (e) {}
         if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
       }
     } catch (e) { return; }
@@ -909,13 +950,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
     for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
     mini.createPane("people").style.zIndex = 650;
-    for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list || [])
-      L.circleMarker([c.lat, c.lon], { radius: 3 + Math.min(5, c.people_max_at_once / 2), weight: 1.5, color: "#fff", fillColor: "#ff6f3c", fillOpacity: .9, interactive: false }).addTo(mini);
+    CROWD_MINI = L.layerGroup().addTo(mini);
     for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(mini);
     for (const wj of Object.values(WASTE)) for (const it of wj.items_list || [])
       L.circleMarker([it.lat, it.lon], { radius: 3, weight: 1, color: "#fff", fillColor: C.waste, fillOpacity: 1, interactive: false }).addTo(mini);
     MO.miniPaths = L.layerGroup().addTo(mini); MO.miniNow = L.layerGroup().addTo(mini); MO.pathSig = "";
     $("minimap").addEventListener("click", openFullMap);
+    crowdsRefresh();
     setMiniRoute();
   }
   function setMiniRoute() {
@@ -987,12 +1028,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
           .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
-      for (const [w, cj] of Object.entries(CROWDS)) for (const c of cj.crowds_list || []) {
-        const sz = Math.round(16 + Math.min(22, c.people_max_at_once * 2));
-        L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-icon", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
-          html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
-          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 ${c.crowd_id || "crowd"} · ~${c.people_max_at_once} people`).addTo(full);
-      }
+      CROWD_FULL = L.layerGroup().addTo(full); drawCrowdMarkers();
       FM_LAYER = L.layerGroup().addTo(full);
       for (const p of FRONT)
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
@@ -1225,12 +1261,153 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       <div class="muted">Heuristic: overlapping person boxes of similar size. Counts approximate (hidden people missed); speed with camera motion removed; age/gender are estimates.</div>
       <button class="go" data-crowd="${c.walk}:${c.id}">▶ Go to video</button></div>`;
   }
+  // ---------- crowds, computed live in the browser (port of pipeline/crowds.py; thresholds adjustable) ----------
+  const CROWD_DEF = { minPeople: 4, maxDist: 8, sizeRatio: 0.7, gapFrac: 0.25, linkM: 2, minDur: 1, mergeM: 4, mergeT: 5 };
+  const CP = { ...CROWD_DEF };
+  function crowdsCompute(walk, d, mo) {
+    const g = GEO.walks[walk]; if (!g || !d) return [];
+    const fps = d.fps || 5, minLen = $("Lmin").checked ? 5 : 0, conf = S.conf, n = d.n_frames;
+    const kx = 111320 * Math.cos(g.lat[0] * deg), ky = 110574;
+    const mtr = id => { if (!mo || !mo.tracks) return null; const gid = mo.id2g ? (mo.id2g[id] ?? id) : id; return mo.tracks[gid] || null; };
+    const mAt = (id, f) => { const m = mtr(id); if (!m) return null; const i = f - m.f0; return (i >= 0 && i < m.lat.length && m.lat[i] != null) ? { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i] } : null; };
+    const pos = (e, f) => { const m = mAt(e[0], f); if (m) return [m.lat, m.lon];
+      if (e[7] == null || g.lat[f] == null) return null; const b = (g.yaw0_bearing_deg[f] + e[2]) * deg;
+      return [g.lat[f] + e[7] * Math.cos(b) / ky, g.lon[f] + e[7] * Math.sin(b) / kx]; };
+    const area = e => Math.max(1e-6, (e[4] - e[3]) * (e[5] - e[6]));
+    let active = [], done = [];
+    for (let f = 0; f < n; f++) {
+      const F = d.frames[f]; if (!F) continue;
+      let rows = F.p.filter(e => { const t = d.tracks[e[0]] || []; return (t[3] || 0) >= conf && (t[2] || 0) >= minLen && e[7] != null && e[7] <= CP.maxDist; });
+      rows.sort((a, b) => b[1] - a[1]);
+      const keep = [];
+      for (const e of rows) {                                           // duplicate / part-body boxes count once
+        let dup = false;
+        for (const k of keep) {
+          const dx = Math.min(e[4], k[4]) - Math.max(e[3], k[3]), dy = Math.min(e[5], k[5]) - Math.max(e[6], k[6]);
+          if (dx > 0 && dy > 0) { const it = dx * dy, a1 = area(e), a2 = area(k); if (it / (a1 + a2 - it) > 0.5 || it / Math.min(a1, a2) > 0.75) { dup = true; break; } }
+        }
+        if (!dup) keep.push(e);
+      }
+      const m = keep.length; if (m < CP.minPeople) { continue; }
+      const par = [...Array(m).keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+      const w = keep.map(e => ((e[4] - e[3]) % 360 + 360) % 360), yc = keep.map((e, i) => e[3] + w[i] / 2), h = keep.map(e => e[5] - e[6]);
+      const gx = keep.map((e, i) => e[7] * Math.sin(yc[i] * deg)), gy = keep.map((e, i) => e[7] * Math.cos(yc[i] * deg));
+      for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
+        if (Math.min(h[i], h[j]) / Math.max(h[i], h[j], 1e-6) < CP.sizeRatio) continue;
+        const dc = Math.abs(((yc[i] - yc[j] + 540) % 360) - 180), gap = dc - (w[i] + w[j]) / 2;
+        if (gap > CP.gapFrac * (w[i] + w[j]) / 2) continue;
+        if (Math.min(keep[i][5], keep[j][5]) < Math.max(keep[i][6], keep[j][6])) continue;
+        if (Math.hypot(gx[i] - gx[j], gy[i] - gy[j]) > CP.linkM) continue;
+        par[find(i)] = find(j);
+      }
+      const comp = new Map(); keep.forEach((e, i) => { const r = find(i); if (!comp.has(r)) comp.set(r, []); comp.get(r).push(e); });
+      const used = new Set();
+      for (const grp of comp.values()) {
+        if (grp.length < CP.minPeople) continue;
+        const ids = new Set(grp.map(e => e[0]));
+        let best = null, bj = 0;
+        for (const c of active) {
+          if (used.has(c) || f - c.last > 5) continue;
+          let inter = 0; for (const x of ids) if (c.memLast.has(x)) inter++;
+          if (inter) { const j = inter / (ids.size + c.memLast.size - inter); if (j > bj) { best = c; bj = j; } }
+        }
+        if (!best) { best = { frames: [], memLast: new Set(), last: f }; active.push(best); }
+        best.frames.push([f, grp]); best.memLast = ids; best.last = f; used.add(best);
+      }
+      const still = []; for (const c of active) (f - c.last <= 5 ? still : done).push(c); active = still;
+    }
+    done = done.concat(active);
+    // merge crowds that share people, or lie within mergeM and less than mergeT apart
+    for (const c of done) {
+      c.mem = new Set(c.frames.flatMap(([, g2]) => g2.map(e => e[0]))); c.f0 = c.frames[0][0]; c.f1 = c.frames[c.frames.length - 1][0];
+      const ps = c.frames.flatMap(([f, g2]) => g2.map(e => pos(e, f))).filter(Boolean);
+      c.ctr = ps.length ? [median(ps.map(q => q[0])), median(ps.map(q => q[1]))] : null;
+    }
+    const par = [...done.keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+    for (let i = 0; i < done.length; i++) for (let j = i + 1; j < done.length; j++) {
+      const a = done[i], b = done[j], gapF = Math.max(a.f0, b.f0) - Math.min(a.f1, b.f1);
+      if (gapF > CP.mergeT * fps) continue;
+      let share = false; for (const x of a.mem) if (b.mem.has(x)) { share = true; break; }
+      const near = a.ctr && b.ctr && Math.hypot((a.ctr[1] - b.ctr[1]) * kx, (a.ctr[0] - b.ctr[0]) * ky) <= CP.mergeM;
+      if (share || near) par[find(i)] = find(j);
+    }
+    const grpd = new Map(); done.forEach((c, i) => { const r = find(i); if (!grpd.has(r)) grpd.set(r, []); grpd.get(r).push(c); });
+    let cum = [0]; for (let i = 1; i < g.lat.length; i++) cum.push(cum[i - 1] + Math.hypot((g.lon[i] - g.lon[i - 1]) * kx, (g.lat[i] - g.lat[i - 1]) * ky));
+    const out = [];
+    for (const cs of grpd.values()) {
+      const per = new Map();
+      for (const c of cs) for (const [f, g2] of c.frames) { if (!per.has(f)) per.set(f, new Map()); for (const e of g2) per.get(f).set(e[0], e); }
+      const frames = [...per.keys()].sort((a, b) => a - b).map(f => [f, [...per.get(f).values()]]);
+      const f0 = frames[0][0], f1 = frames[frames.length - 1][0];
+      if ((f1 - f0 + 1) / fps < CP.minDur) continue;
+      const sizes = frames.map(([, g2]) => g2.length), members = [...new Set(frames.flatMap(([, g2]) => g2.map(e => e[0])))].sort((a, b) => a - b);
+      const [fm, mm] = frames.reduce((a, b) => (b[1].length > a[1].length ? b : a));
+      const pts = frames.map(([f, g2]) => { const q = g2.map(e => pos(e, f)).filter(Boolean); return q.length ? [mean(q.map(x => x[0])), mean(q.map(x => x[1]))] : null; }).filter(Boolean);
+      if (!pts.length) continue;
+      const clat = median(pts.map(x => x[0])), clon = median(pts.map(x => x[1]));
+      const radius = Math.max(0, ...mm.map(e => pos(e, fm)).filter(Boolean).map(q => Math.hypot((q[1] - clon) * kx, (q[0] - clat) * ky)));
+      const spd = members.map(id => { const v = frames.filter(([, g2]) => g2.some(e => e[0] === id)).map(([f]) => (mAt(id, f) || {}).spd).filter(x => x != null); return v.length ? median(v) : null; }).filter(x => x != null);
+      const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return o; };
+      const ys = mm.map(e => e[2] * deg), vy = Math.atan2(mean(ys.map(Math.sin)), mean(ys.map(Math.cos))) / deg;
+      const sm = spd.length ? mean(spd) : null;
+      out.push({ walk, lat: clat, lon: clon, radius_m: +radius.toFixed(1), frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
+        duration_s: +((f1 - f0 + 1) / fps).toFixed(1), chainage_m: +cum[Math.min(fm, cum.length - 1)].toFixed(1),
+        people_median: Math.round(median(sizes)), people_max_at_once: Math.max(...sizes), people_unique: members.length,
+        speed_mean_m_s: sm, speed_std_m_s: sm == null ? null : Math.sqrt(mean(spd.map(v => (v - sm) ** 2))), speed_n: spd.length,
+        walking: spd.filter(v => v >= 0.5).length, standing: spd.filter(v => v <= 0.3).length,
+        age_group: tally(members.map(id => (d.tracks[id] || [])[6] || "uncertain")), perceived_gender: tally(members.map(id => (d.tracks[id] || [])[5] || "uncertain")),
+        members: members.map(id => `P-${String(id).padStart(4, "0")}`), view_frame: fm, view_yaw: +vy.toFixed(1), merged_from: cs.length,
+        framesMap: new Map(frames.map(([f, g2]) => [f, new Set(g2.map(e => e[0]))])) });
+    }
+    out.sort((a, b) => a.frame_start - b.frame_start);
+    const wn = walk.replace("walk", "");
+    out.forEach((c, i) => { c.id = i + 1; c.crowd_id = `C${wn}-${String(i + 1).padStart(2, "0")}`; });
+    return out;
+  }
+  const median = a => { const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  let crowdBusy = false;
+  async function crowdsRefresh() {
+    if (crowdBusy) return; crowdBusy = true;
+    try {
+      for (const w of Object.keys(GEO.walks)) {
+        const { d, mo } = await segData(w);
+        CROWDS[w] = { crowds_list: crowdsCompute(w, d, mo) };
+      }
+      drawCrowdMarkers();
+      $("crowdCount").textContent = Object.entries(CROWDS).map(([w, c]) => `${w === "walk1" ? "walk 1" : "walk 2"}: ${c.crowds_list.length}`).join(" · ");
+    } finally { crowdBusy = false; }
+  }
+  function drawCrowdMarkers() {
+    if (CROWD_MINI) { CROWD_MINI.clearLayers();
+      for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list)
+        L.circleMarker([c.lat, c.lon], { radius: 3 + Math.min(5, c.people_max_at_once / 2), weight: 1.5, color: "#fff", fillColor: "#ff6f3c", fillOpacity: .9, interactive: false }).addTo(CROWD_MINI); }
+    if (CROWD_FULL) { CROWD_FULL.clearLayers();
+      for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list) {
+        const sz = Math.round(16 + Math.min(22, c.people_max_at_once * 2));
+        L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-icon", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+          html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
+          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 ${c.crowd_id} · ~${c.people_max_at_once} people`).addTo(CROWD_FULL);
+      } }
+  }
+  const CP_UI = [["cpMin", "cvMin", "minPeople", v => `${v}`], ["cpDist", "cvDist", "maxDist", v => `${v} m`], ["cpSize", "cvSize", "sizeRatio", v => (+v).toFixed(2)],
+                 ["cpGap", "cvGap", "gapFrac", v => (+v).toFixed(2)], ["cpLink", "cvLink", "linkM", v => `${v} m`], ["cpDur", "cvDur", "minDur", v => `${(+v).toFixed(1)} s`],
+                 ["cpMergeM", "cvMergeM", "mergeM", v => `${v} m`], ["cpMergeT", "cvMergeT", "mergeT", v => `${v} s`]];
+  function cpSync() { for (const [i, o, k, f] of CP_UI) { $(i).value = CP[k]; $(o).textContent = f(CP[k]); } }
+  let cpTimer = null;
+  for (const [i, o, k, f] of CP_UI) $(i).addEventListener("input", () => { CP[k] = +$(i).value; $(o).textContent = f(CP[k]); clearTimeout(cpTimer); cpTimer = setTimeout(crowdsRefresh, 150); });
+  $("cpReset").addEventListener("click", () => { Object.assign(CP, CROWD_DEF); cpSync(); crowdsRefresh(); });
+  $("crowdBtn").addEventListener("click", () => { const p = $("crowdPanel"), open = p.hidden; p.hidden = !open; $("crowdBtn").setAttribute("aria-expanded", String(open));
+    if (open) { $("segPanel").hidden = true; $("segHint").hidden = true; } });
+  cpSync();
+  $("conf").addEventListener("change", () => crowdsRefresh());
+  $("Lmin").addEventListener("change", () => crowdsRefresh());
   async function goToCrowd(c) {
     $("mapfull").hidden = true;
     if (c.walk !== S.walk) await load(c.walk);
     vt = c.view_frame / (S.data ? S.data.fps : 5);
     if (videoOk()) video.currentTime = vt;
-    S.yaw = c.view_yaw; S.pitch = -5;
+    S.yaw = c.view_yaw; S.pitch = -5; SELCROWD = c;                      // outline its members in the 360 view
   }
   async function goToFrontage(p) {
     $("mapfull").hidden = true;

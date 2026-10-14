@@ -14,6 +14,9 @@ Method : 1. per analysis frame, people = tracked persons that pass the viewer de
          3. crowd in a frame = connected group of >= min_people people (default 4, user decision 14 Oct).
          4. crowds are followed over time: a group continues an existing crowd if they share >= 1 person (best
             Jaccard); gaps <= 1 s allowed; crowds seen < MIN_DUR_F frames are dropped.
+         4b. linked people must also stand within LINK_M on the ground (distance + direction), so groups cannot chain
+            across the street; crowds that share people, or lie within MERGE_M and less than 5 s apart, are merged
+            (a group that split for a moment keeps one ID).
          5. per crowd: size (median / most at once / unique people over its life), map position (members' map
             positions from motion.py, else camera position + ground distance along the bearing), speed mean and
             std over members (motion.py: camera motion removed, optical flow + geometry), age group and
@@ -40,8 +43,10 @@ SIZE_RATIO = 0.7           # smaller box height / larger box height
 MIN_DUR_F = 5              # crowd must last >= 1 s
 MAX_GAP_F = 5              # a crowd may disappear for <= 1 s
 OP_ANG_H, OP_ANG_H_ANY, OP_SECTOR = 48.0, 58.0, 60.0   # operator: box height (deg); +-sector around the operator direction
-MAX_DIST_M = 12.0
+MAX_DIST_M = 8.0          # beyond ~8 m crowd members are too small to count by eye (user feedback 14 Oct; was 12)
 DUP_IOU = 0.5
+LINK_M = 2.0           # linked people must also stand within 2 m of each other on the ground (stops chaining)
+MERGE_GAP_F, MERGE_M = 25, 4.0   # crowds sharing people, or within 4 m, less than 5 s apart = one crowd
 DUP_CONTAIN = 0.75     # a box >= 75% inside another (half-body box inside a full-body box) = same person
 
 
@@ -80,6 +85,8 @@ def groups_in_frame(g: pd.DataFrame, min_people: int) -> list[list[int]]:
     yc = yl + w / 2
     pt, pb = g.pitch_top.to_numpy(), g.pitch_bot.to_numpy()
     h = pt - pb
+    d = g.dist_m.to_numpy()
+    gx, gy = d * np.sin(np.radians(yc)), d * np.cos(np.radians(yc))   # ground position relative to the camera (m)
     n = len(ids)
     parent = list(range(n))
 
@@ -97,6 +104,8 @@ def groups_in_frame(g: pd.DataFrame, min_people: int) -> list[list[int]]:
             if gap > GAP_FRAC * (w[i] + w[j]) / 2:
                 continue
             if min(pt[i], pt[j]) < max(pb[i], pb[j]):                    # pitch ranges do not overlap
+                continue
+            if np.hypot(gx[i] - gx[j], gy[i] - gy[j]) > LINK_M:          # too far apart on the ground
                 continue
             parent[find(i)] = find(j)
     comp = {}
@@ -177,6 +186,39 @@ def run(walk: str, variant: str, min_people: int) -> dict:
         active = still
     done += active
 
+    # 5. merge crowds that are really one (a group that split briefly, or re-formed at the same spot)
+    def centre(c):
+        ps = [p for f, m in c["frames"] for p in (position(t, f) for t in m) if p]
+        return (np.median([p[0] for p in ps]), np.median([p[1] for p in ps])) if ps else None
+    for c in done:
+        c["mem"] = {t for _, m in c["frames"] for t in m}
+        c["f0"], c["f1"], c["ctr"] = c["frames"][0][0], c["frames"][-1][0], centre(c)
+    parent = list(range(len(done)))
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    for i, a in enumerate(done):
+        for j in range(i + 1, len(done)):
+            b = done[j]
+            gap = max(a["f0"], b["f0"]) - min(a["f1"], b["f1"])            # < 0 = overlap in time
+            if gap > MERGE_GAP_F:
+                continue
+            near = a["ctr"] and b["ctr"] and np.hypot((a["ctr"][1] - b["ctr"][1]) * kx, (a["ctr"][0] - b["ctr"][0]) * ky) <= MERGE_M
+            if (a["mem"] & b["mem"]) or near:
+                parent[find(i)] = find(j)
+    groups = {}
+    for i, c in enumerate(done):
+        groups.setdefault(find(i), []).append(c)
+    merged = []
+    for cs in groups.values():
+        per = {}
+        for c in cs:
+            for f, m in c["frames"]:
+                per.setdefault(f, set()).update(m)
+        merged.append({"frames": [(f, sorted(per[f])) for f in sorted(per)], "n_merged": len(cs)})
+    done = merged
+
     crowds = []
     for c in done:
         if c["frames"][-1][0] - c["frames"][0][0] + 1 < MIN_DUR_F:
@@ -184,7 +226,7 @@ def run(walk: str, variant: str, min_people: int) -> dict:
         sizes = [len(m) for _, m in c["frames"]]
         members = sorted({t for _, m in c["frames"] for t in m})
         f0, f1 = c["frames"][0][0], c["frames"][-1][0]
-        fm, mm = c["frames"][len(c["frames"]) // 2]
+        fm, mm = max(c["frames"], key=lambda x: len(x[1]))               # fullest moment: easiest to count in the video
         pts, src = [], set()
         for f, m in c["frames"]:
             ps = [p for p in (position(t, f) for t in m) if p]
@@ -215,14 +257,15 @@ def run(walk: str, variant: str, min_people: int) -> dict:
             "speed_mean_m_s": round(float(np.mean(spd)), 2) if spd else None, "speed_std_m_s": round(float(np.std(spd)), 2) if spd else None,
             "speed_n": len(spd), "walking": int(sum(v >= 0.5 for v in spd)), "standing": int(sum(v <= 0.3 for v in spd)),
             "age_group": ages, "perceived_gender": sexes, "members": [f"P-{t:04d}" for t in members],
-            "view_frame": int(fm), "view_yaw": round(view_yaw, 1), "position_from": sorted(src),
+            "view_frame": int(fm), "view_yaw": round(view_yaw, 1), "position_from": sorted(src), "merged_from": c["n_merged"],
+            "frames": [[int(f), [int(t) for t in m]] for f, m in c["frames"]],
         })
     crowds.sort(key=lambda c: c["frame_start"])                         # persistent IDs in time order along the walk
     wn = walk.replace("walk", "")
     for i, c in enumerate(crowds, 1):
         c["id"] = i
         c["crowd_id"] = f"C{wn}-{i:02d}"                                 # e.g. C1-03 = walk 1, crowd 3
-    res = {"walk": walk, "variant": variant, "crowds": len(crowds), "operator_tracks_excluded": len(ops), "max_dist_m": MAX_DIST_M, "min_people": min_people, "size_ratio": SIZE_RATIO, "gap_frac": GAP_FRAC,
+    res = {"walk": walk, "variant": variant, "crowds": len(crowds), "operator_tracks_excluded": len(ops), "max_dist_m": MAX_DIST_M, "link_m": LINK_M, "merge_gap_s": MERGE_GAP_F / 5, "merge_m": MERGE_M, "min_people": min_people, "size_ratio": SIZE_RATIO, "gap_frac": GAP_FRAC,
            "min_duration_s": MIN_DUR_F / 5,
            "note": "Heuristic: overlapping person boxes of similar size (similar distance) = people together. Counts are approximate "
                    "(people hidden behind others are missed; one person can have two track IDs).",

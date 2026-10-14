@@ -360,4 +360,17 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Crowd IDs (14 Oct): persistent "C<walk>-<nn>" numbered in time order (walk 1: C1-01 ... C1-09); shown in the
      map popup and tooltip, and each crowd is exported as a Point feature (entity_type "crowd") to
      observations_stab.geojson with its statistics and member person IDs.
+   - Revision 14 Oct (user: "C1-01..03 are the same crowd"; "could not count the people"):
+       * chaining fix: linked people must also stand within 2 m on the ground (distance + direction), so a
+         group can no longer chain to people across the street or passing the camera;
+       * merge: crowds that share people, or lie within 4 m and less than 5 s apart, become one crowd
+         (C1-01..03 -> one crowd of up to 10 people; old C1-05/06 -> one);
+       * max distance from the camera 12 -> 8 m (members of farther crowds are too small to count by eye);
+       * "go to video" jumps to the crowd's fullest moment and the 360 view outlines its members and the
+         group, labelled "C1-01 · n here now (max m)".
+     Result with defaults: walk 1: 5 crowds (4-10 people at once), walk 2: none.
+   - Thresholds adjustable in the viewer (full map, "👥 Crowd settings"): minimum people, max distance,
+     size similarity, box gap, ground distance, minimum duration, merge distance and time; crowds are
+     recomputed live in the browser (JS port of crowds.py, same defaults; checked: same crowds as Python).
+     IDs are renumbered when thresholds change. crowds.py still writes the defaults for the GIS export.
 
