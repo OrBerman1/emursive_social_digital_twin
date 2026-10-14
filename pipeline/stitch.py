@@ -178,38 +178,53 @@ def fit_orientation(frames, v360_frames, p: dict) -> tuple[np.ndarray, dict]:
 
 # ---------------------------------------------------------------- stitch
 class Stitcher:
-    """precomputed remap tables + blend weights for one output size; call with a raw dual-fisheye BGR frame."""
+    """precomputed remap tables + blend weights for one output size; call with a raw dual-fisheye BGR frame.
+    Fast path: one remap for the whole frame (each pixel from its lens), float blending only in the seam band
+    (~7% of the pixels), exposure gain applied to the two lens halves before the remap."""
 
     def __init__(self, p: dict, W: int, H: int):
         self.p, self.W, self.H = p, W, H
         d = equi_dirs(W, H) @ np.asarray(p["G"])                          # output dir -> camera dir (G^T d, row vectors)
-        self.maps, th, raw_t = [], [], []
+        th, raw_t, U, V = [], [], [], []
         for k in (0, 1):
             u, v, t = dir_to_lens(k, d, p)
             inside = (u >= 0) & (u < HALF_W - 1) & (v >= 0) & (v < RAW_H - 1) & (np.hypot(u - p["c"][k][0], v - p["c"][k][1]) < p["r_max"])
             th.append(np.where(inside, t, np.inf)); raw_t.append(t)
             # clamp into the lens' own half: directions no lens covers (sensor crop at zenith / nadir) repeat the
             # nearest edge pixels like v360 did, instead of black, and the two lenses never bleed into each other
-            uc, vc = np.clip(u, 0, HALF_W - 1) + k * HALF_W, np.clip(v, 0, RAW_H - 1)
-            self.maps.append(cv2.convertMaps(uc.astype(np.float32), vc.astype(np.float32), cv2.CV_16SC2))
+            U.append((np.clip(u, 0, HALF_W - 1) + k * HALF_W).astype(np.float32)); V.append(np.clip(v, 0, RAW_H - 1).astype(np.float32))
         b = p.get("blend_deg", BLEND_DEG) * deg
         w0 = np.clip((np.pi / 2 + b - th[0]) / (2 * b), 0, 1)              # lens 0 fades out across 90 +- b
         w0 = np.where(np.isinf(th[1]), 1.0, np.where(np.isinf(th[0]), 0.0, w0))
         none = np.isinf(th[0]) & np.isinf(th[1])
         w0 = np.where(none, (raw_t[0] <= raw_t[1]).astype(float), w0)        # uncovered: the lens whose axis is closer
         self.uncovered = float(none.mean())
-        self.w0 = cv2.merge([w0.astype(np.float32)] * 3); self.w1 = 1.0 - self.w0
-        self.ring = (np.abs(th[0] - np.pi / 2) < b) & np.isfinite(th[0]) & np.isfinite(th[1])   # overlap for the gain
+        main0 = w0 >= 0.5
+        self.map_main = cv2.convertMaps(np.where(main0, U[0], U[1]), np.where(main0, V[0], V[1]), cv2.CV_16SC2)
+        self.band = np.flatnonzero((w0 > 0) & (w0 < 1))                    # pixels that mix both lenses
+        def row(A, idx):                                                    # sample list as a (rows, 1024) image (remap size limit)
+            v = A.ravel()[idx]; n = -(-len(v) // 1024) * 1024
+            return np.pad(v, (0, n - len(v)), mode="edge").reshape(-1, 1024).copy()
+        self.bmaps = [(row(U[k], self.band), row(V[k], self.band)) for k in (0, 1)]
+        self.bw = w0.ravel()[self.band].astype(np.float32)[:, None]
+        ring = np.flatnonzero(((np.abs(th[0] - np.pi / 2) < b) & np.isfinite(th[0]) & np.isfinite(th[1])).ravel())[::5]
+        self.rmaps = [(row(U[k], ring), row(V[k], ring)) for k in (0, 1)]   # overlap samples for the exposure gain
         self.gain = None
 
     def __call__(self, raw: np.ndarray, smooth: float = 0.15) -> np.ndarray:
-        a = cv2.remap(raw, *self.maps[0], cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT).astype(np.float32)
-        b = cv2.remap(raw, *self.maps[1], cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT).astype(np.float32)
-        m0, m1 = a[self.ring].mean(0) + 1, b[self.ring].mean(0) + 1            # per-channel exposure ratio in the overlap
-        g = np.sqrt(m1 / m0)
+        s0 = cv2.remap(raw, *self.rmaps[0], cv2.INTER_LINEAR).reshape(-1, 3).astype(np.float32)   # (padding repeats a sample: harmless)
+        s1 = cv2.remap(raw, *self.rmaps[1], cv2.INTER_LINEAR).reshape(-1, 3).astype(np.float32)
+        g = np.sqrt((s1.mean(0) + 1) / (s0.mean(0) + 1))                     # per-channel exposure ratio in the overlap
         self.gain = g if self.gain is None else (1 - smooth) * self.gain + smooth * g
-        out = a * (self.w0 * self.gain) + b * (self.w1 / self.gain)
-        return np.clip(out, 0, 255).astype(np.uint8)
+        gl, gr = self.gain, 1.0 / self.gain
+        raw = np.hstack([cv2.multiply(np.ascontiguousarray(raw[:, :HALF_W]), tuple(float(x) for x in gl) + (0.0,)),
+                         cv2.multiply(np.ascontiguousarray(raw[:, HALF_W:]), tuple(float(x) for x in gr) + (0.0,))])
+        out = cv2.remap(raw, *self.map_main, cv2.INTER_LINEAR)
+        nb = len(self.band)
+        a = cv2.remap(raw, *self.bmaps[0], cv2.INTER_LINEAR).reshape(-1, 3)[:nb].astype(np.float32)
+        c = cv2.remap(raw, *self.bmaps[1], cv2.INTER_LINEAR).reshape(-1, 3)[:nb].astype(np.float32)
+        out.reshape(-1, 3)[self.band] = np.clip(a * self.bw + c * (1 - self.bw) + .5, 0, 255).astype(np.uint8)
+        return out
 
 
 def stream(src, p: dict, W: int, H: int, fps: float | None = None):
