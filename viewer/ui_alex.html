@@ -38,6 +38,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .meta { color: var(--soft); font-variant-numeric: tabular-nums; }
 .hbtn { width: 36px; height: 36px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: var(--ink); }
 .hbtn:hover { background: #f1f3f7; }
+.hbtn[aria-pressed="true"] { background: #e2ecff; color: var(--space); }
 .avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 600; font-size: 13px; }
 .menu { position: absolute; top: 50px; left: 66px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 6px; z-index: 40; min-width: 220px; }
 .menu button { display: flex; width: 100%; border: 0; background: none; padding: 9px 12px; border-radius: 8px; cursor: pointer; text-align: left; justify-content: space-between; }
@@ -305,14 +306,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 14.5px; padding-top: 8px; }
 .stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .dtip { position: fixed; background: var(--ink); color: #fff; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
-.uipop { position: absolute; right: 16px; top: 10px; width: 280px; border-radius: 16px; padding: 14px 16px 10px; z-index: 45; }
-.uipop label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
-.uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; direction: rtl; }   /* flipped: solid (0%) on the right */
-.uipop .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 
 /* ---- dark mode (sun button -> Theme): the same design, dark surfaces; info windows over the video and the category colours stay ---- */
-.themes { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 4px; margin-top: 8px; border-top: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.uipop { position: absolute; right: 16px; top: 10px; width: 280px; border-radius: 16px; padding: 6px 16px 10px; z-index: 45; }
+.themes { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0 2px; font-weight: 600; font-size: 14px; }
 .tseg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; }
 .tseg button { border: 0; background: none; border-radius: 999px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; color: var(--soft); cursor: pointer; }
 .tseg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
@@ -365,7 +363,72 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 :root[data-theme="dark"] .leaflet-control-attribution { background: rgba(23,27,37,.8) !important; color: var(--soft); } :root[data-theme="dark"] .leaflet-control-attribution a { color: #8db8ff; }
 /* these use the ink colour as their background: keep their text dark when ink turns light */
 :root[data-theme="dark"] .tip, :root[data-theme="dark"] .tip2, :root[data-theme="dark"] .dtip, :root[data-theme="dark"] .toast, :root[data-theme="dark"] .mapx .mhint,
-:root[data-theme="dark"] .rail button[data-tip]:hover::after, :root[data-theme="dark"] .seg-ab, :root[data-theme="dark"] .track .mk.file { color: #11151d; }
+:root[data-theme="dark"] .rail button[data-tip]:hover::after, :root[data-theme="dark"] .seg-ab, :root[data-theme="dark"] .track .mk.file , :root[data-theme="dark"] .ptip { color: #11151d; }
+/* ================= Analysis mode: big video, dashboard on the right, walk profile below ================= */
+body.analysis { display: grid; grid-template-columns: minmax(0, 1fr) 440px; grid-template-rows: 54px minmax(0, 1fr) auto; }
+body.analysis header { grid-column: 1 / -1; }
+body.analysis .stage { grid-row: 2; grid-column: 1; margin: 10px 0 0 10px; border-radius: 16px; }
+body.analysis .side { grid-row: 2; grid-column: 2; }
+body.analysis .profile { grid-row: 3; grid-column: 1 / -1; }
+body.analysis .transport, body.analysis .mini, body.analysis .mini-cap, body.analysis #statsPop { display: none !important; }
+body.analysis .rail { top: 14px; }
+.side { display: flex; flex-direction: column; gap: 10px; padding: 10px; min-height: 0; background: #0d1117; }
+.sbox { background: var(--surf, #fff); border-radius: 16px; box-shadow: var(--shadow); }
+.mapbox { padding: 10px 12px 8px; flex: none; }
+.shd { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.shd small { font-weight: 500; font-size: 11.5px; color: var(--soft); }
+.amapwrap { position: relative; height: clamp(150px, 30vh, 260px); border-radius: 12px; overflow: hidden; }   /* leaves room for the lists on small screens */
+#amap { position: absolute; inset: 0; background: #e5e9ee; }
+#amapLayer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 450; }
+.amapwrap .n { position: absolute; right: 8px; top: 8px; z-index: 500; font: 800 12px var(--sans); background: rgba(255,255,255,.95); border-radius: 999px; width: 24px; height: 24px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.amapwrap .leaflet-control-scale-line { font: 600 10px var(--sans); }
+.alegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--soft); padding-top: 8px; }
+.alegend span { display: inline-flex; align-items: center; gap: 5px; }
+.listbox { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 10px 6px; }
+.ltabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.ltabs button { border: 0; background: none; padding: 7px 8px 8px; font-weight: 600; font-size: 13.5px; color: var(--soft); cursor: pointer; border-bottom: 2.5px solid transparent; }
+.ltabs button b { font-weight: 700; color: #a0a6b2; margin-left: 2px; }
+.ltabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--space); }
+.ltabs button[aria-selected="true"] b { color: var(--space); }
+.ltable { flex: 1; overflow: auto; font-size: 12.5px; }
+.ltable table { width: 100%; border-collapse: collapse; }
+.ltable th { position: sticky; top: 0; background: var(--surf, #fff); text-align: left; font-weight: 600; color: var(--soft); padding: 7px 6px; font-size: 11.5px; }
+.ltable td { padding: 6px; border-top: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ltable tr.row { cursor: pointer; } .ltable tr.row:hover td { background: var(--hov, #f5f8ff); }
+.ltable tr.now td:first-child { box-shadow: inset 3px 0 0 var(--space); }
+.ltable tr.dim td { color: #a7adb8; }
+.ltable .sh { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.profile { background: var(--surf, #fff); padding: 8px 14px 6px; border-top: 1px solid var(--line); }
+.phead { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
+.phead .play { width: 34px; height: 34px; }
+.ptime { font-variant-numeric: tabular-nums; color: var(--soft); } .ptime b { color: var(--space); font-size: 18px; }
+.pmark { display: inline-flex; gap: 6px; padding: 0 10px; font-weight: 600; }
+.prows { position: relative; display: grid; grid-template-columns: 170px minmax(0, 1fr); row-gap: 2px; }
+.plab { font-size: 12px; color: var(--soft); display: flex; align-items: center; gap: 6px; padding-right: 8px; }
+.plab small { color: #9aa1ad; } .plab b { margin-left: auto; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ptrack { position: relative; cursor: crosshair; }
+.thumbs { height: 42px; border-radius: 6px; background-repeat: no-repeat; background-color: var(--surf2, #e9ecf1); }
+svg.pr { display: block; width: 100%; height: 30px; }
+.pev { position: relative; height: 22px; }
+.pev .mk { position: absolute; top: 5px; width: 11px; height: 11px; margin-left: -5.5px; border: 0; padding: 0; cursor: pointer; }
+.pev .mk.person { background: var(--person); border-radius: 50%; } .pev .mk.object { background: var(--object); border-radius: 1px; }
+.pev .mk.space { background: var(--space); clip-path: polygon(50% 0, 100% 100%, 0 100%); width: 12px; }
+.pev .mk.bookmark { background: #fff; border: 2px solid var(--ink); border-radius: 2px; }
+.thumbs .th { position: absolute; top: 0; height: 42px; border-radius: 5px; background-repeat: no-repeat; box-shadow: 0 0 0 1px #fff; }
+.thumbs { position: relative; }
+.paxis { height: 18px; font-size: 11px; color: var(--soft); }
+.paxis span { position: absolute; top: 2px; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.phead-line { position: absolute; top: 0; bottom: 18px; width: 2px; margin-left: -1px; background: var(--space); pointer-events: none; z-index: 3; }
+.pguide { position: absolute; top: 0; bottom: 18px; width: 1px; background: rgba(29,36,51,.35); pointer-events: none; z-index: 2; }
+@media (max-height: 820px) {      /* short screens: slimmer profile + map so the lists keep room */
+  .thumbs, .thumbs .th { height: 30px !important; }
+  svg.pr { height: 20px; } .pev { height: 18px; } .pev .mk { top: 3px; }
+  .phead { padding-bottom: 2px; } .phead .play { width: 30px; height: 30px; }
+  .amapwrap { height: clamp(120px, 22vh, 200px); }
+  .alegend { font-size: 11px; gap: 2px 9px; padding-top: 5px; }
+  .shd { margin-bottom: 5px; } .mapbox { padding: 8px 10px 6px; }
+}
+.ptip { position: absolute; top: -6px; transform: translate(-50%, -100%); background: var(--ink); color: #fff; font-size: 11.5px; line-height: 1.45; padding: 5px 9px; border-radius: 8px; pointer-events: none; white-space: nowrap; z-index: 4; }
 </style>
 </head>
 <body>
@@ -375,16 +438,17 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false"><span id="projName">Shuk HaTikvah</span> <small id="walkName">· Hatikvah St</small>
     <svg width="16" height="16" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   <nav class="tabs" role="tablist">
-    <button role="tab" aria-selected="true">360° Exploration</button>
+    <button role="tab" aria-selected="true" id="tabExplore">360° Exploration</button>
     <button role="tab" aria-selected="false" disabled title="Coming in a later version">Observations</button>
-    <button role="tab" aria-selected="false" disabled title="Coming in a later version">Analysis</button>
+    <button role="tab" aria-selected="false" id="tabAnalysis">Analysis</button>
   </nav>
   <div class="grow"></div>
   <a class="askbtn" id="projBtn" href="projects.html" title="Add data to this project (video, store table, anchor points) or start a new area"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7h6l2 2h10v10H3z"/><path d="M12 12v5M9.5 14.5h5"/></svg>Projects</a>
   <button class="askbtn" id="jvOpen" aria-pressed="false" title="Ask questions about this project, or give it a data task"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</button>
   <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-  <button class="hbtn" id="setBtn" aria-label="Display settings: overlay transparency" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
+  <button class="hbtn" id="seeBtn" aria-pressed="false" title="See-through overlays (on/off)" aria-label="See-through overlays"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button>
+  <button class="hbtn" id="setBtn" aria-label="Theme: light, dark or system" title="Theme" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
   <div class="avatar" title="Alex Alvisi">AA</div>
 </header>
 <div class="menu" id="walkMenu" role="menu" hidden>
@@ -489,9 +553,6 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   </div>
   <div class="toast" id="toast" hidden></div>
   <div class="uipop glass" id="uiPop" data-no-drag hidden>
-    <label for="uiAlpha">Transparency of the overlays <b id="uiAlphaLbl">0%</b></label>
-    <input type="range" id="uiAlpha" min="0" max="80" step="5" value="0" aria-label="Transparency of everything over the video">
-    <div class="ends"><span>see-through</span><span>solid</span></div>
     <div class="themes"><span>Theme</span><div class="tseg" id="themeSeg"><button data-th="light">Light</button><button data-th="dark">Dark</button><button data-th="system">System</button></div></div>
   </div>
   <input type="file" id="atFile" multiple hidden>
@@ -504,6 +565,51 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       <button class="jvsend" id="jvSend" aria-label="Ask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
   </aside>
 </div>
+
+<aside class="side" id="side" hidden>
+  <section class="sbox mapbox">
+    <div class="shd">Top-down map <small id="amapNote"></small></div>
+    <div class="amapwrap"><div id="amap"></div><canvas id="amapLayer"></canvas><span class="n">N</span></div>
+    <div class="alegend">
+      <span><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="var(--person)" stroke="#fff" stroke-width="1.5"/></svg>People</span>
+      <span><svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h20" stroke="var(--person)" stroke-width="2.5" stroke-dasharray="4 3"/></svg>Trajectory</span>
+      <span><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" fill="var(--object)" stroke="#fff" stroke-width="1.5"/></svg>Objects</span>
+      <span><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1.5 13 12.5H1z" fill="var(--space)" stroke="#fff" stroke-width="1.5"/></svg>Places</span>
+      <span><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#1d2433" stroke="#fff" stroke-width="2"/></svg>Camera</span>
+      <span><svg width="16" height="14" viewBox="0 0 16 14"><path d="M8 13 1 2a10 10 0 0 1 14 0z" fill="rgba(47,124,246,.35)" stroke="rgba(47,124,246,.8)"/></svg>View cone</span>
+      <span><svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h20" stroke="#1d2433" stroke-opacity=".5" stroke-width="2.5" stroke-dasharray="4 4"/></svg>Path</span>
+    </div>
+  </section>
+  <section class="sbox listbox">
+    <div class="ltabs" role="tablist">
+      <button role="tab" data-l="people" aria-selected="true">People <b id="lnPeople">0</b></button>
+      <button role="tab" data-l="objects" aria-selected="false">Objects <b id="lnObjects">0</b></button>
+      <button role="tab" data-l="zones" aria-selected="false">Zones <b id="lnZones">0</b></button>
+      <button role="tab" data-l="events" aria-selected="false">Events <b id="lnEvents">0</b></button>
+    </div>
+    <div class="ltable" id="ltable"></div>
+  </section>
+</aside>
+
+<section class="profile" id="profile" hidden aria-label="Walk profile">
+  <div class="phead">
+    <button class="play" id="aPlay" aria-label="Play"><svg id="aPlayIc" width="16" height="16" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></button>
+    <div class="ptime"><b id="aNow">00:00</b> / <span id="aDur">00:00</span></div>
+    <button class="tbtn" id="aSpeed" title="Playback speed">1.0x</button>
+    <div class="grow"></div>
+    <button class="tbtn pmark" id="aMark" title="Bookmark this moment"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>Bookmark</button>
+  </div>
+  <div class="prows" id="prows">
+    <div class="plab"></div><div class="ptrack"><div class="thumbs" id="thumbs"></div></div>
+    <div class="plab">Events</div><div class="ptrack"><div class="pev" id="prEvents"></div></div>
+    <div class="plab">People count <b id="pvCount"></b></div><div class="ptrack"><svg class="pr" id="prCount" viewBox="0 0 1000 30" preserveAspectRatio="none"></svg></div>
+    <div class="plab">Flow <small>people/min</small> <b id="pvFlow"></b></div><div class="ptrack"><svg class="pr" id="prFlow" viewBox="0 0 1000 30" preserveAspectRatio="none"></svg></div>
+    <div class="plab">Avg. speed <small>m/s</small> <b id="pvSpeed"></b></div><div class="ptrack"><svg class="pr" id="prSpeed" viewBox="0 0 1000 30" preserveAspectRatio="none"></svg></div>
+    <div class="plab">Density <small>people/m²</small> <b id="pvDens"></b></div><div class="ptrack"><svg class="pr" id="prDens" viewBox="0 0 1000 30" preserveAspectRatio="none"></svg></div>
+    <div class="plab"></div><div class="ptrack paxis" id="paxis"></div>
+    <div class="phead-line" id="pPlayhead"></div><div class="pguide" id="pGuide" hidden></div><div class="ptip" id="pTip" hidden></div>
+  </div>
+</section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="engine.js"></script>
@@ -583,7 +689,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`${E.project.processed}/${w}/forward.json`); } catch (e) { FW = null; }
     try { NAMES = await J(`${E.project.processed}/${w}/sign_names.json`); } catch (e) { NAMES = null; }   // pipeline/sign_names.py
-    buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); cmLoad(); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); cmLoad(); buildMet(d, await geoFor(w)); buildAnalysis(d); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
 
@@ -1117,17 +1223,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop", tMark: "markPop" };
   const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
   for (const [b, p] of Object.entries(pops)) if (b !== "tMark") $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
-  // display settings (sun icon): one transparency for everything drawn over the video; remembered between visits
-  const OVERLAYS = ".rail, .chips, .transport, .pop, #cards, .mini, .mini-cap";
-  const setAlpha = v => {
-    $("uiAlpha").value = v; $("uiAlphaLbl").textContent = `${v}%`;
-    document.querySelectorAll(OVERLAYS).forEach(el => { el.style.opacity = String(1 - v / 100); });
-    try { localStorage.setItem("ui_alex.alpha", String(v)); } catch (e) {}
-  };
+  // sun icon: display settings (theme)
   $("setBtn").addEventListener("click", () => { const p = $("uiPop"); p.hidden = !p.hidden; $("setBtn").setAttribute("aria-expanded", String(!p.hidden)); });
-  $("uiAlpha").addEventListener("input", () => setAlpha(+$("uiAlpha").value));
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest("#uiPop, #setBtn")) { $("uiPop").hidden = true; $("setBtn").setAttribute("aria-expanded", "false"); } });
-  setAlpha(+(localStorage.getItem("ui_alex.alpha") || 0));
   // theme: light / dark / follow the system; remembered between visits
   const sysDark = matchMedia("(prefers-color-scheme: dark)");
   let theme = "light"; try { theme = localStorage.getItem("ui_alex.theme") || "light"; } catch (e) {}
@@ -1139,6 +1237,16 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("themeSeg").addEventListener("click", ev => { const b = ev.target.closest("button[data-th]"); if (b) applyTheme(b.dataset.th); });
   sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
   applyTheme(theme);
+  // see-through toggle (header): everything drawn over the video becomes largely transparent; remembered between visits
+  const OVERLAYS = ".rail, .chips, .transport, .pop, #cards, .mini, .mini-cap", SEE = 0.35;   // opacity while on
+  const setSee = on => {
+    $("seeBtn").setAttribute("aria-pressed", String(on));
+    document.querySelectorAll(OVERLAYS).forEach(el => { el.style.opacity = on ? String(SEE) : ""; });
+    try { localStorage.setItem("ui_alex.see", on ? "1" : "0"); } catch (e) {}
+  };
+  $("seeBtn").addEventListener("click", () => setSee($("seeBtn").getAttribute("aria-pressed") !== "true"));
+  try { localStorage.removeItem("ui_alex.alpha"); } catch (e) {}
+  setSee(localStorage.getItem("ui_alex.see") === "1");
   // outside clicks close Layers/Search; the statistics panel stays open while you watch
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn, .transport")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
@@ -1818,6 +1926,203 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (ws.length) selectWalk(ws[0]);
     else { $("walkName").textContent = "· no analysed walk yet"; toast("No analysed walk yet: open Projects… to add a video and run the analysis"); }
   });
+  // ======================= Analysis mode =======================
+  // big video + dashboard (map, People / Objects / Zones / Events) + walk profile (thumbnails, events, people count,
+  // flow, average speed, density) on one time axis. Speeds and density are estimates (assumed camera pace, distance
+  // from the camera-height model); zones are 20 m stretches of the approximate path.
+  let mode = "explore", A = null, ltab = "people", amap = null, amapMe = null, amapRoute = null, THUMBS = null;
+  const ZONE_M = 20, DENS_R = 10, STREET_W = 6;           // density: people within 10 m, over a 20 m x 6 m stretch of street
+  async function buildAnalysis(d) {
+    const fps = d.fps, N = Math.ceil(d.n_frames / fps), g = E.geo.walks[E.walk];
+    const TRK = new Map();                                  // id -> Map(frame -> [yaw, dist])
+    const okP = e => e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen;
+    d.frames.forEach((F, f) => { for (const e of F.p) if (okP(e) && e[7]) { let m = TRK.get(e[0]); if (!m) TRK.set(e[0], m = new Map()); m.set(f, [e[2], e[7]]); } });
+    const count = new Array(N).fill(0), dens = new Array(N).fill(0), speed = new Array(N).fill(null), firsts = new Array(N).fill(0);
+    for (const t of TRK.values()) { const f0 = Math.min(...t.keys()); firsts[Math.floor(f0 / fps)]++; }
+    for (let sI = 0; sI < N; sI++) {
+      let c = 0, dn = 0, k = 0;
+      for (let f = sI * fps; f < Math.min(d.n_frames, (sI + 1) * fps); f++, k++) {
+        for (const e of d.frames[f].p) if (okP(e)) { c++; if (e[7] && e[7] < DENS_R) dn++; }
+      }
+      count[sI] = c / Math.max(1, k); dens[sI] = dn / Math.max(1, k) / (2 * DENS_R * STREET_W);
+      const mid = Math.min(d.n_frames - 1, Math.round((sI + 0.5) * fps)), sp = [];
+      for (const e of d.frames[mid].p) if (okP(e)) { const m = motionOf(e[0], mid); if (m && m.spd <= 3) sp.push(m.spd); }   // > 3 m/s = distance noise, not walking
+      speed[sI] = sp.length ? sp.reduce((a, b) => a + b, 0) / sp.length : null;
+    }
+    // flow = new people per minute over the last 60 s (shown once 20 s of walk exist, so the start is not inflated)
+    const flow = firsts.map((_, sI) => { if (sI < 20) return null; let n = 0; for (let j = Math.max(0, sI - 59); j <= sI; j++) n += firsts[j]; return n * 60 / Math.min(60, sI + 1); });
+    // zones: 20 m stretches along the (approximate) path
+    const zones = [];
+    if (g) {
+      let dist = 0, prev = null;
+      for (let f = 0; f < d.n_frames; f++) {
+        if (g.lat[f] == null) continue;
+        if (prev != null) dist += Math.hypot((g.lat[f] - g.lat[prev]) * 110574, (g.lon[f] - g.lon[prev]) * 111320 * Math.cos(g.lat[f] * D2R));
+        prev = f; const z = Math.floor(dist / ZONE_M);
+        if (!zones[z]) zones[z] = { z, f0: f, f1: f, people: new Set(), objects: new Set(), signs: new Set() };
+        const Z = zones[z]; Z.f1 = f; const F = d.frames[f];
+        for (const e of F.p) if (okP(e)) Z.people.add(e[0]);
+        for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) Z.objects.add(e[7]);
+        for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) Z.objects.add(e[8]);
+        for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) Z.signs.add(e[0]);
+      }
+    }
+    try { THUMBS = await J(`${E.project.processed}/${E.walk}/thumbs.json`); } catch (e) { THUMBS = null; }
+    A = { N, count, flow, speed, dens, zones: zones.filter(Boolean), TRK, okP };
+    if (mode === "analysis") { drawProfile(); renderThumbs(); renderList(); amapRoutes(); }
+  }
+  // person summary for the table: dwell, average speed, direction relative to the walk
+  const personRow = (id, fi) => {
+    const d = E.data, t = d.tracks[id] || [], last = Math.min(t[1], fi), m = PP && PP.get(id);
+    let spd = null, dir = "—";
+    if (m) {
+      const ks = [...m.keys()].filter(k => k <= fi); if (ks.length >= 4) {
+        const a = m.get(ks[0]), b = m.get(ks[ks.length - 1]), dt = (ks[ks.length - 1] - ks[0]) / d.fps, vx = (b[0] - a[0]) / dt, vy = (b[1] - a[1]) / dt;
+        spd = Math.hypot(vx, vy); const w = fwdAt(Math.round((ks[0] + ks[ks.length - 1]) / 2)) * D2R, fx = Math.sin(w), fy = Math.cos(w), along = (vx * fx + vy * fy) / (spd || 1);
+        dir = spd < 0.35 ? "Standing" : along > 0.7 ? "Away" : along < -0.7 ? "Toward" : (vx * fy - vy * fx) > 0 ? "L → R" : "R → L";
+      }
+    }
+    return { id, dwell: (last - t[0]) / d.fps, spd, dir, last };
+  };
+  function renderList() {
+    if (!A || mode !== "analysis") return;
+    const st = E.state; if (!st) return;
+    const d = st.data, fi = st.fi, now = new Set(st.entities.map(keyOf)), rows = [];
+    const sh = g => `<svg class="sh" width="11" height="11" viewBox="0 0 12 12">${g === "person" ? '<circle cx="6" cy="6" r="5" fill="var(--person)"/>' : g === "object" ? '<rect x="1" y="1" width="10" height="10" fill="var(--object)"/>' : '<path d="M6 .5 11.5 11H.5z" fill="var(--space)"/>'}</svg>`;
+    const inPeople = [...A.TRK.keys()].filter(id => { const t = d.tracks[id]; return t && t[0] <= fi && t[1] >= fi - 20 * d.fps; });
+    $("lnPeople").textContent = st.counts.people.view;
+    const objs = new Map(); for (let f = Math.max(0, fi - 20 * d.fps); f <= fi; f++) { const F = d.frames[f];
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) objs.set(`object:${e[7]}`, { id: e[7], cls: e[0], conf: e[1], last: f, kind: "object" });
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) objs.set(`level2:${e[8]}`, { id: e[8], cls: e[0], conf: e[1], last: f, kind: "level2" }); }
+    $("lnObjects").textContent = st.entities.filter(e => e.alpha >= .5 && groupOf(e) === "object").length;
+    $("lnZones").textContent = A.zones.length; const ev = [...marks, ...CM.list.filter(c => c.walk === E.walk).map(c => ({ f: Math.round(c.t * E.data.fps), k: "bookmark", t: c.text || "Note" }))].sort((a, b) => a.f - b.f);
+    $("lnEvents").textContent = ev.length;
+    let html = "";
+    if (ltab === "people") {
+      const list = inPeople.map(id => personRow(id, fi)).sort((a, b) => b.last - a.last).slice(0, 60);
+      html = `<table><tr><th>ID</th><th>Dwell</th><th>Avg. speed</th><th>Direction</th><th>Last seen</th></tr>` + list.map(r =>
+        `<tr class="row ${now.has(`person:${r.id}`) ? "now" : "dim"}" data-k="person" data-id="${r.id}" data-f="${r.last}"><td>${sh("person")}P${r.id}</td><td>${r.dwell.toFixed(1)} s</td><td>${r.spd == null ? "—" : "≈" + r.spd.toFixed(1) + " m/s"}</td><td>${r.dir}</td><td>${fmt(r.last / d.fps)}</td></tr>`).join("") + "</table>";
+    } else if (ltab === "objects") {
+      const list = [...objs.values()].sort((a, b) => b.last - a.last).slice(0, 60);
+      html = `<table><tr><th>ID</th><th>Type</th><th>Visible</th><th>Conf.</th><th>Last seen</th></tr>` + list.map(r =>
+        `<tr class="row ${now.has(`${r.kind}:${r.id}`) ? "now" : "dim"}" data-k="${r.kind}" data-id="${r.id}" data-f="${r.last}"><td>${sh("object")}O${r.id % 100000}</td><td>${esc(cap(r.cls))}</td><td>${(((d.obj_len || {})[r.id] || 0) / d.fps).toFixed(1)} s</td><td>${Math.round(r.conf * 100)}%</td><td>${fmt(r.last / d.fps)}</td></tr>`).join("") + "</table>";
+    } else if (ltab === "zones") {
+      html = `<table><tr><th>Zone</th><th>Along the walk</th><th>Time</th><th>People</th><th>Objects</th><th>Signs</th></tr>` + A.zones.map(Z =>
+        `<tr class="row ${fi >= Z.f0 && fi <= Z.f1 ? "now" : fi < Z.f0 ? "dim" : ""}" data-f="${Z.f0}"><td>Z${Z.z + 1}</td><td>${Z.z * ZONE_M}–${(Z.z + 1) * ZONE_M} m</td><td>${fmt(Z.f0 / d.fps)}–${fmt(Z.f1 / d.fps)}</td><td>${Z.people.size}</td><td>${Z.objects.size}</td><td>${Z.signs.size}</td></tr>`).join("") + "</table>" +
+        `<div style="color:var(--soft);font-size:11.5px;padding:6px">Zones are 20 m stretches of the approximate path.</div>`;
+    } else {
+      html = `<table><tr><th>Event</th><th>Time</th><th></th></tr>` + ev.map(m =>
+        `<tr class="row ${m.f <= fi ? "" : "dim"}" data-f="${m.f}"><td>${m.k === "bookmark" ? "🔖 " : sh(m.k)}${esc(m.t)}</td><td>${fmt(m.f / d.fps)}</td><td>${m.f <= fi ? "passed" : "ahead"}</td></tr>`).join("") + "</table>";
+    }
+    const box = $("ltable"), y = box.scrollTop; box.innerHTML = html; box.scrollTop = y;
+  }
+  $("ltable").addEventListener("click", ev => {
+    const r = ev.target.closest("tr.row"); if (!r) return;
+    E.seekFrame(+r.dataset.f); if (r.dataset.k) pin({ kind: r.dataset.k, id: +r.dataset.id });
+  });
+  document.querySelectorAll(".ltabs button").forEach(b => b.addEventListener("click", () => {
+    ltab = b.dataset.l; document.querySelectorAll(".ltabs button").forEach(x => x.setAttribute("aria-selected", String(x === b))); renderList();
+  }));
+
+  // ---- walk profile ----
+  const PCOL = { count: COL.person, flow: "#2a78d6", speed: "#1baf7a", dens: "#6250d6" };
+  function drawProfile() {
+    if (!A) return;
+    const N = A.N, X = i => i / Math.max(1, N - 1) * 1000;
+    const line = (id, ser, col) => { const v = ser.map(x => x ?? 0), mx = Math.max(1e-6, ...v); let dd = "";
+      ser.forEach((x, i) => { if (x == null) return; dd += `${dd ? "L" : "M"}${X(i).toFixed(1)} ${(27 - x / mx * 24).toFixed(1)}`; });
+      $(id).innerHTML = `<line x1="0" y1="28" x2="1000" y2="28" stroke="#eef0f4" vector-effect="non-scaling-stroke"/><path d="${dd}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`; };
+    const mx = Math.max(1, ...A.count), bw = 1000 / N * 0.72;
+    $("prCount").innerHTML = A.count.map((v, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${(28 - v / mx * 26).toFixed(1)}" width="${bw.toFixed(2)}" height="${(v / mx * 26).toFixed(1)}" fill="${PCOL.count}" opacity=".85"/>`).join("");
+    line("prFlow", A.flow, PCOL.flow); line("prSpeed", A.speed, PCOL.speed); line("prDens", A.dens, PCOL.dens);
+    const ev = [...marks, ...CM.list.filter(c => c.walk === E.walk).map(c => ({ f: Math.round(c.t * E.data.fps), k: "bookmark", t: c.text || "Note" }))], d = E.data;
+    $("prEvents").innerHTML = ev.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}" title="${esc(m.t)} · ${fmt(m.f / d.fps)}"></button>`).join("");
+    const step = N > 300 ? 60 : 30; let ax = ""; for (let t = 0; t <= N; t += step) ax += `<span style="left:${t / N * 100}%">${fmt(t)}</span>`;
+    $("paxis").innerHTML = ax;
+  }
+  function renderThumbs() {
+    const el = $("thumbs"); if (!THUMBS || !A) { el.innerHTML = ""; return; }
+    const W = el.clientWidth, tw = Math.round((el.clientHeight || 42) * 16 / 9), n = Math.max(1, Math.floor(W / (tw + 3))), dur = E.duration() || A.N, src = `${E.project.processed}/${E.walk}/thumbs.jpg`;
+    let h = ""; for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n * dur, k = Math.min(THUMBS.count - 1, Math.floor(t / THUMBS.every_s)), x = i * (W / n) + (W / n - tw) / 2;
+      h += `<div class="th" style="left:${x}px;width:${tw}px;background-image:url('${src}');background-size:${THUMBS.count * tw}px ${el.clientHeight || 42}px;background-position:-${k * tw}px 0" data-t="${t}"></div>`;
+    }
+    el.innerHTML = h;
+  }
+  const prows = $("prows"), PL = 170;
+  const tAt = ev => { const r = prows.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left - PL) / (r.width - PL))); };
+  prows.addEventListener("mousemove", ev => {
+    if (!A || !ev.target.closest(".ptrack")) { $("pGuide").hidden = $("pTip").hidden = true; return; }
+    const fr = tAt(ev), sI = Math.min(A.N - 1, Math.round(fr * (A.N - 1))), r = prows.getBoundingClientRect(), x = PL + fr * (r.width - PL);
+    $("pGuide").hidden = $("pTip").hidden = false; $("pGuide").style.left = `${x}px`; $("pTip").style.left = `${Math.min(r.width - 120, Math.max(PL + 110, x))}px`;
+    $("pTip").innerHTML = `<b>${fmt(sI)}</b><br>People ${A.count[sI].toFixed(1)} · Flow ${A.flow[sI] == null ? "—" : A.flow[sI].toFixed(0) + "/min"}<br>Speed ${A.speed[sI] == null ? "—" : "≈" + A.speed[sI].toFixed(2) + " m/s"} · Density ${A.dens[sI].toFixed(3)}/m²`;
+  });
+  prows.addEventListener("mouseleave", () => { $("pGuide").hidden = $("pTip").hidden = true; });
+  prows.addEventListener("click", ev => { const mk = ev.target.closest(".mk"); if (mk) { E.seekFrame(+mk.dataset.f); return; } if (ev.target.closest(".ptrack")) E.seek(tAt(ev) * E.duration()); });
+  $("aPlay").addEventListener("click", () => setPlay(E.play()));
+  $("aSpeed").addEventListener("click", () => $("speed").click());
+  $("aMark").addEventListener("click", () => { $("tMark").click(); drawProfile(); renderList(); });
+  window.addEventListener("resize", () => { if (mode === "analysis") renderThumbs(); });
+
+  // ---- dashboard map: north-up, route, trajectories (last 5 s) of the people around, everything met, camera + cone ----
+  function amapInit() {
+    if (amap || !window.L) return;
+    amap = L.map("amap", { zoomControl: true, attributionControl: false, scrollWheelZoom: true, zoomSnap: 0.25 }).setView(MARKET, 19);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 21, maxNativeZoom: 19, className: "soft-tiles" }).addTo(amap);
+    L.control.scale({ metric: true, imperial: false, maxWidth: 90, position: "bottomleft" }).addTo(amap);
+    amapMe = L.marker(MARKET, { icon: L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30], html: YOU }), interactive: false, zIndexOffset: 1000 }).addTo(amap);
+    amap.on("zoomstart", () => { amap._userZoom = true; });
+    amapRoutes();
+  }
+  function amapRoutes() {
+    if (!amap) return; if (amapRoute) { amapRoute.remove(); amapRoute = null; }
+    const g = E.geo.walks[E.walk]; if (!g) return;
+    amapRoute = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(q => q[0] != null), { color: "#1d2433", weight: 3, opacity: .4, dashArray: "5 6" }).addTo(amap);
+    $("amapNote").textContent = APPROX[E.walk] ? "approximate position" : "";
+  }
+  setInterval(() => {
+    if (mode !== "analysis" || !amap) return;
+    const st = E.state, cv = $("amapLayer"); if (!st || !st.cam) return;
+    const g = E.geo.walks[E.walk]; if (!g) return;                     // the new walk's position may still be loading
+    const fi = st.fi, { lat, lon, bearing } = st.cam, W = cv.clientWidth, H = cv.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
+    if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+    const c = cv.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+    amapMe.setLatLng([lat, lon]); amap.panTo([lat, lon], { animate: false });
+    const cone = amapMe.getElement() && amapMe.getElement().querySelector("#cone"); if (cone) cone.setAttribute("transform", `rotate(${bearing.toFixed(1)} 30 30)`);
+    const P = (la, lo) => amap.latLngToContainerPoint([la, lo]), now = new Set(st.entities.map(keyOf));
+    for (const m of MET) { if (m.f0 > fi) break; if (!show[m.g]) continue; const q = P(m.lat, m.lon); if (q.x < -10 || q.y < -10 || q.x > W + 10 || q.y > H + 10) continue;
+      c.globalAlpha = now.has(m.key) ? 1 : .7; mark(c, m.g, q.x, q.y, now.has(m.key) ? 5.5 : 3.6, 1.3); }
+    c.globalAlpha = 1;
+    if (show.person && A) for (const e of st.data.frames[fi].p) {
+      const t = A.TRK.get(e[0]); if (!t) continue;
+      c.strokeStyle = "rgba(245,197,24,.95)"; c.lineWidth = 2.5; c.setLineDash([5, 4]); c.beginPath(); let on = false;
+      for (let f = fi - 25; f <= fi; f++) { const v = t.get(f); if (!v || g.lat[f] == null) continue; const [la, lo] = offset(g.lat[f], g.lon[f], g.yaw0_bearing_deg[f] + v[0], v[1]); const q = P(la, lo); on ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); on = true; }
+      c.stroke(); c.setLineDash([]);
+      const v = t.get(fi); if (v) { const [la, lo] = offset(g.lat[fi], g.lon[fi], g.yaw0_bearing_deg[fi] + v[0], v[1]), q = P(la, lo); mark(c, "person", q.x, q.y, 6, 1.8); }
+    }
+  }, 120);
+
+  // ---- mode switch + periodic refresh ----
+  function setMode(m) {
+    mode = m; document.body.classList.toggle("analysis", m === "analysis");
+    $("side").hidden = $("profile").hidden = m !== "analysis";
+    $("tabExplore").setAttribute("aria-selected", String(m === "explore")); $("tabAnalysis").setAttribute("aria-selected", String(m === "analysis"));
+    if (m === "analysis") { amapInit(); setTimeout(() => { amap && amap.invalidateSize(); drawProfile(); renderThumbs(); renderList(); }, 60); }
+  }
+  $("tabExplore").addEventListener("click", () => setMode("explore"));
+  $("tabAnalysis").addEventListener("click", () => setMode("analysis"));
+  setInterval(() => {
+    if (mode !== "analysis" || !A) return;
+    const st = E.state; if (!st) return;
+    const r = prows.getBoundingClientRect(), fr = st.duration ? st.t / st.duration : 0, sI = Math.min(A.N - 1, Math.floor(st.t));
+    $("pPlayhead").style.left = `${PL + fr * (r.width - PL)}px`;
+    $("aNow").textContent = fmt(st.t); $("aDur").textContent = fmt(st.duration); $("aSpeed").textContent = $("speed").textContent;
+    $("pvCount").textContent = A.count[sI].toFixed(0); $("pvFlow").textContent = A.flow[sI] == null ? "—" : A.flow[sI].toFixed(0);
+    $("pvSpeed").textContent = A.speed[sI] == null ? "—" : A.speed[sI].toFixed(1); $("pvDens").textContent = A.dens[sI].toFixed(2);
+    $("aPlayIc").innerHTML = E.playing ? `<path d="M7 4h4v16H7zM13 4h4v16h-4z" fill="currentColor"/>` : `<path d="M7 4v16l13-8z" fill="currentColor"/>`;
+  }, 100);
+  setInterval(renderList, 600);
+
 })();
 </script>
 </body>
