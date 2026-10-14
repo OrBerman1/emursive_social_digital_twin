@@ -33,7 +33,7 @@ import pandas as pd
 import torch
 
 from attributes import MODEL, crop, text_features
-from common import INTERIM, PROCESSED, ROOT, WALKS, Stage
+from common import CONFIG, INTERIM, PROCESSED, ROOT, WALKS, Stage
 
 VERSION = 1
 CATEGORY = "possible_rabi_sign"
@@ -46,7 +46,7 @@ PROMPTS = {
                  "a painted picture of a face on a sign", "a sticker with a photo of a man"],
 }
 H_MIN, H_MAX = 0.9, 2.2        # plausible standing body height (m); children ~1.0 m
-REVIEW = ROOT / "config" / "depicted_review.json"
+REVIEW = CONFIG / "depicted_review.json"
 P_CANDIDATE, P_FALLBACK = 0.3, 0.9
 
 

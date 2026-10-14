@@ -21,7 +21,7 @@ import shutil
 
 import numpy as np
 
-from common import INTERIM, PROCESSED, ROOT
+from common import CONFIG, INTERIM, PROCESSED, ROOT
 
 MERGE_M = 3.0
 
@@ -29,7 +29,7 @@ MERGE_M = 3.0
 def run(variant: str) -> dict:
     sfx = f"_{variant}" if variant else ""
     sm = json.loads((PROCESSED / "stall_materials.json").read_text(encoding="utf-8"))["stores_list"]
-    review = json.loads((ROOT / "config" / "stall_review.json").read_text(encoding="utf-8"))["stores"]
+    review = json.loads((CONFIG / "stall_review.json").read_text(encoding="utf-8"))["stores"]
     geo, pts = {}, []
     for s in sm:
         r = review.get(str(s["OBJECTID"]))

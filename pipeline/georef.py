@@ -32,12 +32,13 @@ from matplotlib.path import Path as MPath
 from scipy.ndimage import distance_transform_edt, gaussian_filter1d, map_coordinates
 from scipy.optimize import least_squares
 
-from common import PROCESSED, RAW, ROOT, WALKS
+from common import CONFIG, OSM_DIR, PROCESSED, RAW, ROOT, STORE_TABLE, WALKS
 
-SHOPS_XLSX = RAW / "Shops_In_hatikva_30_7_26.xlsx"
-ANCHORS = ROOT / "config" / "anchors.json"
-OSM_XML = RAW.parent / "osm" / "hatikva_osm.xml"
-OSM_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=34.7880,32.0500,34.7925,32.0548"
+SHOPS_XLSX = STORE_TABLE                    # project store table (optional; without it there is no map)
+ANCHORS = CONFIG / "anchors.json"
+OSM_XML = OSM_DIR / ("hatikva_osm.xml" if (OSM_DIR / "hatikva_osm.xml").exists() else "osm.xml")
+OSM_MARGIN_M = 150                           # OSM download area = store extent + this margin
+OSM_BBOX = None                              # (lon_min, lat_min, lon_max, lat_max), set from the store table in main()
 WALKABLE = {"pedestrian", "footway", "residential", "service", "living_street", "tertiary", "secondary",
             "unclassified", "path", "steps", "primary"}
 KNOT_S = 20.0          # stage 2: drift / pace knots every 20 s
@@ -59,7 +60,11 @@ def wrap(a):
 
 def load_shops() -> pd.DataFrame:
     df = pd.read_excel(SHOPS_XLSX)
-    df = df[df.X.between(34.70, 34.90) & df.Y.between(31.95, 32.15)].copy()     # drop test points far away
+    df = df[df.X.notna() & df.Y.notna()].copy()
+    # drop test points far away: > 3 km from the median store position (the table had a few at lon 36.0)
+    mx, my = df.X.median(), df.Y.median()
+    far = np.hypot((df.X - mx) * 111320 * np.cos(np.radians(my)), (df.Y - my) * 110574) > 3000
+    df = df[~far].copy()
     df["name"] = df.Shop_Name.fillna("No name").astype(str)
     return df.reset_index(drop=True)
 
@@ -92,11 +97,12 @@ def load_osm(loc: "Local"):
     """Walkable street segments (N x 4, local metres) and building polygons from OpenStreetMap."""
     if not OSM_XML.exists():
         OSM_XML.parent.mkdir(parents=True, exist_ok=True)
+        url = "https://api.openstreetmap.org/api/0.6/map?bbox=%.5f,%.5f,%.5f,%.5f" % OSM_BBOX
         try:
-            req = urllib.request.Request(OSM_URL, headers={"User-Agent": "shuk-hatikvah-twin/0.1"})
+            req = urllib.request.Request(url, headers={"User-Agent": "shuk-hatikvah-twin/0.1"})
             OSM_XML.write_bytes(urllib.request.urlopen(req, timeout=120).read())
         except Exception:                                   # Python SSL sometimes fails here; curl works
-            subprocess.run(["curl", "-s", "-L", "-A", "shuk-hatikvah-twin/0.1", "-o", str(OSM_XML), OSM_URL], check=True)
+            subprocess.run(["curl", "-s", "-L", "-A", "shuk-hatikvah-twin/0.1", "-o", str(OSM_XML), url], check=True)
     root = ET.parse(OSM_XML).getroot()
     nodes = {n.get("id"): (float(n.get("lon")), float(n.get("lat"))) for n in root.iter("node")}
     segs, blds = [], []
@@ -357,8 +363,17 @@ def fit_walk(walk: str, anchors: list, shops: pd.DataFrame, loc: Local):
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if SHOPS_XLSX is None or not SHOPS_XLSX.exists():
+        print("[georef] no store table in this project: the walks cannot be placed on the map (map layers stay off)")
+        return
+    if not ANCHORS.exists():
+        print(f"[georef] no anchors ({ANCHORS}): the walks cannot be placed on the map yet")
+        return
     shops = load_shops()
     loc = Local(shops.X.mean(), shops.Y.mean())
+    global OSM_BBOX
+    dlon, dlat = OSM_MARGIN_M / (111320 * np.cos(np.radians(loc.lat0))), OSM_MARGIN_M / 110574
+    OSM_BBOX = (shops.X.min() - dlon, shops.Y.min() - dlat, shops.X.max() + dlon, shops.Y.max() + dlat)
     anchors = json.loads(ANCHORS.read_text(encoding="utf-8"))
     sx, sy = loc.to_xy(shops.X, shops.Y)
     best = {i: None for i in range(len(shops))}

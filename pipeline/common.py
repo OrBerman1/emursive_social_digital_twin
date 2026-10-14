@@ -1,5 +1,8 @@
 """Shared helpers: project paths, walks, and the compute-once cache (see CLAUDE.md).
 
+Projects: the active project is SHUK_PROJECT (env var, default "shuk_hatikvah"); its project.json gives the
+paths, the walks (raw .insv file + label) and the optional store table.
+
 Every expensive stage writes into its own output folder together with a manifest.json that records
 the inputs, parameters and stage version. A stage is skipped when the manifest matches, so stitching,
 detection etc. run once and later iterations reuse the cache.
@@ -13,15 +16,54 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data" / "raw" / "LABAI"
-INTERIM = ROOT / "data" / "interim"
-PROCESSED = ROOT / "data" / "processed"
+PROJECTS_DIR = ROOT / "projects"
+DEFAULT_PROJECT = "shuk_hatikvah"
 
-# walk id -> raw Insta360 file
-WALKS = {
-    "walk1": RAW / "1_Hatikvah St.insv",
-    "walk2": RAW / "2_Hamevasser St.insv",
+# The original project keeps its data where it always was (data/, config/); new projects live in projects/<id>/.
+LEGACY = {
+    "id": DEFAULT_PROJECT, "name": "Shuk HaTikvah",
+    "paths": {"raw": "data/raw/LABAI", "interim": "data/interim", "processed": "data/processed", "config": "config", "osm": "data/raw/osm"},
+    "walks": {"walk1": {"file": "1_Hatikvah St.insv", "label": "Hatikvah St"},
+              "walk2": {"file": "2_Hamevasser St.insv", "label": "Hamevasser St"}},
+    "store_table": "Shops_In_hatikva_30_7_26.xlsx",
 }
+
+
+def project_paths(pid: str) -> dict:
+    base = f"projects/{pid}"
+    return {"raw": f"{base}/data/raw", "interim": f"{base}/data/interim", "processed": f"{base}/data/processed",
+            "config": f"{base}/config", "osm": f"{base}/data/interim/osm"}
+
+
+def load_project(pid: str) -> dict:
+    """project.json of a project (the original project works even without one)."""
+    pj = PROJECTS_DIR / pid / "project.json"
+    if pj.exists():
+        proj = json.loads(pj.read_text(encoding="utf-8"))
+    elif pid == DEFAULT_PROJECT:
+        proj = dict(LEGACY)
+    else:
+        raise SystemExit(f"unknown project '{pid}' (no {pj})")
+    proj.setdefault("paths", project_paths(pid))
+    proj.setdefault("walks", {})
+    return proj
+
+
+def list_projects() -> list[dict]:
+    ids = {DEFAULT_PROJECT} | ({p.parent.name for p in PROJECTS_DIR.glob("*/project.json")} if PROJECTS_DIR.exists() else set())
+    return [load_project(i) for i in sorted(ids)]
+
+
+PROJECT_ID = os.environ.get("SHUK_PROJECT", DEFAULT_PROJECT)
+PROJECT = load_project(PROJECT_ID)
+_P = {k: ROOT / v for k, v in PROJECT["paths"].items()}
+RAW, INTERIM, PROCESSED, CONFIG = _P["raw"], _P["interim"], _P["processed"], _P["config"]
+OSM_DIR = _P.get("osm", INTERIM / "osm")
+
+# walk id -> raw Insta360 file; walk id -> street / label shown in the viewer
+WALKS = {w: RAW / v["file"] for w, v in PROJECT["walks"].items()}
+WALK_LABELS = {w: v.get("label", w) for w, v in PROJECT["walks"].items()}
+STORE_TABLE = (RAW / PROJECT["store_table"]) if PROJECT.get("store_table") else None
 
 
 def file_fingerprint(path: Path, chunk: int = 8 << 20) -> str:
