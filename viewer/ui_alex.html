@@ -132,6 +132,32 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .tbtn:disabled { opacity: .35; cursor: default; }
 .sep { width: 1px; height: 26px; background: var(--line); }
 
+/* ---- Ask Jeeves (pipeline/jeeves.py): header pill + glass chat panel on the right ---- */
+.askbtn { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.askbtn:hover, .askbtn[aria-pressed="true"] { background: #eef2fb; border-color: #cfdcf7; color: var(--space); }
+.jv { position: absolute; right: 16px; top: 16px; bottom: 96px; width: min(420px, calc(100% - 32px)); border-radius: 18px; z-index: 35; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+.jv .jvh { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px 16px; border-bottom: 1px solid var(--line); }
+.jv .jvh b { font-size: 15px; flex: 1; display: flex; align-items: center; gap: 8px; }
+.jv .jvh select { max-width: 140px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: inherit; font-size: 12.5px; padding: 5px 6px; color: var(--ink); }
+.jv .jvh .hbtn { width: 30px; height: 30px; border-radius: 8px; }
+.jvlog { overflow-y: auto; padding: 14px 16px; display: grid; gap: 14px; align-content: start; }
+.jvq { justify-self: end; max-width: 86%; background: #eef0f4; border-radius: 14px 14px 4px 14px; padding: 8px 12px; white-space: pre-wrap; font-size: 13.5px; }
+.jva { font-size: 13.5px; line-height: 1.55; } .jva p { margin: 0 0 7px; } .jva ul { margin: 0 0 7px; padding-left: 18px; } .jva li { margin: 2px 0; }
+.jva.err { color: var(--object); }
+.jvsteps { font-size: 12px; color: var(--soft); } .jvsteps summary { cursor: pointer; } .jvsteps ol { margin: 4px 0 0; padding-left: 18px; }
+.jvlive { display: grid; gap: 3px; font-size: 12.5px; color: var(--soft); } .jvlive b { color: var(--space); font-weight: 600; }
+.jvgo { border: 0; cursor: pointer; font: 700 12px var(--sans); padding: 2px 7px; border-radius: 6px; margin: 0 1px; vertical-align: 1px; }
+.jvgo.p { background: var(--person); color: #1a1a1a; } .jvgo.t { background: var(--space); color: #fff; }
+.jvgo:hover { filter: brightness(1.08); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.jvex { display: grid; gap: 8px; color: var(--soft); font-size: 13px; } .jvex .hello { color: var(--ink); font-size: 14px; }
+.jvex button { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 9px 12px; cursor: pointer; font-size: 13px; color: var(--ink); }
+.jvex button:hover { background: #f3f5f9; }
+.jvin { display: flex; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--line); align-items: flex-end; }
+.jvin textarea { flex: 1; resize: none; border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; font: inherit; font-size: 13.5px; min-height: 40px; max-height: 120px; background: #fff; color: var(--ink); }
+.jvin textarea:focus { outline: 2px solid #cfdcf7; border-color: var(--space); }
+.jvsend { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--space); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+.jvsend:disabled { opacity: .4; cursor: default; }
+
 /* ---- popovers ---- */
 .pop { position: absolute; left: 70px; top: 54px; width: 290px; border-radius: 16px; padding: 14px 16px; z-index: 30; }
 .pop h4 { margin: 0 0 10px; font-size: 14px; }
@@ -191,6 +217,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button role="tab" aria-selected="false" disabled title="Coming in a later version">Analysis</button>
   </nav>
   <div class="grow"></div>
+  <button class="askbtn" id="jvOpen" aria-pressed="false" title="Ask questions about this project, or give it a data task"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</button>
   <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
@@ -261,6 +288,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="statsNote"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
+  <aside class="jv glass" id="jv" data-no-drag hidden aria-label="Ask Jeeves">
+    <div class="jvh"><b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</b><select id="jvChats" aria-label="Earlier chats"></select>
+      <button class="hbtn" id="jvNew" title="New chat" aria-label="New chat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="hbtn" id="jvClose" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="jvlog" id="jvLog"></div>
+    <div class="jvin"><textarea id="jvQ" rows="1" dir="auto" placeholder="Ask about this project, or give it a task…"></textarea>
+      <button class="jvsend" id="jvSend" aria-label="Ask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+  </aside>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -807,6 +842,89 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
   }));
   $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
+
+  // ---- 🎩 Ask Jeeves: the project's question-answering / data-analysis agent (pipeline/jeeves.py via serve.py) ----
+  const JV = { chat: null, job: null, timer: null };
+  const jvApi = async (url, opt) => { const r = await fetch(url, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j; };
+  const jvP = () => encodeURIComponent(E.project.id);
+  function jvMd(t) {                                          // small, safe markdown: paragraphs, lists, **bold**, jump tokens
+    const inline = x => esc(x).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/\{\{p:(walk\d+):(\d+)\}\}/g, (m, w, id) => `<button class="jvgo p" data-w="${w}" data-p="${id}" title="${esc(cap(E.walkShort(w)))} · go to this person">P${id} ▶</button>`)
+      .replace(/\{\{t:(walk\d+):([\d.]+)(?::(-?[\d.]+))?\}\}/g, (m, w, t, y) => `<button class="jvgo t" data-w="${w}" data-t="${t}"${y ? ` data-y="${y}"` : ""} title="${esc(cap(E.walkShort(w)))} · go to this moment">${E.walkIds().length > 1 ? esc(E.walkShort(w)) + " · " : ""}${fmt(+t)} ▶</button>`);
+    let html = "", list = false;
+    for (const line of String(t || "").split("\n")) {
+      const m = line.match(/^\s*[-*•]\s+(.*)/);
+      if (m) { if (!list) { html += "<ul>"; list = true; } html += `<li dir="auto">${inline(m[1])}</li>`; continue; }
+      if (list) { html += "</ul>"; list = false; }
+      if (line.trim()) html += `<p dir="auto">${inline(line)}</p>`;
+    }
+    return html + (list ? "</ul>" : "");
+  }
+  // the moment a person is seen best (largest confident box): there their card is shown and readable
+  function bestFrameOf(id) {
+    const d = E.data, t = d && d.tracks[id]; if (!t) return null;
+    let best = null, bh = -1;
+    for (let f = t[0]; f <= t[1] && f < d.n_frames; f++) { const r = d.frames[f].p.find(x => x[0] === id); if (r && r[1] >= E.conf && r[5] - r[6] > bh) { bh = r[5] - r[6]; best = f; } }
+    return best;
+  }
+  const jvSteps = st => st && st.length ? `<details class="jvsteps"><summary>What I did (${st.length})</summary><ol>${st.map(x => `<li>${esc(x)}</li>`).join("")}</ol></details>` : "";
+  function jvRender(display, live) {
+    let html = (display || []).map(d => `<div class="jvq" dir="auto">${esc(d.q)}</div>` +
+      (d.a ? `<div class="jva">${jvMd(d.a)}${jvSteps(d.steps)}</div>` : `<div class="jva err">Something went wrong: ${esc(d.error || "no answer")}${jvSteps(d.steps)}</div>`)).join("");
+    if (live) html += `<div class="jvq" dir="auto">${esc(live.q)}</div><div class="jvlive"><b>Working… ${live.elapsed_s || 0} s</b>${(live.steps || []).slice(-6).map(x => `<span>· ${esc(x)}</span>`).join("")}</div>`;
+    if (!html) html = `<div class="jvex"><div class="hello">I know this project's analysed data and can look at the video.</div>Try:
+      <button data-q="How many women are in the video?">How many women are in the video?</button>
+      <button data-q="Count all the people wearing blue shirts">Count all the people wearing blue shirts</button>
+      <button data-q="Where and when is it most crowded?">Where and when is it most crowded?</button>
+      <button data-q="Which shop signs mention fish or meat?">Which shop signs mention fish or meat?</button></div>`;
+    $("jvLog").innerHTML = html; $("jvLog").scrollTop = $("jvLog").scrollHeight;
+  }
+  async function jvChats(sel) {
+    const r = await jvApi(`/api/jeeves/chats?project=${jvP()}`).catch(() => ({ chats: [] }));
+    $("jvChats").innerHTML = `<option value="">Earlier chats (${r.chats.length})</option>` + r.chats.map(c => `<option value="${c.id}"${c.id === sel ? " selected" : ""}>${esc(c.title)}</option>`).join("");
+  }
+  async function jvOpenChat(id) {
+    JV.chat = id || null; if (!id) { jvRender([]); return; }
+    const c = await jvApi(`/api/jeeves/chat?project=${jvP()}&id=${id}`).catch(() => null); jvRender(c ? c.display : []);
+  }
+  async function jvSend(q) {
+    q = (q || $("jvQ").value).trim(); if (!q || JV.job) return;
+    $("jvQ").value = ""; $("jvSend").disabled = true;
+    let prev = [];
+    if (JV.chat) { const c = await jvApi(`/api/jeeves/chat?project=${jvP()}&id=${JV.chat}`).catch(() => null); prev = c ? c.display : []; }
+    jvRender(prev, { q, steps: [] });
+    try {
+      const r = await jvApi(`/api/jeeves/ask?project=${jvP()}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q, chat: JV.chat }) });
+      JV.chat = r.chat; JV.job = r.job;
+      JV.timer = setInterval(async () => {
+        const j = await jvApi(`/api/jeeves/job?id=${JV.job}`).catch(() => null); if (!j) return;
+        if (j.status === "running") { jvRender(prev, { q, steps: j.steps, elapsed_s: j.elapsed_s }); return; }
+        clearInterval(JV.timer); JV.job = null; $("jvSend").disabled = false; await jvOpenChat(JV.chat); jvChats(JV.chat);
+      }, 1000);
+    } catch (e) {
+      $("jvSend").disabled = false;
+      jvRender(prev.concat([{ q, a: null, error: /404|not found/i.test(e.message) ? "the server is older than this page - close the black server window, run start_viewer.bat again, then reload" : e.message }]));
+    }
+  }
+  const jvToggle = open => { $("jv").hidden = !open; $("jvOpen").setAttribute("aria-pressed", String(open)); if (open) { jvChats(JV.chat); if (!JV.job) jvOpenChat(JV.chat); $("jvQ").focus(); } };
+  $("jvOpen").addEventListener("click", () => jvToggle($("jv").hidden));
+  $("jvClose").addEventListener("click", () => jvToggle(false));
+  $("jvNew").addEventListener("click", () => { if (!JV.job) { $("jvChats").value = ""; jvOpenChat(null); } });
+  $("jvChats").addEventListener("change", ev => { if (!JV.job) jvOpenChat(ev.target.value || null); });
+  $("jvSend").addEventListener("click", () => jvSend());
+  $("jvQ").addEventListener("keydown", ev => { ev.stopPropagation(); if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); jvSend(); } });
+  $("jvQ").addEventListener("input", () => { const t = $("jvQ"); t.style.height = "auto"; t.style.height = Math.min(120, t.scrollHeight) + "px"; });
+  $("jvLog").addEventListener("click", async ev => {
+    const ex = ev.target.closest(".jvex button"); if (ex) { jvSend(ex.dataset.q); return; }
+    const b = ev.target.closest(".jvgo"); if (!b || !E.project.walks[b.dataset.w]) return;
+    if (E.playing) setPlay(E.play(false));
+    if (E.walk !== b.dataset.w) await selectWalk(b.dataset.w);
+    setFollow(false);
+    if (b.dataset.p) {                                         // a person: jump to their first frame, open their card, look at them
+      const id = +b.dataset.p, f = bestFrameOf(id); if (f == null) { toast(`P${id} is not shown on this walk`); return; }
+      const r = E.data.frames[f].p.find(x => x[0] === id); E.seekFrame(f); pin({ kind: "person", id }); E.look(r[2], (r[5] + r[6]) / 2 - 4);
+    } else { E.seek(+b.dataset.t); if (b.dataset.y) E.look(+b.dataset.y, -5); }
+  });
 
   E.ready.then(() => {
     const P = E.project, ws = E.walkIds();
