@@ -108,6 +108,10 @@ To force a stage to recompute, run it alone with `--force`.
 
 ## 5. Open the viewer
 
+**Main viewer (design `ui_alex`):** double-click **`start_viewer_ui_alex.bat`** → http://localhost:8006/viewer/ui_alex.html
+(Mac: `start_viewer_ui_alex_mac.command`). Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at
+the top. The original viewer below still works and has the same data.
+
 1. Double-click **`start_viewer.bat`**. A black window (the local server) opens and the viewer opens in
    your browser at **http://localhost:8000/viewer/**. Keep the black window open while viewing.
 2. To stop: close the browser tab and the black window.
