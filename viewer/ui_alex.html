@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuk HaTikvah · 360° Exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ui_alex: full-bleed 360 stage with floating glass UI. Entities are marked with a pointer dot + leader line to a
+   card (no boxes): compact cards for a few salient entities, expanded cards (photo crop + attributes) when pinned. */
+:root {
+  --person: #f2b705; --object: #e8475f; --space: #2f7cf6; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
+  --glass: rgba(255,255,255,.92); --shadow: 0 10px 30px rgba(20,25,40,.18);
+  --sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { font: 13px/1.4 var(--sans); color: var(--ink); background: #0d1117; display: flex; flex-direction: column; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+svg { display: block; }
+
+/* ---- top bar ---- */
+header { height: 54px; flex: none; background: #fff; display: flex; align-items: center; padding: 0 18px; gap: 18px; border-bottom: 1px solid var(--line); z-index: 20; }
+.logo { width: 32px; height: 32px; }
+.place { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; border: 0; background: none; cursor: pointer; padding: 6px 8px; border-radius: 8px; border-left: 1px solid var(--line); border-radius: 0; padding-left: 18px; }
+.place small { font-weight: 500; color: var(--soft); font-size: 13px; }
+.place:hover small { color: var(--ink); }
+.tabs { display: flex; height: 100%; margin-left: 18px; border-left: 1px solid var(--line); padding-left: 18px; gap: 4px; }
+.tabs button { border: 0; background: none; padding: 0 12px; height: 100%; color: var(--soft); font-weight: 500; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+.tabs button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--space); }
+.tabs button:disabled { cursor: default; opacity: .55; }
+.grow { flex: 1; }
+.meta { color: var(--soft); font-variant-numeric: tabular-nums; display: flex; gap: 14px; }
+.hbtn { width: 36px; height: 36px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+.hbtn:hover { background: #f1f3f7; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.menu { position: absolute; top: 50px; left: 66px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 6px; z-index: 40; min-width: 220px; }
+.menu button { display: flex; width: 100%; border: 0; background: none; padding: 9px 12px; border-radius: 8px; cursor: pointer; text-align: left; justify-content: space-between; }
+.menu button:hover { background: #f3f5f9; }
+.menu button[aria-checked="true"]::after { content: "✓"; color: var(--space); font-weight: 700; }
+
+/* ---- stage ---- */
+.stage { position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab; outline: none; background: #111; }
+.stage.dragging { cursor: grabbing; }
+#gl, #ov { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.glass { background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+
+/* left tool rail */
+.rail { position: absolute; left: 16px; top: 54px; border-radius: 16px; padding: 8px 6px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+.rail button { width: 40px; height: 40px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: #2a3142; position: relative; }
+.rail button:hover, .rail button[aria-pressed="true"] { background: #eef2fb; color: var(--space); }
+.rail button[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 48px; white-space: nowrap; background: var(--ink); color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+
+/* category chips */
+.chips { position: absolute; right: 16px; top: 22px; border-radius: 999px; padding: 6px; display: flex; gap: 4px; z-index: 10; }
+.chip { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 5px 8px 5px 5px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.chip .ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; }
+.chip .n { min-width: 26px; height: 22px; border-radius: 999px; background: #eef0f4; display: grid; place-items: center; font-size: 12px; font-variant-numeric: tabular-nums; padding: 0 6px; }
+.chip[aria-pressed="false"] { opacity: .45; }
+.chip[data-k="person"] .ic { background: #fff3c4; color: #b88a00; } .chip[data-k="object"] .ic { background: #ffe1e6; color: var(--object); }
+.chip[data-k="space"] .ic { background: #e2ecff; color: var(--space); }
+.chip[data-k="object"] .lbl { color: var(--object); } .chip[data-k="space"] .lbl { color: var(--space); }
+
+/* entity cards (positioned every frame; leader lines are drawn on the overlay canvas) */
+.card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow); border: 1.5px solid transparent; z-index: 8; will-change: transform; }
+.card.person { border-color: rgba(242,183,5,.75); } .card.object { border-color: rgba(232,71,95,.6); } .card.space { border-color: rgba(47,124,246,.55); }
+.card.compact { width: 236px; padding: 9px 10px; display: flex; gap: 10px; align-items: center; cursor: pointer; }
+.card.compact:hover { box-shadow: 0 12px 34px rgba(20,25,40,.28); }
+.card.compact b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card.compact small { display: block; color: var(--soft); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; }
+.card.compact .tx { flex: 1; min-width: 0; }
+.card.compact .chev { color: var(--soft); font-size: 18px; }
+.badge { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; }
+.person .badge { background: #fff3c4; color: #b88a00; } .object .badge { background: #ffe1e6; color: var(--object); } .space .badge { background: #e2ecff; color: var(--space); }
+.card.full { width: 286px; padding: 12px 14px 14px; }
+.card.full .hd { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14.5px; padding-bottom: 10px; }
+.card.full .hd .id { color: var(--soft); font-weight: 500; font-size: 12px; }
+.card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--soft); }
+.card.full .hd button + button { margin-left: 0; }
+.card.full .hd button:hover { background: #eef0f4; color: var(--ink); }
+.who { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.who canvas { width: 64px; height: 64px; border-radius: 10px; background: #e9ebf0; flex: none; }
+.who b { display: block; font-size: 15px; }
+.who small { color: var(--soft); font-size: 12.5px; }
+.rows { border-top: 1px solid var(--line); }
+.rw { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rw .ri { width: 26px; display: grid; place-items: center; color: #8a6a00; flex: none; }
+.object .rw .ri { color: var(--object); } .space .rw .ri { color: var(--space); }
+.rw small { display: block; color: var(--soft); font-size: 11.5px; }
+.rw span { display: block; font-size: 13px; }
+.conf { display: flex; align-items: center; gap: 10px; padding-top: 10px; font-size: 12.5px; color: var(--soft); }
+.conf .bar { flex: 1; height: 6px; border-radius: 999px; background: #eceef3; overflow: hidden; }
+.conf .bar i { display: block; height: 100%; border-radius: 999px; }
+.person .conf .bar i { background: var(--person); } .object .conf .bar i { background: var(--object); } .space .conf .bar i { background: var(--space); }
+.conf b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.note { color: var(--soft); font-size: 11px; padding-top: 8px; }
+.signtext { font-size: 18px; font-weight: 600; padding: 10px 0; border-top: 1px solid var(--line); unicode-bidi: plaintext; direction: auto; }
+
+/* compass + radar */
+.compass { position: absolute; left: 18px; bottom: 100px; width: 112px; height: 112px; border-radius: 50%; z-index: 9; pointer-events: none; }
+.compass-cap { position: absolute; left: 18px; bottom: 76px; width: 112px; text-align: center; color: #fff; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,.8); pointer-events: none; z-index: 9; }
+.radar { position: absolute; right: 18px; bottom: 96px; width: 176px; height: 176px; border-radius: 50%; z-index: 9; }
+
+/* bottom transport */
+.transport { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px; width: min(1340px, calc(100% - 300px)); height: 60px; border-radius: 999px; display: flex; align-items: center; gap: 14px; padding: 0 22px 0 10px; z-index: 10; }
+.play { width: 42px; height: 42px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: grid; place-items: center; cursor: pointer; flex: none; }
+.time { font-variant-numeric: tabular-nums; min-width: 92px; color: var(--soft); }
+.time b { color: var(--ink); font-weight: 600; }
+.track { flex: 1; position: relative; height: 36px; cursor: pointer; }
+.track .rail-line { position: absolute; left: 0; right: 0; top: 17px; height: 2px; background: #d9dce4; border-radius: 2px; }
+.track .done { position: absolute; left: 0; top: 17px; height: 2px; background: #9aa3b5; border-radius: 2px; }
+.track .ticks { position: absolute; left: 0; right: 0; top: 22px; height: 6px; background: repeating-linear-gradient(90deg, #d9dce4 0 1px, transparent 1px 1.25%); }
+.track .mk { position: absolute; top: 12px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; }
+.track .mk.person { background: var(--person); } .track .mk.object { background: var(--object); top: 4px; } .track .mk.space { background: var(--space); }
+.track .mk.bookmark { background: #fff; border: 2px solid var(--ink); top: 3px; width: 11px; height: 11px; }
+.track .mk:hover { transform: scale(1.35); }
+.track .thumb { position: absolute; top: 9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #fff; border: 2px solid #c6cbd6; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; }
+.track .tip { position: absolute; bottom: 34px; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.tbtn { height: 38px; min-width: 38px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tbtn:hover, .tbtn[aria-pressed="true"] { background: #eef1f6; }
+.tbtn:disabled { opacity: .35; cursor: default; }
+.sep { width: 1px; height: 26px; background: var(--line); }
+
+/* popovers */
+.pop { position: absolute; left: 70px; top: 54px; width: 290px; border-radius: 16px; padding: 14px 16px; z-index: 30; }
+.pop h4 { margin: 0 0 10px; font-size: 14px; }
+.pop label { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.pop label:last-of-type { border-bottom: 0; }
+.pop label span { flex: 1; }
+.pop input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--space); }
+.pop .row { padding-top: 10px; color: var(--soft); font-size: 12.5px; }
+.pop input[type=range] { width: 100%; accent-color: var(--space); }
+.pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
+.pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
+.stats .big { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 12.5px; padding-top: 8px; }
+.stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
+</style>
+</head>
+<body>
+<header>
+  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
+  <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false">Shuk HaTikvah <small id="walkName">· Hatikvah St</small>
+    <svg width="16" height="16" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true">360° Exploration</button>
+    <button role="tab" aria-selected="false" disabled title="Coming in a later version">Observations</button>
+    <button role="tab" aria-selected="false" disabled title="Coming in a later version">Analysis</button>
+  </nav>
+  <div class="grow"></div>
+  <div class="meta"><span title="Recording date">Aug 25, 2025</span></div>
+  <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <div class="avatar" title="Alex Alvisi">AA</div>
+</header>
+<div class="menu" id="walkMenu" role="menu" hidden>
+  <button role="menuitemradio" data-walk="walk1" aria-checked="true">Walk 1 · Hatikvah St</button>
+  <button role="menuitemradio" data-walk="walk2" aria-checked="false">Walk 2 · Hamevasser St</button>
+</div>
+
+<div class="stage" id="stage" aria-label="360 degree view. Drag to look around, scroll to zoom, click a dot for details.">
+  <canvas id="gl"></canvas><canvas id="ov"></canvas>
+  <div id="cards"></div>
+
+  <div class="rail glass" data-no-drag>
+    <button id="tCenter" data-tip="Look ahead (walking direction)" aria-label="Look ahead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+    <button id="tSearch" data-tip="Find a person by ID" aria-label="Find"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>
+    <button id="tStats" data-tip="What's in view" aria-label="Statistics"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M7 17v-6M12 17V6M17 17v-9"/></svg></button>
+    <button id="tMark" data-tip="Bookmark this moment" aria-label="Bookmark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>
+    <button id="tLayers" data-tip="Layers & filters" aria-label="Layers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 5 9-5" opacity=".6"/></svg></button>
+  </div>
+
+  <div class="chips glass" data-no-drag>
+    <button class="chip" data-k="person" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></span><span class="lbl">People</span><span class="n" id="nP">0</span></button>
+    <button class="chip" data-k="object" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span><span class="lbl">Objects</span><span class="n" id="nO">0</span></button>
+    <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg></span><span class="lbl">Space</span><span class="n" id="nS">0</span></button>
+  </div>
+
+  <canvas class="compass" id="compass" width="224" height="224" aria-hidden="true"></canvas>
+  <div class="compass-cap" id="compassCap"></div>
+  <canvas class="radar glass" id="radar" width="352" height="352" aria-label="Radar: people and objects around the camera" data-no-drag></canvas>
+
+  <div class="transport glass" data-no-drag>
+    <button class="play" id="play" aria-label="Play"><svg id="playIc" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></button>
+    <div class="time"><b id="tNow">00:00</b> / <span id="tDur">00:00</span></div>
+    <div class="track" id="track" aria-label="Timeline"><div class="rail-line"></div><div class="done" id="done"></div><div class="ticks"></div><div id="marks"></div><div class="thumb" id="thumb"></div><div class="tip" id="tip" hidden></div></div>
+    <button class="tbtn" id="spin" aria-pressed="false" title="Auto-rotate the 360° view" aria-label="Auto-rotate"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="16" cy="16" rx="12" ry="5"/><path d="M8 9.5A12 12 0 0 1 24 9.5M24 22.5A12 12 0 0 1 8 22.5"/><text x="16" y="18.5" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-family="Inter" font-weight="700">360°</text></svg></button>
+    <button class="tbtn" disabled title="VR headset view: later version" aria-label="VR (later)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h18v9h-6l-1.5-2.5h-3L9 17H3z"/><circle cx="8" cy="12" r="1.6"/><circle cx="16" cy="12" r="1.6"/></svg></button>
+    <div class="sep"></div>
+    <button class="tbtn" id="speed" title="Playback speed">1.0x</button>
+    <div class="sep"></div>
+    <button class="tbtn" id="fs" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+
+  <div class="pop glass" id="layersPop" data-no-drag hidden>
+    <h4>Layers &amp; filters</h4>
+    <label><input type="checkbox" data-show="person" checked><span>People</span></label>
+    <label><input type="checkbox" data-show="object" checked><span>Objects &amp; market items</span></label>
+    <label><input type="checkbox" data-show="decor"><span>Decor (lamps, flags)</span></label>
+    <label><input type="checkbox" data-show="space" checked><span>Space: readable signs</span></label>
+    <label><input type="checkbox" data-show="labels" checked><span>Auto labels for nearby entities</span></label>
+    <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
+  </div>
+  <div class="pop glass" id="searchPop" data-no-drag hidden>
+    <h4>Find a person</h4>
+    <input type="text" id="searchIn" placeholder="Track ID, e.g. 12 or P-12" autocomplete="off">
+    <div class="hint" id="searchHint">Jumps to when they first appear and opens their card.</div>
+  </div>
+  <div class="pop glass stats" id="statsPop" data-no-drag hidden>
+    <h4>In view now</h4>
+    <div class="big" id="sPeople">0</div><div style="color:var(--soft)">people · <span id="sSeen">0</span> unique so far on this walk</div>
+    <div class="grid" id="sGrid"></div>
+    <div class="hint">Gender and age group are perceived estimates from video, shown as aggregates.</div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = { person: css("--person"), object: css("--object"), space: css("--space") };
+  const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
+  const stage = $("stage");
+  const show = { person: true, object: true, decor: false, space: true, labels: true };
+  const DECOR = new Set(["hanging lamp", "flag", "awning"]);
+  const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
+  const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
+  let auto = [], autoAt = 0, hover = null;
+
+  // UI group of an engine entity: person / object / space (readable signs), or null = not shown
+  const groupOf = e => e.kind === "person" ? "person" : (e.kind === "object" || e.kind === "level2") ? (DECOR.has(e.cls) ? (show.decor ? "object" : null) : "object")
+    : (e.kind === "sign" && e.readable) ? "space" : null;
+  const keyOf = e => `${e.kind}:${e.id}`;
+  const cap = s => String(s || "").replace(/^./, c => c.toUpperCase());
+  const esc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const pad2 = n => String(n).padStart(2, "0");
+  const fmt = s => `${pad2(Math.floor(s / 60))}:${pad2(Math.floor(s % 60))}`;
+
+  // older overlay files store signs without the conf column the engine expects: insert it once after loading
+  const load = async w => {
+    const d = await E.load(w);
+    if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
+    buildMarks(d); return d;
+  };
+
+  // ---- pointer anchor: upper torso for people, centre for objects and signs ----
+  const anchor = e => { const r = e.rect; return e.kind === "person" ? [(r[0] + r[2]) / 2, r[1] + (r[3] - r[1]) * 0.22] : [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
+
+  // ---- perceived description of a person ----
+  const AGE = { "child": ["Child", "under 18"], "young adult 18-35": ["Young adult", "~18–35 years"], "middle adult 36-60": ["Adult", "~36–60 years"],
+                "older adult 61+": ["Older adult", "61+ years"], "uncertain": ["Person", "age uncertain"] };
+  const SEX = { man: "male", woman: "female" };
+  function personTitle(e) {
+    const [a, yrs] = AGE[e.age] || AGE.uncertain, s = SEX[e.sex];
+    const t = e.age === "child" ? "Child" : s ? (a === "Person" ? cap(s) : `${a} ${s}`) : a;
+    return [t, yrs];
+  }
+  // social context: other people within 1.5 m on the ground plane (from yaw + distance in this frame)
+  function nearby(e, st) {
+    const F = st.data.frames[st.fi]; if (!F || !e.dist) return null;
+    const P = (yw, d) => [d * Math.sin(yw * E.deg), d * Math.cos(yw * E.deg)], me = P(e.yaw, e.dist);
+    let n = 0; for (const o of F.p) { if (o[0] === e.id || o[7] == null) continue; const q = P(o[2], o[7]); if (Math.hypot(q[0] - me[0], q[1] - me[1]) < 1.5) n++; }
+    return n;
+  }
+  function carrying(e, st) {
+    const r = e.rect, items = new Set();
+    for (const o of st.entities) if ((o.kind === "object" || o.kind === "level2") && CARRY.has(o.cls)) {
+      const [x, y] = anchor(o); if (x > r[0] && x < r[2] && y > r[1] + (r[3] - r[1]) * 0.25 && y < r[3] + (r[3] - r[1]) * 0.1) items.add(o.cls);
+    }
+    return [...items];
+  }
+
+  // ---- photo crop of an entity straight from the equirect video frame ----
+  function rawOf(e, st) {
+    const F = st.data.frames[st.fi]; if (!F) return null;
+    const ii = { p: 0, o: 7, l2: 8, s: 0 }[e.key]; return (F[e.key] || []).find(x => x[ii] === e.id) || null;
+  }
+  function crop(cv, e, st) {
+    const v = E.video, raw = rawOf(e, st); if (!raw || v.readyState < 2 || !v.videoWidth) return false;
+    const W = v.videoWidth, H = v.videoHeight, u = y => (y / 360 + 0.5) * W, w = p => (0.5 - p / 180) * H;
+    let x0 = u(raw[3]), x1 = u(raw[4]); if (x1 < x0) x1 += W;
+    const y0 = w(raw[5]), y1 = w(raw[6]), bw = x1 - x0, bh = y1 - y0;
+    let side, cx = (x0 + x1) / 2, top;
+    if (e.kind === "person") { side = Math.max(bw * 1.05, bh * 0.42); top = y0 - side * 0.04; }
+    else { side = Math.max(bw, bh) * 1.25; top = (y0 + y1) / 2 - side / 2; }
+    side = Math.max(side, 24); top = Math.max(0, Math.min(H - side, top));
+    const c = cv.getContext("2d"); c.fillStyle = "#e9ebf0"; c.fillRect(0, 0, cv.width, cv.height);
+    c.drawImage(v, Math.max(0, Math.min(W - side, cx - side / 2)), top, side, side, 0, 0, cv.width, cv.height);
+    return true;
+  }
+
+  // ---- icons ----
+  const IC = {
+    person: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>`,
+    object: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>`,
+    space: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg>`,
+    bag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
+    walk: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="13" cy="4.5" r="2"/><path d="m9 21 2.5-6 2.5 2v4M8 12l2-4.5 3 .5 2.5 3.5 2.5 1M11.5 15 10 8"/></svg>`,
+    group: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></svg>`,
+    clock: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+    tag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4"/></svg>`,
+    lang: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-10 4 10M14.5 17.5h5"/></svg>`,
+    focus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-8 8M10 4H4v16h16v-6"/></svg>`,
+    close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+  };
+  const row = (ic, lbl, val) => `<div class="rw"><div class="ri">${ic}</div><div><small>${lbl}</small><span>${val}</span></div></div>`;
+  const confRow = v => `<div class="conf">Confidence <div class="bar"><i style="width:${Math.round(v * 100)}%"></i></div><b>${Math.round(v * 100)}%</b></div>`;
+  const KIND_TXT = { object: "Object", level2: "Market item" };
+
+  function compactHtml(e, g) {
+    if (g === "person") { const [t, yrs] = personTitle(e); return `<div class="badge">${IC.person}</div><div class="tx"><b>Person · ${esc(t)}</b><small>${esc(yrs)}${e.dist ? ` · ${e.dist.toFixed(1)} m away` : ""}</small></div><div class="chev">›</div>`; }
+    if (g === "space") return `<div class="badge">${IC.space}</div><div class="tx"><b>Space · Sign</b><small dir="auto">${esc(e.text)}</small></div><div class="chev">›</div>`;
+    return `<div class="badge">${IC.object}</div><div class="tx"><b>${KIND_TXT[e.kind]} · ${esc(cap(e.cls))}</b><small>${ShukEngine.emojiOf(e.cls)} ${Math.round(e.conf * 100)}% confidence</small></div><div class="chev">›</div>`;
+  }
+  function fullHtml(e, g, st) {
+    const d = st.data, hd = (ic, name, id) => `<div class="hd"><div class="badge">${ic}</div>${name} <span class="id">${id}</span><button data-act="focus" aria-label="Look at it" title="Look at it">${IC.focus}</button><button data-act="close" aria-label="Close" title="Close">${IC.close}</button></div>`;
+    if (g === "person") {
+      const t = d.tracks[e.id] || [], [title, yrs] = personTitle(e), n = nearby(e, st), carry = carrying(e, st);
+      const seen = t.length ? `${Math.round((t[1] - t[0]) / d.fps)} s on this walk` : "—";
+      const social = n == null ? "—" : n === 0 ? "Alone (no group detected)" : `With ${n} other${n > 1 ? "s" : ""} within 1.5 m`;
+      return hd(IC.person, "Person", `P-${e.id}`) +
+        `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${esc(title)}</b><small>${esc(yrs)} · perceived</small></div></div>` +
+        `<div class="rows">${row(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}${row(IC.walk, "Position", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}` +
+        `${row(IC.group, "Social context", social)}${row(IC.clock, "Seen for", seen)}</div>${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity.</div>`;
+    }
+    if (g === "space") {
+      const info = (d.signs || {})[e.id] || [];
+      return hd(IC.space, "Space · Sign", `S-${e.id}`) + `<div class="signtext" dir="auto">${esc(e.text)}</div>` +
+        `<div class="rows">${row(IC.lang, "Language", { he: "Hebrew", en: "English", ar: "Arabic" }[info[1]] || esc(info[1] || "—"))}</div>${confRow(Math.min(1, (info[2] || 0) / 100))}<div class="note">Read with OCR (Tesseract).</div>`;
+    }
+    const len = (d.obj_len || {})[e.id] || 0;
+    return hd(IC.object, KIND_TXT[e.kind], `O-${e.id}`) +
+      `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}</b><small>${e.kind === "level2" ? "Market item (open-vocabulary)" : "Everyday object"}</small></div></div>` +
+      `<div class="rows">${row(IC.tag, "Category", e.kind === "level2" ? "Market infrastructure" : "Object / vehicle")}${row(IC.clock, "Seen for", `${(len / d.fps).toFixed(0)} s on this walk`)}</div>${confRow(e.conf)}`;
+  }
+
+  // ---- card pool: create/update/position DOM cards; leader lines go on the canvas ----
+  const pool = new Map();
+  function cardFor(key) {
+    let c = pool.get(key);
+    if (!c) {
+      c = { el: document.createElement("div"), sig: "", photoAt: 0 }; c.el.dataset.noDrag = ""; c.el.setAttribute("data-no-drag", "");
+      c.el.addEventListener("pointerdown", ev => ev.stopPropagation());
+      c.el.addEventListener("click", ev => onCardClick(key, ev)); $("cards").appendChild(c.el); pool.set(key, c);
+    }
+    return c;
+  }
+  function onCardClick(key, ev) {
+    const act = ev.target.closest("[data-act]"), [kind, id] = key.split(":"), e = (E.state?.entities || []).find(x => keyOf(x) === key);
+    if (act && act.dataset.act === "close") { unpin(key); return; }
+    if (act && act.dataset.act === "focus") { if (e) E.look(e.yaw, (e.pt + e.pb) / 2); return; }
+    if (!pinned.some(p => `${p.kind}:${p.id}` === key)) pin({ kind, id: +id });
+  }
+  function pin(p) { unpin(`${p.kind}:${p.id}`); pinned.push(p); while (pinned.length > 3) pinned.shift(); }
+  function unpin(key) { const i = pinned.findIndex(p => `${p.kind}:${p.id}` === key); if (i >= 0) pinned.splice(i, 1); }
+
+  const overlap = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+  function layoutCards(st, c, list) {
+    const k = E.k, Wc = stage.clientWidth, Hc = stage.clientHeight;
+    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [0, Hc - 230, 150, Hc], [Wc - 210, Hc - 290, Wc, Hc], [0, Hc - 92, Wc, Hc]];
+    const placed = [], used = new Set();
+    for (const it of list) {
+      const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
+      card.el.className = `card ${g} ${full ? "full" : "compact"}`;
+      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${full ? Math.floor(st.t) : Math.round((e.dist || 0) * 2)}`;
+      if (card.sig !== sig) { const keepPhoto = card.el.querySelector("[data-photo]"); card.el.innerHTML = full ? fullHtml(e, g, st) : compactHtml(e, g); card.sig = sig;
+        const ph = card.el.querySelector("[data-photo]"); if (ph && keepPhoto && keepPhoto.dataset.ok) { ph.getContext("2d").drawImage(keepPhoto, 0, 0); ph.dataset.ok = 1; } }
+      const ph = card.el.querySelector("[data-photo]");
+      if (ph && (!ph.dataset.ok || performance.now() - card.photoAt > 1500)) { if (crop(ph, e, st)) { ph.dataset.ok = 1; card.photoAt = performance.now(); } }
+      const w = card.el.offsetWidth, h = card.el.offsetHeight, [ax, ay] = anchor(e).map(v => v / k), right = ax < Wc * 0.55;
+      const cands = (right ? [[40, -h - 30], [40, 30], [-w - 40, -h - 30], [-w - 40, 30], [60, -h / 2]] : [[-w - 40, -h - 30], [-w - 40, 30], [40, -h - 30], [40, 30], [-w - 60, -h / 2]])
+        .map(([dx, dy]) => { const x = Math.max(76, Math.min(Wc - w - 12, ax + dx)), y = Math.max(12, Math.min(Hc - h - 96, ay + dy)); return [x, y, x + w, y + h]; });
+      const score = r => placed.filter(p => overlap(p, r)).length * 10 + blocked.filter(b => overlap(b, r)).length * 3;
+      const best = cands.reduce((a, b) => score(b) < score(a) ? b : a);
+      if (!full && placed.some(q => overlap(q, best))) { card.el.style.opacity = 0; continue; }
+      placed.push(best); card.el.style.transform = `translate(${best[0]}px, ${best[1]}px)`; card.el.style.opacity = full ? 1 : Math.min(1, e.alpha * 1.4);
+      // leader line from the dot to the nearest point of the card edge
+      const tx = Math.max(best[0], Math.min(best[2], ax)), ty = Math.max(best[1], Math.min(best[3], ay));
+      c.strokeStyle = COL[g]; c.lineWidth = 1.6 * k; c.globalAlpha = full ? 1 : 0.85;
+      c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke(); c.globalAlpha = 1;
+    }
+    for (const [key, card] of pool) if (!used.has(key)) { card.el.remove(); pool.delete(key); }
+  }
+
+  // ---- per frame ----
+  E.onFrame = (st, c) => {
+    const k = E.k, shown = [];
+    let nP = 0, nO = 0, nS = 0;
+    for (const e of st.entities) {
+      const g = groupOf(e); if (!g) continue;
+      if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else nS++; }
+      if (!show[g]) continue;
+      shown.push([e, g]);
+    }
+    // auto labels: the closest people + the largest object + a readable sign, re-chosen every 1.5 s to stay calm
+    const now = performance.now();
+    if (now - autoAt > 1500) {
+      autoAt = now;
+      const big = e => (e.rect[2] - e.rect[0]) * (e.rect[3] - e.rect[1]);
+      const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, 2);
+      const obj = shown.filter(([e, g]) => g === "object" && e.alpha > .6).sort((a, b) => big(b[0]) - big(a[0])).slice(0, 1);
+      const sgn = shown.filter(([e, g]) => g === "space" && e.alpha > .6).slice(0, 1);
+      auto = [...ppl, ...obj, ...sgn].map(([e]) => keyOf(e));
+    }
+    const pinnedKeys = new Set(pinned.map(p => `${p.kind}:${p.id}`)), byKey = new Map(shown.map(x => [keyOf(x[0]), x]));
+    // dots
+    for (const [e, g] of shown) {
+      const [x, y] = anchor(e), isPin = pinnedKeys.has(keyOf(e)), isHov = hover && keyOf(hover) === keyOf(e), r = (g === "person" ? 5 : 4.2) * k;
+      c.globalAlpha = Math.min(1, e.alpha * 1.3);
+      if (isPin || isHov) { c.fillStyle = COL[g] + "44"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(x, y, r + 2.2 * k, 0, 7); c.fill();
+      c.fillStyle = COL[g]; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+      if (g === "person" && (isPin || isHov)) {          // corner brackets around the head, like a viewfinder
+        const rr = e.rect, hw = Math.min((rr[2] - rr[0]) * 0.26, (rr[3] - rr[1]) * 0.085), cx = (rr[0] + rr[2]) / 2, top = rr[1] - hw * 0.2, hh = hw * 2.5, L = Math.min(10 * k, hw * .7);
+        c.strokeStyle = COL.person; c.lineWidth = 2 * k; c.beginPath();
+        for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const px = cx + sx * hw, py = sy < 0 ? top : top + hh; c.moveTo(px, py - sy * L); c.lineTo(px, py); c.lineTo(px - sx * L, py); }
+        c.stroke();
+      }
+      c.globalAlpha = 1;
+      E.addHit(x - 12 * k, y - 12 * k, x + 12 * k, y + 12 * k, e);
+    }
+    const list = [];
+    for (const p of pinned) { const x = byKey.get(`${p.kind}:${p.id}`); if (x) list.push({ e: x[0], g: x[1], full: true }); }
+    if (show.labels) for (const key of auto) if (!pinnedKeys.has(key) && byKey.has(key)) { const [e, g] = byKey.get(key); list.push({ e, g, full: false }); }
+    layoutCards(st, c, list);
+    $("nP").textContent = nP; $("nO").textContent = nO; $("nS").textContent = nS;
+    drawRadar(st); drawCompass(st); updateStats(st);
+  };
+  E.onHover = h => { hover = h && groupOf(h) ? h : null; stage.style.cursor = hover ? "pointer" : ""; };
+  E.onClick = h => { if (!h || !groupOf(h)) return; const key = keyOf(h); if (pinned.some(p => `${p.kind}:${p.id}` === key)) unpin(key); else pin({ kind: h.kind, id: h.id }); };
+
+  // ---- radar: everything detected around the camera this frame; the view cone points up ----
+  function drawRadar(st) {
+    const cv = $("radar"), c = cv.getContext("2d"), S = cv.width, R = S / 2 - 14, o = S / 2, F = st.data.frames[st.fi];
+    c.clearRect(0, 0, S, S);
+    c.strokeStyle = "#dfe3ea"; c.lineWidth = 1.5; for (const f of [1, 0.66, 0.33]) { c.beginPath(); c.arc(o, o, R * f, 0, 7); c.stroke(); }
+    const half = E.fov / 2 * E.deg, g = c.createRadialGradient(o, o, 0, o, o, R);
+    g.addColorStop(0, "rgba(47,124,246,.55)"); g.addColorStop(1, "rgba(47,124,246,.04)");
+    c.fillStyle = g; c.beginPath(); c.moveTo(o, o); c.arc(o, o, R, -Math.PI / 2 - half, -Math.PI / 2 + half); c.closePath(); c.fill();
+    if (!F) return;
+    const dot = (yw, dist, col, rad) => { const a = (yw - E.yaw) * E.deg, rr = Math.min(1, dist / 14) * R; c.fillStyle = col; c.beginPath(); c.arc(o + Math.sin(a) * rr, o - Math.cos(a) * rr, rad, 0, 7); c.fill(); };
+    if (show.object) { for (const x of F.o) if (x[1] >= E.conf) dot(x[2], 11, COL.object, 4.5); for (const x of F.l2) if (x[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(x[0])) dot(x[2], x[7] || 9, COL.object, 4.5); }
+    if (show.person) for (const x of F.p) if (x[1] >= E.conf && x[7]) dot(x[2], x[7], COL.person, 5.5);
+    c.fillStyle = COL.space; c.beginPath(); c.arc(o, o, 7, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 2.5; c.stroke();
+    c.fillStyle = "#8a93a6"; c.font = "600 18px Inter, sans-serif"; c.textAlign = "center"; c.fillText("14 m", o, o - R + 22);
+  }
+
+  // ---- compass: real bearing when the walk is placed on the map (georef), otherwise relative to the walking direction ----
+  function drawCompass(st) {
+    const cv = $("compass"), c = cv.getContext("2d"), S = cv.width, o = S / 2, R = o - 6;
+    c.clearRect(0, 0, S, S);
+    c.fillStyle = "rgba(255,255,255,.92)"; c.beginPath(); c.arc(o, o, R, 0, 7); c.fill();
+    c.strokeStyle = "#e3e6ec"; c.lineWidth = 2; c.beginPath(); c.arc(o, o, R - 30, 0, 7); c.stroke();
+    const geo = !!st.cam, head = geo ? st.cam.bearing : E.yaw, labels = geo ? ["N", "E", "S", "W"] : ["Ahead", "R", "Back", "L"];
+    c.fillStyle = "#1d2433"; c.textAlign = "center"; c.textBaseline = "middle";
+    labels.forEach((t, i) => { const a = (i * 90 - head) * E.deg; c.font = `600 ${t.length > 1 ? 17 : 21}px Inter, sans-serif`; c.fillText(t, o + Math.sin(a) * (R - 16), o - Math.cos(a) * (R - 16)); });
+    c.fillStyle = COL.space; c.beginPath(); c.moveTo(o, o - 34); c.lineTo(o + 15, o + 14); c.lineTo(o, o + 5); c.lineTo(o - 15, o + 14); c.closePath(); c.fill();
+    const deg = Math.round(((head % 360) + 360) % 360);
+    $("compassCap").textContent = geo ? `facing ${deg}°` : (Math.abs(E.yaw) < 8 ? "looking ahead" : `${Math.abs(Math.round(E.yaw))}° ${E.yaw > 0 ? "right" : "left"} of walking direction`);
+  }
+
+  // ---- stats popover ----
+  function updateStats(st) {
+    if ($("statsPop").hidden) return;
+    $("sPeople").textContent = st.counts.people.view; $("sSeen").textContent = st.uniqueSoFar;
+    const a = st.counts.age, s = st.counts.sex, rows = [["Men (perceived)", s.man || 0], ["Women (perceived)", s.woman || 0], ["Gender uncertain", s.uncertain || 0],
+      ...ShukEngine.AGES.map(k => [AGE[k][0] + (k === "uncertain" ? " (age uncertain)" : ""), a[k] || 0])];
+    $("sGrid").innerHTML = rows.map(([l, v]) => `<span>${l}</span><span>${v}</span>`).join("");
+  }
+
+  // ---- timeline markers: crowd peaks (people), market-item peaks (objects), first sight of readable signs (space) ----
+  const bookmarks = { walk1: [], walk2: [] };
+  let marks = [];
+  function peaks(series, n, gap) {
+    const idx = series.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]), out = [];
+    for (const [v, i] of idx) { if (out.length >= n || v <= 0) break; if (out.every(j => Math.abs(j - i) > gap)) out.push(i); }
+    return out;
+  }
+  function buildMarks(d) {
+    const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf).length);
+    const obj = d.frames.map(F => F.l2.filter(x => !DECOR.has(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
+    const firstSign = new Map(); d.frames.forEach((F, i) => { for (const s of F.s || []) if ((d.signs[s[0]] || [])[3] && !firstSign.has(s[0])) firstSign.set(s[0], i); });
+    const signs = [...firstSign.values()].sort((a, b) => a - b).filter((f, i, a) => i === 0 || f - a[i - 1] > d.fps * 8).slice(0, 10);
+    marks = [...peaks(ppl, 8, d.fps * 12).map(f => ({ f, k: "person", t: `Crowd peak · ${ppl[f]} people` })),
+             ...peaks(obj, 4, d.fps * 20).map(f => ({ f, k: "object", t: `Busy stalls · ${obj[f]} items` })),
+             ...signs.map(f => ({ f, k: "space", t: "Readable sign" }))];
+    renderMarks();
+  }
+  function renderMarks() {
+    const d = E.data; if (!d) return;
+    const all = [...marks, ...bookmarks[E.walk].map(f => ({ f, k: "bookmark", t: "Bookmark" }))];
+    $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}" data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}"></button>`).join("");
+  }
+
+  // ---- transport ----
+  const track = $("track");
+  const tOf = ev => { const r = track.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * E.duration(); };
+  let scrub = false;
+  track.addEventListener("pointerdown", ev => { const mk = ev.target.closest(".mk"); if (mk) { E.seekFrame(+mk.dataset.f); return; } scrub = true; track.setPointerCapture(ev.pointerId); E.seek(tOf(ev)); });
+  track.addEventListener("pointermove", ev => {
+    if (scrub) E.seek(tOf(ev));
+    const mk = ev.target.closest(".mk"), tip = $("tip"), r = track.getBoundingClientRect();
+    tip.hidden = false; tip.style.left = `${ev.clientX - r.left}px`; tip.textContent = mk ? mk.dataset.t : fmt(tOf(ev));
+  });
+  track.addEventListener("pointerup", () => { scrub = false; });
+  track.addEventListener("pointerleave", () => { $("tip").hidden = true; });
+  const setPlay = on => { $("playIc").innerHTML = on ? `<path d="M7 4h4v16H7zM13 4h4v16h-4z" fill="currentColor"/>` : `<path d="M7 4v16l13-8z" fill="currentColor"/>`; $("play").setAttribute("aria-label", on ? "Pause" : "Play"); };
+  $("play").addEventListener("click", () => setPlay(E.play())); E.onPlay = setPlay;
+  const SPEEDS = [0.5, 1, 1.5, 2];
+  $("speed").addEventListener("click", () => { const s = SPEEDS[(SPEEDS.indexOf(E.speed) + 1) % SPEEDS.length]; E.setSpeed(s); $("speed").textContent = s.toFixed(1) + "x"; });
+  let spinning = false;
+  $("spin").addEventListener("click", () => { spinning = !spinning; $("spin").setAttribute("aria-pressed", String(spinning)); });
+  setInterval(() => { if (spinning) E.look(E.yaw + 0.25); }, 16);
+  const fsToggle = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
+  $("fs").addEventListener("click", fsToggle); $("fsTop").addEventListener("click", fsToggle);
+  setInterval(() => {
+    const st = E.state; if (!st) return;
+    $("tNow").textContent = fmt(st.t); $("tDur").textContent = fmt(st.duration); 
+    const p = st.duration ? st.t / st.duration * 100 : 0; $("thumb").style.left = p + "%"; $("done").style.width = p + "%";
+  }, 100);
+
+  // ---- header: walk menu ----
+  $("placeBtn").addEventListener("click", () => { const m = $("walkMenu"); m.hidden = !m.hidden; $("placeBtn").setAttribute("aria-expanded", String(!m.hidden)); });
+  document.querySelectorAll("#walkMenu button").forEach(b => b.addEventListener("click", async () => {
+    document.querySelectorAll("#walkMenu button").forEach(x => x.setAttribute("aria-checked", String(x === b)));
+    $("walkMenu").hidden = true; pinned.length = 0; $("walkName").textContent = `· ${E.walkLabel(b.dataset.walk)}`; await load(b.dataset.walk);
+  }));
+
+  // ---- tool rail + popovers ----
+  const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop" };
+  const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
+  for (const [b, p] of Object.entries(pops)) $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
+  $("setBtn").addEventListener("click", () => $("tLayers").click());
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops(); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
+  $("tCenter").addEventListener("click", () => { E.look(0, -5); E.fov = 90; });
+  const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 400); }, 1800); };
+  $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; bookmarks[E.walk].push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
+  $("searchIn").addEventListener("keydown", ev => {
+    ev.stopPropagation();                      // keep typing out of the viewer's keyboard shortcuts
+    if (ev.key !== "Enter") return;
+    const id = parseInt($("searchIn").value.replace(/\D/g, ""), 10), t = E.data && E.data.tracks[id];
+    if (!t) { $("searchHint").textContent = `No person P-${isNaN(id) ? "?" : id} on this walk.`; return; }
+    E.seekFrame(t[0] + 1); pin({ kind: "person", id }); closePops(); $("searchHint").textContent = "Jumps to when they first appear and opens their card.";
+    setTimeout(() => { const e = (E.state?.entities || []).find(x => x.kind === "person" && x.id === id); if (e) E.look(e.yaw); else { const F = E.data.frames[t[0] + 1], r = F && F.p.find(x => x[0] === id); if (r) E.look(r[2]); } }, 300);
+  });
+  document.querySelectorAll("[data-show]").forEach(i => i.addEventListener("change", () => {
+    show[i.dataset.show] = i.checked; const chip = document.querySelector(`.chip[data-k="${i.dataset.show}"]`); if (chip) chip.setAttribute("aria-pressed", String(i.checked)); autoAt = 0;
+  }));
+  document.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+    const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
+  }));
+  $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); });
+
+  load("walk1");
+})();
+</script>
+</body>
+</html>
