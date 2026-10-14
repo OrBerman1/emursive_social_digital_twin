@@ -123,6 +123,24 @@ After updating the code, restart `start_viewer.bat` and press **Ctrl+F5** once i
 **Hand-count validation:** http://localhost:8000/viewer/validate.html — 30 frames; type how many people
 you see in each, and the page compares your counts with the model's.
 
+### Projects: add data, or start a new area
+
+Open **http://localhost:8000/viewer/projects.html** (link "projects" in the viewer's title).
+- **Add data to a project** (also to Shuk HaTikvah): another 360 video (Insta360 ONE RS `.insv`, one walk), a
+  store table (`.xlsx` with at least `Shop_Name`, `X`, `Y` in WGS84, like `Shops_In_hatikva_30_7_26.xlsx`), or a
+  `.txt` of anchor points for one walk, e.g. `Hasaluf f104 yaw -8; Rosita Bar f163 yaw 150` (store name or
+  GlobalID, frame `f…` and view yaw from the viewer's top-left box; optional `pitch` and `fov`).
+- **New project** (another area): a name and a 360 video are required; the store table and anchors are optional.
+- **Run analysis**: runs the pipeline once for that project in the background, with a bar per step. Finished steps
+  are cached, so adding anchors later only re-runs the map steps. A new walk takes about 1–1.5 h on the GPU.
+- Without a store table **and** anchors for a walk there is no map for it (no paths, crowds, speed map,
+  segment summary); the 360 view, people, objects, signs and food still work.
+- **Claude API key** (optional, left panel): if saved, sign text is read by Claude and the pictured-people and
+  stall-material checks are reviewed by Claude. Without it, Tesseract and the automatic fallbacks run, and stall
+  materials are skipped. The key is stored only on this computer (`%LOCALAPPDATA%\ShukTwin`), never in the repo.
+- Each project lives in `projects/<id>/` (its data folder is not in git). The viewer opens a project with
+  `viewer/?project=<id>`.
+
 ## 6. Outputs for GIS
 
 `data\processed\<walk>\observations_stab.geojson`: one feature per persistent entity (ID, entity type,

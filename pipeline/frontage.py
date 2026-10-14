@@ -29,7 +29,8 @@ MERGE_M = 3.0
 def run(variant: str) -> dict:
     sfx = f"_{variant}" if variant else ""
     sm = json.loads((PROCESSED / "stall_materials.json").read_text(encoding="utf-8"))["stores_list"]
-    review = json.loads((CONFIG / "stall_review.json").read_text(encoding="utf-8"))["stores"]
+    rp = CONFIG / "stall_review.json"
+    review = json.loads(rp.read_text(encoding="utf-8"))["stores"] if rp.exists() else {}
     geo, pts = {}, []
     for s in sm:
         r = review.get(str(s["OBJECTID"]))

@@ -414,3 +414,35 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      comments stay in the browser (localStorage) and the composer says so.
    - data/ is gitignored, so comments are not committed; copy comments.json to share them.
 
+
+27. PROJECTS: ADD DATA OR START A NEW AREA  (viewer/projects.html; pipeline/projects_api.py, common.py, run_all.py)
+   - Project registry (common.py): SHUK_PROJECT selects the project (default shuk_hatikvah = the original data in
+     data/ and config/, unchanged). Other projects: projects/<id>/project.json + data/raw|interim|processed +
+     config/. Every stage reads its paths (RAW, INTERIM, PROCESSED, CONFIG, WALKS, STORE_TABLE) from there.
+   - Uploads (streamed, validated, user choice: browser upload): .insv video (MP4 header checked) -> new walkN;
+     .xlsx store table (needs Shop_Name, X, Y); .txt anchors for one walk -> anchors_import.py merges them into
+     config/anchors.json (same walk + frame + store replaces; unreadable entries are reported).
+   - Analysis (run_all.py --project): one job at a time, in the background. A conditional plan: video stages need
+     the walk's .insv; map stages (georef, waste, motion, crowds, stall/frontage) need the store table AND anchors
+     for that walk; Claude stages need an API key. Skipped steps show their reason. Progress -> processed/job.json
+     (per-step % parsed from "a/b" in each step's output, weighted by typical run time) + job.log; the projects
+     page polls it every 2 s. Cached steps skip themselves (compute once per project).
+   - georef for new areas: stores > 3 km from the median are dropped; OSM is downloaded for the store extent + 150 m.
+   - Claude API mode (vlm.py, only with a key; the original project keeps its saved reviews): model claude-opus-5-5,
+     effort medium, JSON forced by a schema, server-side fallback on a refusal. One request = one numbered sheet.
+       ocr_vlm.py api      : the same 16-crop sign sheets as before -> text / lang / legible / kind per sign.
+       depicted.py --api   : candidates (CLIP p >= 0.3) as context crops with the green person box, 12 per sheet ->
+                             real / depicted / operator / unclear; cached in depicted_<v>/api_review.json.
+                             Manual review wins over Claude; unreviewed fall back to CLIP p >= 0.9.
+       stall_materials.py --api : the store's 1-3 side views, 8 stores per sheet -> visible, facade, structure,
+                             materials -> the project's config/stall_review.json (source "Claude API").
+     Without a key: Tesseract signs, CLIP fallback for pictured people, stall materials skipped (CLIP alone was
+     below the majority baseline, METHODS 19).
+   - The key is stored outside the repo (%LOCALAPPDATA%/ShukTwin/anthropic_api_key), passed only to the analysis
+     process, never returned by the server; "Check" calls the API's model list with the key on curl's stdin.
+   - Short test clips: cut the .insv with ffmpeg stream copy (-t N) and append the original Insta360 trailer (its
+     size is the uint32 40 bytes before the end; the trailer holds the gyro log, which ffmpeg drops) -> the gyro
+     still parses and stabilisation works. The clip must start at 0 s (gyro time = video time).
+   - Tested 14 Oct: original project re-run fully cached (outputs identical); progress parsing (a/b and ffmpeg
+     time=); API paths against a local mock of the Messages API (requests, schemas, caching, no resend).
+     Not yet run against the real API (no key on this machine).

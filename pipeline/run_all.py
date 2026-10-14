@@ -115,9 +115,24 @@ class Job:
 
 
 PROG = re.compile(r"(\d+)\s*/\s*(\d+)")
+FFTIME = re.compile(r"time=(\d+):(\d+):(\d+(?:\.\d+)?)")          # ffmpeg -stats (stitching, encoding, baking)
+WALKRE = re.compile(r"\b(walk\d+)\b")
+_dur = {}
 
 
-def run_stage(job: Job, i: int, s: dict, log) -> None:
+def duration(path) -> float:
+    """Video length in seconds (ffprobe), for ffmpeg's time= progress; 0 if unknown."""
+    if path not in _dur:
+        try:
+            r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+                               capture_output=True, text=True, timeout=60)
+            _dur[path] = float(r.stdout.strip() or 0)
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            _dur[path] = 0.0
+    return _dur[path]
+
+
+def run_stage(job: Job, i: int, s: dict, log, videos: dict) -> None:
     js = job.state["stages"][i]
     js["state"], js["pct"] = "running", 0
     job.write(force=True)
@@ -127,6 +142,7 @@ def run_stage(job: Job, i: int, s: dict, log) -> None:
     env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")   # Hebrew sign text in the children's output
     p = subprocess.Popen(cmd, cwd=s["cwd"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", bufsize=1, env=env)
     walks = s["walks"] or [""]
+    wi = 0                                                          # walk being processed (from the stage's own lines)
     tail = []
     for line in p.stdout:
         for part in line.replace("\r", "\n").splitlines():
@@ -134,13 +150,20 @@ def run_stage(job: Job, i: int, s: dict, log) -> None:
                 continue
             log.write(part + "\n")
             tail = (tail + [part])[-12:]
-            m = PROG.findall(part)
-            if m:
+            mw = WALKRE.search(part)
+            if mw and mw.group(1) in walks:
+                wi = walks.index(mw.group(1))
+            m, mt = PROG.findall(part), FFTIME.search(part)
+            frac = None
+            if mt and walks[wi] in videos:
+                d = duration(videos[walks[wi]])
+                frac = min(1.0, (int(mt[1]) * 3600 + int(mt[2]) * 60 + float(mt[3])) / d) if d else None
+            elif m:
                 a, b = map(int, m[-1])
-                if b > 1 and a <= b:
-                    wi = next((k for k, w in enumerate(walks) if w and w in part), 0)
-                    js["pct"] = round(100 * (wi + a / b) / len(walks), 1)
-                    job.write()
+                frac = a / b if b > 1 and a <= b else None
+            if frac is not None:
+                js["pct"] = round(100 * (wi + frac) / len(walks), 1)
+                job.write()
         sys.stdout.write(line)
     log.flush()
     if p.wait() != 0:
@@ -174,7 +197,7 @@ def main() -> None:
                 if s["skip"]:
                     print(f"\n--- skip {s['key']}: {s['skip']}", flush=True)
                     continue
-                run_stage(job, i, s, log)
+                run_stage(job, i, s, log, C.WALKS)
             job.state["status"] = "done"
         except Exception as e:                                       # noqa: BLE001 - reported to the projects page
             job.state["status"], job.state["error"] = "failed", str(e)

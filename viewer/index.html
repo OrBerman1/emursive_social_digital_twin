@@ -199,11 +199,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <body>
 <div class="wrap">
   <header>
-    <h1>Shuk HaTikvah 360° <span>· real footage, levels 1–2 v0.1</span></h1>
-    <div class="walks" role="group" aria-label="Walk">
-      <button data-walk="walk1" aria-pressed="true">Walk 1 · Hatikvah St</button>
-      <button data-walk="walk2" aria-pressed="false">Walk 2 · Hamevasser St</button>
-    </div>
+    <h1><span id="projName">Shuk HaTikvah</span> 360° <span>· real footage · <a href="projects.html" id="projLink" style="color:var(--accent)">projects</a></span></h1>
+    <div class="walks" role="group" aria-label="Walk" id="walkBtns"></div>
   </header>
   <div class="main">
     <div style="display:grid;gap:10px;min-width:0">
@@ -379,6 +376,28 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   const video = document.createElement("video");
   video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = true; video.preload = "auto";
   video.hidden = true; document.body.appendChild(video);   // detached videos may never start loading in Chrome
+  // ---------- project (projects.html / pipeline/projects_api.py): data paths, walks and their labels ----------
+  const PROJ = { id: new URLSearchParams(location.search).get("project") || "shuk_hatikvah", name: "Shuk HaTikvah",
+                 processed: "/data/processed", interim: "/data/interim",
+                 walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback = the original project
+  const WALK_COLS = ["#4fb3bb", "#e0a948", "#c08bff", "#8cff5a", "#ff9a3c", "#38c6ff"];
+  const walkNo = w => String(w).replace(/^walk/, "");
+  const walkShort = w => `walk ${walkNo(w)}`;
+  const walkLong = w => `Walk ${walkNo(w)} · ${(PROJ.walks[w] || {}).label || w}`;
+  const walkLabel = w => (PROJ.walks[w] || {}).label || w;
+  const walkCol = w => WALK_COLS[Math.max(0, Object.keys(PROJ.walks).indexOf(w)) % WALK_COLS.length];
+  async function initProject() {
+    try {
+      const r = await fetch("/api/projects"); const j = await r.json();
+      const pr = (j.projects || []).find(x => x.id === PROJ.id) || (j.projects || [])[0];
+      if (pr) Object.assign(PROJ, { id: pr.id, name: pr.name, processed: pr.urls.processed, interim: pr.urls.interim,
+        walks: Object.fromEntries(Object.entries(pr.walks).filter(([, v]) => v.analysed).map(([w, v]) => [w, { label: v.label }])) });
+    } catch (e) { /* old server without the projects API: original project */ }
+    document.title = `${PROJ.name} 360`; $("projName").textContent = PROJ.name;
+    $("projLink").href = `projects.html?project=${encodeURIComponent(PROJ.id)}`;
+    $("walkBtns").innerHTML = Object.keys(PROJ.walks).map((w, i) => `<button data-walk="${w}" aria-pressed="${i === 0}">${walkLong(w).replace(/[<>&]/g, "")}</button>`).join("");
+    document.querySelectorAll(".walks button").forEach(b => b.addEventListener("click", () => load(b.dataset.walk)));
+  }
   const S = { speed: 1, stab: null, yaw: 0, pitch: -5, fov: 90, walk: "walk1", data: null, hits: [], sel: null, seen: new Set(), conf: 0.6 };
   // Fallback when the video can't play (not loaded yet, background tab): show the cached analysis frame
   // for the current time. Overlays then align exactly with the frame they were computed on.
@@ -439,15 +458,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const keepT = curTime();
     try {
       const v = $("Lvar").checked ? "_stab" : "";
-      let r = await fetch(`../data/processed/${walk}/overlays${v}.json`);
-      if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
+      let r = await fetch(`${PROJ.processed}/${walk}/overlays${v}.json`);
+      if (!r.ok) { r = await fetch(`${PROJ.processed}/${walk}/overlays.json`); $("Lvar").checked = false; }
       S.data = await r.json();
       if (typeof setMiniRoute === "function") setMiniRoute();
       MO.data = null; MO.follow.clear(); MO.pathSig = ""; MO.lastKey = "";
-      try { const rm = await fetch(`../data/processed/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
+      try { const rm = await fetch(`${PROJ.processed}/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
       renderChips();
       if (typeof cmRender === "function") setTimeout(cmRender, 0);
-      video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
+      video.src = `${PROJ.processed}/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
       const tr = S.data.tracks;
@@ -561,7 +580,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     else if (S.data) {
       if (playing) { vt += dt * S.speed; if (vt >= duration()) vt = 0; }
       const want = Math.min(S.data.n_frames - 1, Math.round(vt * S.data.fps));
-      if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `../data/interim/${S.walk}/${S.data.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
+      if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `${PROJ.interim}/${S.walk}/${S.data.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
       if (stillReady) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, still); stillReady = false; shownFi = stillFi; still.dataset.up = "1"; $("loading").hidden = true; }
     }
     const W = ov.width, H = ov.height, tx = Math.tan(S.fov * deg / 2);
@@ -836,7 +855,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       } else if (S.sel.kind === "fm") {
         const p = FRONT.find(x => x.id === S.sel.id) || {};
         title = `🧱 Frontage materials · M-${S.sel.id}`;
-        rows = `</dl><img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop"><dl class="kv">` +
+        rows = `</dl><img class="fm" src="${PROJ.processed}/${p.crop}" alt="Frontage crop"><dl class="kv">` +
                row("Facade", p.facade || "—") + row("Structure", p.structure || "—") +
                row("Materials", (p.materials || []).join(", ") || "—") + row("Where", `${p.chainage_m} m along the route, ${p.side} side`);
         note = "Experimental: what the camera saw at this spot (vision review of a frontage crop). Location-based, not tied to a store name.";
@@ -1003,11 +1022,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   let mini = null, full = null, miniRoute = null, fullMe = null;
   async function loadGeo() {
     try {
-      GEO.shops = (await (await fetch("../data/processed/shops.json")).json()).shops;
-      for (const w of ["walk1", "walk2"]) {
-        try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
-        if (w === "walk1") try { const rf = await fetch("../data/processed/frontage_materials.json"); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
-        if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
+      GEO.shops = (await (await fetch(`${PROJ.processed}/shops.json`)).json()).shops;
+      for (const w of Object.keys(PROJ.walks)) {
+        try { GEO.walks[w] = await (await fetch(`${PROJ.processed}/${w}/georef.json`)).json(); } catch (e) {}
+        if (w === Object.keys(PROJ.walks)[0]) try { const rf = await fetch(`${PROJ.processed}/frontage_materials.json`); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
+        if (SHOW_WASTE) try { const rw = await fetch(`${PROJ.processed}/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
       }
     } catch (e) { return; }
     if (!window.L || !GEO.shops) return;
@@ -1067,11 +1086,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       full.createPane("people").style.zIndex = 650;                     // followed people above the "you are here" marker
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19,
         attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
-      const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
+
       ML.layers.routes = L.layerGroup();
       for (const [w, g] of Object.entries(GEO.walks)) {
-        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(ML.layers.routes)
-          .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
+        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: walkCol(w), weight: 5, opacity: .85 }).addTo(ML.layers.routes)
+          .bindTooltip(walkLong(w), { sticky: true });
       }
       ML.layers.stores = L.layerGroup(); ML.layers.paths = L.layerGroup(); ML.layers.speed = L.layerGroup();
       const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
@@ -1082,7 +1101,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                       ["Facade", sh.Facade_Mat], ["Structure", sh.Skeleton_Mat], ["Established", sh.Est_Year ? Math.round(sh.Est_Year) : null],
                       ["Generation", sh.Gen_Status ? Math.round(sh.Gen_Status) : null], ["Informal vendor", sh.Informal_Vendor]]
           .filter(x => x[1]).map(([a, b]) => `${a}: ${esc3(b)}`).join("<br>");
-        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
+        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${walkShort(sh.seen.walk)}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
                               : `<div class="muted">Not passed on the recorded walks.</div>`;
         m.bindPopup(`<b>${esc3(sh.name)}</b><br>${info}<br>${where}`);
         m.off("click", m._openPopup, m);                                // we decide on click: popup, or segment anchor
@@ -1100,7 +1119,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
-          .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
+          .bindTooltip(`${it.emoji} ${it.type} · ${walkShort(w)} · ${it.chainage_m} m`).addTo(full);
       CROWD_FULL = L.layerGroup(); drawCrowdMarkers(); ML.layers.crowds = CROWD_FULL;
       FM_LAYER = L.layerGroup(); ML.layers.frontage = FM_LAYER;
       for (const p of FRONT)
@@ -1196,7 +1215,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (coloured.length < vals.length) parts.push(`<span><i style="background:#cfd8d6"></i>other / unknown</span>`);
     }
     if (ML.on.crowds) parts.push(`<span><i style="background:#ff6f3c"></i>👥 crowd (number = most people at once)</span>`);
-    if (ML.on.routes) parts.push(`<span><i style="background:#4fb3bb"></i>walk 1 route</span><span><i style="background:#e0a948"></i>walk 2 route</span>`);
+    if (ML.on.routes) parts.push(`${Object.keys(GEO.walks).map(w => `<span><i style="background:${walkCol(w)}"></i>${walkLong(w)}</span>`).join("")}`);
     if (ML.on.frontage) parts.push(`<span>🧱 frontage materials (experimental)</span>`);
     if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
     $("speedLeg").hidden = !ML.on.speed; $("miniSpeed").hidden = !ML.on.speed || !mini;
@@ -1219,7 +1238,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (key === mlSpeedKey && lays.every(l => l.getLayers().length)) return;
     mlSpeedKey = key;
     for (const r of ["speedRamp", "miniSpeedRamp"]) $(r).style.background = `linear-gradient(90deg,${SPEED_RAMP.join(",")})`;
-    const lat0 = 32.0527, lon0 = 34.7903, kx = 111320 * Math.cos(lat0 * deg), ky = 110574;
+    const g0 = Object.values(GEO.walks)[0] || { lat: [32.0527], lon: [34.7903] };
+    const lat0 = g0.lat.find(x => x != null), lon0 = g0.lon.find(x => x != null), kx = 111320 * Math.cos(lat0 * deg), ky = 110574;
     const people = [];                                                  // [[x, y, speed], ...] per person (thinned to 1 point / m)
     for (const w of Object.keys(GEO.walks)) {
       const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
@@ -1342,8 +1362,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (walk === S.walk && S.data) return { d: S.data, mo: MO.data };
     if (!SEG.cache[walk]) {
       const v = $("Lvar").checked ? "_stab" : "";
-      const d = await (await fetch(`../data/processed/${walk}/overlays${v}.json`)).json();
-      let mo = null; try { const r = await fetch(`../data/processed/${walk}/motion${v}.json`); if (r.ok) mo = await r.json(); } catch (e) {}
+      const d = await (await fetch(`${PROJ.processed}/${walk}/overlays${v}.json`)).json();
+      let mo = null; try { const r = await fetch(`${PROJ.processed}/${walk}/motion${v}.json`); if (r.ok) mo = await r.json(); } catch (e) {}
       SEG.cache[walk] = { d, mo };
     }
     return SEG.cache[walk];
@@ -1425,7 +1445,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const fronts = FRONT.filter(p => p.walk === walk && p.frame >= f0 && p.frame <= f1);
     const mat = {}; for (const p of fronts) for (const m of p.materials) mat[m] = (mat[m] || 0) + 1;
     return {
-      segment: { walk, street: walk === "walk1" ? "Hatikvah St" : "Hamevasser St", from_store: startSh.name, to_store: endSh.name,
+      segment: { walk, street: walkLabel(walk), from_store: startSh.name, to_store: endSh.name,
                  frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
                  duration_s: +((f1 - f0) / fps).toFixed(1), length_m: +len.toFixed(1), min_confidence: conf, hide_tracks_shorter_than_1s: minLen > 0,
                  exported: new Date().toISOString() },
@@ -1491,9 +1511,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
   $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
   const fmHtml = (p, withBtn) => `<b>🧱 Frontage materials</b> <span class="muted">· experimental</span><br>` +
-    `<img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop">` +
+    `<img class="fm" src="${PROJ.processed}/${p.crop}" alt="Frontage crop">` +
     `Facade: ${p.facade} · structure: ${p.structure}<br>Materials: ${p.materials.length ? p.materials.join(", ") : "—"}<br>` +
-    `<span class="muted">${p.walk === "walk1" ? "walk 1" : "walk 2"} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
+    `<span class="muted">${walkShort(p.walk)} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
     (withBtn ? `<br><button class="go" data-fm="${p.id}">▶ Go to video</button>` : "");
   const AGE_ORDER = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"];
   const AGE_HEX = { "child": "#e2f7dc", "young adult 18-35": "#9fe08f", "middle adult 36-60": "#4caf50", "older adult 61+": "#1b6e2a", "uncertain": "#9aa3a1" };
@@ -1503,7 +1523,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const bar = (o, keys, hex) => `<div class="bar2">${keys.filter(k => o[k]).map(k => `<span style="width:${o[k] / n * 100}%;background:${hex[k]}" title="${k}: ${o[k]}"></span>`).join("")}</div>`;
     const rows = (o, keys) => keys.filter(k => o[k]).map(k => `<tr><td>${AGE_EMOJI[k] || ""} ${k}</td><td>${o[k]}</td></tr>`).join("");
     const sp = c.speed_mean_m_s == null ? "—" : `${c.speed_mean_m_s.toFixed(2)} ± ${c.speed_std_m_s.toFixed(2)} m/s`;
-    return `<div class="cpop"><h4>👥 Crowd ${c.crowd_id || ""} · ${c.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(c.t_start_s)}</h4><table>
+    return `<div class="cpop"><h4>👥 Crowd ${c.crowd_id || ""} · ${walkShort(c.walk)} · ${fmt(c.t_start_s)}</h4><table>
       <tr><td>People (approx.) · most at once</td><td><b>${c.people_max_at_once}</b></td></tr>
       <tr><td>Typical size (median)</td><td>${c.people_median}</td></tr>
       <tr><td>Different people over ${c.duration_s} s</td><td>${c.people_unique}</td></tr>
@@ -1630,7 +1650,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         CROWDS[w] = { crowds_list: crowdsCompute(w, d, mo) };
       }
       drawCrowdMarkers();
-      $("crowdCount").textContent = Object.entries(CROWDS).map(([w, c]) => `${w === "walk1" ? "walk 1" : "walk 2"}: ${c.crowds_list.length}`).join(" · ");
+      $("crowdCount").textContent = Object.entries(CROWDS).map(([w, c]) => `${walkShort(w)}: ${c.crowds_list.length}`).join(" · ");
     } finally { crowdBusy = false; }
   }
   function drawCrowdMarkers() {
@@ -1680,7 +1700,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     S.yaw = t.yaw; S.pitch = -3;
   }
   requestAnimationFrame(frame);
-  loadGeo();
 
   // ---------- interaction ----------
   let drag = null, scrubbing = false;
@@ -1734,15 +1753,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     `<path d="M3.4 2 C8 0, 12 5, 20.5 2.5 L20.5 13.5 C12 16, 8 11, 3.4 13 Z" fill="${col}" stroke="#121819" stroke-width=".9" stroke-linejoin="round"/></svg>`;
   const cmEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
   async function cmLoad() {
-    try { const r = await fetch("../data/processed/comments.json", { cache: "no-store" }); if (r.ok) CM.list = (await r.json()).comments || []; }
+    try { const r = await fetch(`${PROJ.processed}/comments.json`, { cache: "no-store" }); if (r.ok) CM.list = (await r.json()).comments || []; }
     catch (e) {}
-    if (!CM.list.length) { try { CM.list = JSON.parse(localStorage.getItem("shukComments") || "[]"); } catch (e) {} }
+    if (!CM.list.length) { try { CM.list = JSON.parse(localStorage.getItem(`shukComments:${PROJ.id}`) || "[]"); } catch (e) {} }
     cmRender();
   }
   async function cmSave() {
-    try { localStorage.setItem("shukComments", JSON.stringify(CM.list)); } catch (e) {}
+    try { localStorage.setItem(`shukComments:${PROJ.id}`, JSON.stringify(CM.list)); } catch (e) {}
     try {
-      const r = await fetch("/api/comments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comments: CM.list }) });
+      const r = await fetch(`/api/comments?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comments: CM.list }) });
       if (!r.ok) throw new Error(r.status);
       CM.server = true; return true;
     } catch (e) { CM.server = false; return false; }
@@ -1761,7 +1780,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const t = c ? c.t : curTime();
     CM.color = c ? c.color : (CM.color || FLAG_COLS[0]);
     $("cmTitle").textContent = c ? "🚩 Edit comment" : "🚩 New comment";
-    $("cmWhen").textContent = `${S.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(t)}`;
+    $("cmWhen").textContent = `${walkShort(S.walk)} · ${fmt(t)}`;
     $("cmText").value = c ? c.text : ""; $("cmDelete").hidden = !c; $("cmStatus").textContent = "";
     cmSwatches(); $("composer").hidden = false; $("cmText").focus();
   }
@@ -1800,7 +1819,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   $("flags").addEventListener("mouseout", e => { if (e.target.closest(".flag")) $("flagTip").hidden = true; });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("composer").hidden) $("composer").hidden = true; });
   video.addEventListener("loadedmetadata", cmRender);
-  cmLoad();
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
   $("play").addEventListener("click", togglePlay);
   $("mMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; MO.mode = b.dataset.m;
@@ -1817,9 +1835,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   $("speed").addEventListener("change", () => setSpeed(+$("speed").value));
   video.addEventListener("loadedmetadata", () => { video.playbackRate = S.speed; });
   setSpeed(1);
-  document.querySelectorAll(".walks button").forEach(b => b.addEventListener("click", () => load(b.dataset.walk)));
   $("Lvar").addEventListener("change", () => load(S.walk));
-  load("walk1");
+  initProject().then(() => {
+    const first = Object.keys(PROJ.walks)[0];
+    if (!first) { $("loading").textContent = "This project has no analysed walk yet — open Projects to add a video and run the analysis."; return; }
+    loadGeo(); cmLoad(); load(first);
+  });
 })();
 </script>
 </body>

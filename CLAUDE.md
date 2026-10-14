@@ -17,6 +17,10 @@
   (`start_viewer_1..5_*.bat`, ports 8001–8005). Design is PARKED until all features are done (user,
   14 Oct): add new features to the base viewer `viewer/index.html` only, and list each one in PLAN.md
   ("to port to the designs") so the chosen design can pick them up later.
+- **Projects (14 Oct):** `viewer/projects.html` + `pipeline/projects_api.py`: add data to a project or create a
+  new area; analysis = `run_all.py --project <id>` (conditional plan, progress in `<processed>/job.json`). Paths come
+  from `common.py` (`SHUK_PROJECT`; default `shuk_hatikvah` = the original `data/` + `config/`). New projects live in
+  `projects/<id>/`. Claude API mode (`vlm.py`, key from the projects page) only for new projects. METHODS 27.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.

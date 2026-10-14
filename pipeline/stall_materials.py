@@ -13,6 +13,9 @@ Method : 1. per store: search +-8 s around the closest approach (georef camera p
          3. scored against the survey fields Facade_Mat and Skeleton_Mat (Shops_In_hatikva_30_7_26.xlsx).
          4. vision review (Claude, contact sheets of the crops) in config/stall_review.json: facade, structure and
             visible materials per store, or null when the crop does not show the store; merged into the output.
+            With --api (new projects, ANTHROPIC_API_KEY set) stores without a review are reviewed by Claude through the
+            API (vlm.py; the store's views side by side, 8 stores per sheet) and added to the project's
+            config/stall_review.json (source "Claude API"); stores already reviewed are not sent again.
 Findings (13 Oct 2026): the survey is near-constant among visible stores (Facade Open 93%, Skeleton steel 97%), so
          accuracy against it cannot separate methods (CLIP 86% / 89% is below the majority baseline 93% / 97%);
          the review disagrees systematically (block-built butcher shops coded "steel", glass fronts coded "Open"),
@@ -21,7 +24,7 @@ Findings (13 Oct 2026): the survey is near-constant among visible stores (Facade
          definitions are settled.
 Output : data/interim/<walk>/stalls<_stab>/crops/<OBJECTID>_<k>.jpg, data/processed/stall_materials.json
 
-usage:  python pipeline/stall_materials.py [--variant stab] [--force]
+usage:  python pipeline/stall_materials.py [--variant stab] [--force] [--api]
 """
 from __future__ import annotations
 
@@ -35,7 +38,7 @@ import numpy as np
 import torch
 
 from attributes import MODEL, crop, text_features
-from common import INTERIM, PROCESSED, Stage
+from common import CONFIG, INTERIM, PROCESSED, Stage
 
 VERSION = 2
 SEARCH_F = 40                   # +-8 s around the closest approach
@@ -65,7 +68,41 @@ DETAIL = {   # material -> (present prompt, absent prompt)
 }
 
 
-def run(variant: str, force: bool) -> dict:
+API_PROMPT = """Each numbered cell shows 1-3 side views (left to right) of the same market stall or shop front, taken
+2-8 m away during a 360-degree walk through a street market (Shuk HaTikvah, Tel Aviv). For EVERY store id answer:
+- visible: false if the views do not show a shop front (only street, sky, the camera operator or people blocking it)
+- facade: Open (open front, goods displayed, no front wall), Glass (glass windows / glass door) or Metal (closed metal shutter)
+- structure: steel (light steel frame / poles / metal roof), blocks (concrete-block or plastered masonry) or cement (cast concrete)
+- materials: the materials you can actually see, from the given list only
+When visible is false, give your best guess for facade/structure and an empty materials list; they are ignored."""
+
+
+def api_review(views: dict, review: dict) -> int:
+    """Claude reviews stores that have views but no review yet; answers are added to review (in place)."""
+    import vlm
+    todo = [oid for oid, ps in sorted(views.items()) if ps and str(oid) not in review]
+    item = {"type": "object", "additionalProperties": False, "required": ["visible", "facade", "structure", "materials"],
+            "properties": {"visible": {"type": "boolean"}, "facade": {"type": "string", "enum": list(FACADE)},
+                           "structure": {"type": "string", "enum": list(SKELETON)},
+                           "materials": {"type": "array", "items": {"type": "string", "enum": list(DETAIL)}}}}
+    n, done = -(-len(todo) // 8), 0
+    for k in range(n):
+        part = todo[k * 8:(k + 1) * 8]
+        ims = [np.hstack([cv2.resize(cv2.imread(str(p)), (448, 448)) for p in views[oid]]) for oid in part]
+        ids = [f"S{oid}" for oid in part]
+        try:
+            ans = vlm.ask(vlm.sheet(ims, ids, cols=2, cell_w=900, cell_h=360), API_PROMPT, vlm.id_map_schema(ids, item))
+            for i, a in ans.items():
+                review[i[1:]] = {"facade": a["facade"], "structure": a["structure"], "materials": a["materials"],
+                                 "source": "Claude API"} if a["visible"] else None
+                done += 1
+        except Exception as e:                                         # noqa: BLE001 - those stores stay unreviewed
+            print(f"[stalls api] sheet {k + 1} failed: {e}", flush=True)
+        print(f"[stalls api] sheet {k + 1}/{n}", flush=True)
+    return done
+
+
+def run(variant: str, force: bool, use_api: bool = False) -> dict:
     sfx = f"_{variant}" if variant else ""
     shops = json.loads((PROCESSED / "shops.json").read_text(encoding="utf-8"))["shops"]
     seen = [s for s in shops if s.get("seen")]
@@ -159,8 +196,13 @@ def run(variant: str, force: bool) -> dict:
             cf.setdefault(s["Facade_Mat"], {}).setdefault(pf, 0); cf[s["Facade_Mat"]][pf] += 1
         if s.get("Skeleton_Mat") in SKELETON:
             cs.setdefault(s["Skeleton_Mat"], {}).setdefault(ps, 0); cs[s["Skeleton_Mat"]][ps] += 1
-    review_p = PROCESSED.parent.parent / "config" / "stall_review.json"
-    review = json.loads(review_p.read_text(encoding="utf-8"))["stores"] if review_p.exists() else {}
+    review_p = CONFIG / "stall_review.json"
+    rv_doc = json.loads(review_p.read_text(encoding="utf-8")) if review_p.exists() else {"stores": {}}
+    review = rv_doc["stores"]
+    if use_api and api_review(views, review):
+        rv_doc.setdefault("_note", "Vision review of stall frontage crops (stall_materials.py); null = store not visible.")
+        review_p.parent.mkdir(parents=True, exist_ok=True)
+        review_p.write_text(json.dumps(rv_doc, ensure_ascii=False, indent=1), encoding="utf-8")
     for r in rows:
         v = review.get(str(r["OBJECTID"]), "missing")
         r["vision"] = None if v in (None, "missing") else v
@@ -184,8 +226,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="stab")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--api", action="store_true", help="review unreviewed stores with Claude (needs ANTHROPIC_API_KEY)")
     a = ap.parse_args()
-    print(json.dumps(run(a.variant, a.force), ensure_ascii=False, indent=1))
+    print(json.dumps(run(a.variant, a.force, a.api), ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

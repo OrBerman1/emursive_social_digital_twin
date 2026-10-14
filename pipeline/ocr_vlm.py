@@ -7,9 +7,12 @@ reading is done by Claude in the Claude Code session; any VLM could fill the sam
   read  : (outside this script) each sheet is read and written as sheets/sheet_###.json:
           {"S00012": {"text": "...", "lang": "he|en|ar|ru|mixed|none", "legible": true|false}, ...}
   merge : sheet JSONs -> ocr_vlm<variant>/signs.parquet + sign_boxes.parquet (same schema the export reads)
+  api   : prep (if needed) + each unread sheet sent to Claude through the API (needs ANTHROPIC_API_KEY; vlm.py)
+          + merge. Sheets already answered are not sent again. Used for new projects from the projects page.
 
 usage:  python pipeline/ocr_vlm.py prep  walk1 walk2
         python pipeline/ocr_vlm.py merge walk1 walk2
+        python pipeline/ocr_vlm.py api   walk1 walk2
 """
 from __future__ import annotations
 
@@ -93,6 +96,46 @@ def prep(walk: str, variant: str) -> dict:
     return {"walk": walk + variant, "sign_tracks": int(t.track.nunique()), "signs_to_read": len(best), "sheets": n_sheets}
 
 
+KINDS = ["shop_sign", "banner", "price_sign", "product_packaging", "other_text", "no_text", "operator_shirt"]
+PROMPT = """This contact sheet shows numbered crops of text found in a 360-degree walk through a street market in Israel
+(signs are mostly Hebrew, some English, Arabic or Russian). The crops come from a camera held upside down by an operator,
+so some crops show the operator's T-shirt print. For EVERY id on the sheet give:
+- text: the text exactly as written (keep Hebrew as Hebrew; separate lines with " / "; "" if nothing can be read)
+- lang: he, en, ar, ru, mixed or none
+- legible: true only if you can read the text with confidence
+- kind: shop_sign (shop name / trade sign), banner, price_sign, product_packaging, other_text,
+  no_text (the crop shows no text) or operator_shirt (print on the camera operator's T-shirt)
+Do not guess words you cannot see."""
+
+
+def api(walk: str, variant: str) -> dict:
+    """Send every unread sheet to Claude (vlm.py); answers are cached as sheet_###.json like a manual reading."""
+    import vlm
+    out = INTERIM / walk / f"ocr_vlm{variant}"
+    if not (out / "lines.parquet").exists():
+        print(json.dumps(prep(walk, variant), ensure_ascii=False), flush=True)
+    item = {"type": "object", "additionalProperties": False, "required": ["text", "lang", "legible", "kind"],
+            "properties": {"text": {"type": "string"}, "lang": {"type": "string", "enum": ["he", "en", "ar", "ru", "mixed", "none"]},
+                           "legible": {"type": "boolean"}, "kind": {"type": "string", "enum": KINDS}}}
+    ids_files = sorted((out / "sheets").glob("sheet_*.ids.json"))
+    sent, failed = 0, []
+    for k, idf in enumerate(ids_files):
+        res = idf.with_name(idf.name.replace(".ids.json", ".json"))
+        if not res.exists():
+            ids = json.loads(idf.read_text(encoding="utf-8"))
+            jpg = idf.with_name(idf.name.replace(".ids.json", ".jpg")).read_bytes()
+            try:
+                ans = vlm.ask(jpg, PROMPT, vlm.id_map_schema(ids, item))
+                res.write_text(json.dumps(ans, ensure_ascii=False), encoding="utf-8")
+                sent += 1
+            except Exception as e:                                     # noqa: BLE001 - one bad sheet stays unread
+                failed.append(f"{idf.name}: {e}")
+        print(f"[ocr_vlm api] {walk} sheet {k + 1}/{len(ids_files)}", flush=True)
+    if failed and len(failed) == len(ids_files):
+        raise SystemExit("Claude could not read any sheet: " + failed[0])
+    return {"walk": walk + variant, "sheets": len(ids_files), "sent": sent, "failed": failed[:5], **merge(walk, variant)}
+
+
 def merge(walk: str, variant: str) -> dict:
     out = INTERIM / walk / f"ocr_vlm{variant}"
     best = pd.read_parquet(out / "lines.parquet")
@@ -133,13 +176,13 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("action", choices=["prep", "merge"])
+    ap.add_argument("action", choices=["prep", "merge", "api"])
     ap.add_argument("walks", nargs="*", default=list(WALKS))
     ap.add_argument("--variant", default="stab", choices=["", "stab"])
     a = ap.parse_args()
     v = "_stab" if a.variant == "stab" else ""
     for w in a.walks:
-        print(json.dumps(prep(w, v) if a.action == "prep" else merge(w, v), ensure_ascii=False))
+        print(json.dumps({"prep": prep, "merge": merge, "api": api}[a.action](w, v), ensure_ascii=False))
 
 
 if __name__ == "__main__":
