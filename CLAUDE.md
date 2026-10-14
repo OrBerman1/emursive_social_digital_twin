@@ -2,8 +2,8 @@
 
 ## Current state — read this first (updated 13 Oct 2026, evening)
 - **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–21: the method,
-  numbers and validation for every stage). Git: one branch per feature; current branch `design`
-  (pushed); `main` holds everything before it. Push only when the user asks, with
+  numbers and validation for every stage). Git: one branch per feature; `main` holds everything up to
+  the design variants (merged 14 Oct); current branch `advanced_features`. Push only when the user asks, with
   `git -c http.sslBackend=schannel push` (certificate issue on this machine).
 - **Shown in the viewer:** people (tracked, age colour, gender badge), motion arrows (camera motion
   removed, reliability gate), people paths on the map, interactive map (GTA-style minimap + full map,
@@ -14,7 +14,9 @@
   definitions unresolved) — shown instead as locations (`frontage.py`).
 - **Viewers:** original `viewer/index.html` (`start_viewer.bat`, port 8000) + five design variants on the
   shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
-  (`start_viewer_1..5_*.bat`, ports 8001–8005). The user has not chosen a direction yet.
+  (`start_viewer_1..5_*.bat`, ports 8001–8005). Design is PARKED until all features are done (user,
+  14 Oct): add new features to the base viewer `viewer/index.html` only, and list each one in PLAN.md
+  ("to port to the designs") so the chosen design can pick them up later.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
