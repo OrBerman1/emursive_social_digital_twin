@@ -139,6 +139,9 @@ The controls below describe the original viewer.
 - **Min. confidence** slider (default 0.60).
 - Side panel: people in view, perceived gender and age groups in view (aggregate only), text in view,
   objects in view.
+- **People totals** (whole walk, so far) count linked persons: track pieces confirmed as one person
+  (`pipeline\link_persons.py`, vision-reviewed in `config\person_links_review.json`) count once and share one
+  perceived gender / age label (smoothed over the pieces). Undo: `.venv\Scripts\python pipeline\restore_person_linking_backup.py`.
 
 After updating the code, restart `start_viewer.bat` and press **Ctrl+F5** once in the browser.
 
