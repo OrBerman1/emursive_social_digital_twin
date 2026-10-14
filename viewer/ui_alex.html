@@ -132,7 +132,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .track .mk.person { background: var(--person); border-radius: 50%; }
 .track .mk.object { background: var(--object); border-radius: 1px; top: 4px; }
 .track .mk.space { background: var(--space); border-radius: 0; width: 12px; height: 11px; margin-left: -6px; top: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.track .mk.bookmark { background: #fff; border: 2px solid var(--ink); top: 3px; width: 11px; height: 11px; }
+.track .mk.bookmark { background: var(--c, #fff); border: 2px solid var(--ink); top: 3px; width: 12px; height: 12px; margin-left: -6px; border-radius: 3px 3px 3px 0; }
 .track .mk.file { top: 1px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
 .track .mk:hover { transform: scale(1.35); }
 .track .thumb { position: absolute; top: 9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #fff; border: 2px solid #c6cbd6; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; }
@@ -179,6 +179,19 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=range] { width: 100%; accent-color: var(--space); }
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
+/* bookmark = a note on the timeline (shared with the base viewer: <processed>/comments.json via serve.py) */
+.pop.mark { top: 190px; }
+.pop.mark h4 { display: flex; justify-content: space-between; align-items: baseline; } .pop.mark h4 small { font-weight: 500; color: var(--soft); font-variant-numeric: tabular-nums; }
+.pop.mark textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; color: var(--ink); background: #fff; }
+.pop.mark textarea:focus { outline: 2px solid #cfdcf7; border-color: var(--space); }
+.sw { display: flex; gap: 7px; align-items: center; padding: 10px 0 4px; }
+.sw button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sw button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.pbtns { display: flex; gap: 8px; align-items: center; padding-top: 10px; }
+.pbtns .st { flex: 1; color: var(--soft); font-size: 12px; }
+.pbtns button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.pbtns button.primary { background: var(--space); border-color: var(--space); color: #fff; }
+.pbtns button.danger { color: var(--object); border-color: #f5c2cb; }
 #statsNote { font-size: 13px; text-align: center; }
 /* statistics panel: People / Objects / Places, donuts that follow the walk + a trend along the whole walk */
 .pop.stats { width: 380px; max-height: calc(100% - 150px); overflow: hidden; padding: 14px 18px 12px; }   /* donuts are sized to fit: never scrolls */
@@ -297,6 +310,12 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="trend"><div class="tlbl" id="trendLbl"></div><svg id="trend" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Count along the walk"></svg><div class="tip2" id="trendTip" hidden></div></div>
     <div class="hint" id="statsNote"></div>
   </div>
+  <div class="pop glass mark" id="markPop" data-no-drag hidden>
+    <h4><span id="markTitle">Bookmark</span><small id="markWhen"></small></h4>
+    <textarea id="markText" dir="auto" placeholder="A note about this moment…"></textarea>
+    <div class="sw" id="markSw" aria-label="Colour"></div>
+    <div class="pbtns"><button class="danger" id="markDel" hidden>Delete</button><span class="st" id="markSt"></span><button id="markCancel">Cancel</button><button class="primary" id="markSave">Save</button></div>
+  </div>
   <div class="toast" id="toast" hidden></div>
   <input type="file" id="atFile" multiple hidden>
   <aside class="jv glass" id="jv" data-no-drag hidden aria-label="Ask Jeeves">
@@ -379,7 +398,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`${E.project.processed}/${w}/forward.json`); } catch (e) { FW = null; }
-    buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); cmLoad(); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
 
@@ -781,7 +800,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("statsBody").addEventListener("mouseleave", () => { dtip.hidden = true; });
 
   // ---- timeline markers: crowd peaks (people), market-item peaks (objects), first sight of readable signs (space) ----
-  const bookmarks = {};
+  // bookmarks = notes on the timeline, shared with the base viewer (<processed>/comments.json; localStorage if the server is old)
+  const CM = { list: [], edit: null, color: "#E69F00" };
+  const CM_COLS = ["#E69F00", "#D55E00", "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#1d2433"];
   let marks = [];
   function peaks(series, n, gap) {
     const idx = series.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]), out = [];
@@ -801,15 +822,17 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   function renderMarks() {
     const d = E.data; if (!d) return;
     const files = atHere().map(a => ({ f: a.frame ?? ((d.tracks[a.track] || [0])[0]), k: "file", p: a.track, t: `P${a.track} · ${a.files.map(x => x.name).join(", ")}` }));
-    const all = [...marks, ...(bookmarks[E.walk] || []).map(f => ({ f, k: "bookmark", t: "Bookmark" })), ...files];
-    $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}"${m.p != null ? ` data-p="${m.p}"` : ""} data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}">${m.k === "file" ? "📎" : ""}</button>`).join("");
+    const notes = CM.list.filter(c => c.walk === E.walk).map(c => ({ f: Math.round(c.t * d.fps), k: "bookmark", cid: c.id, col: c.color, t: c.text.length > 70 ? c.text.slice(0, 68) + "…" : c.text }));
+    const all = [...marks, ...files, ...notes];
+    $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%${m.col ? `;--c:${m.col}` : ""}" data-f="${m.f}"${m.p != null ? ` data-p="${m.p}"` : ""}${m.cid ? ` data-c="${esc(m.cid)}"` : ""} data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}">${m.k === "file" ? "📎" : ""}</button>`).join("");
   }
 
   // ---- transport ----
   const track = $("track");
   const tOf = ev => { const r = track.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * E.duration(); };
   let scrub = false;
-  track.addEventListener("pointerdown", ev => { const mk = ev.target.closest(".mk"); if (mk && mk.dataset.p) { goPerson(+mk.dataset.p, +mk.dataset.f); return; } if (mk) { E.seekFrame(+mk.dataset.f); return; } scrub = true; track.setPointerCapture(ev.pointerId); E.seek(tOf(ev)); });
+  track.addEventListener("pointerdown", ev => { const mk = ev.target.closest(".mk"); if (mk && mk.dataset.p) { goPerson(+mk.dataset.p, +mk.dataset.f); return; }
+    if (mk && mk.dataset.c) { const c = CM.list.find(x => x.id === mk.dataset.c); if (c) { setFollow(false); E.seek(c.t); E.look(c.yaw, c.pitch); cmOpen(c); } return; } if (mk) { E.seekFrame(+mk.dataset.f); return; } scrub = true; track.setPointerCapture(ev.pointerId); E.seek(tOf(ev)); });
   track.addEventListener("pointermove", ev => {
     if (scrub) E.seek(tOf(ev));
     const mk = ev.target.closest(".mk"), tip = $("tip"), r = track.getBoundingClientRect();
@@ -841,15 +864,54 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("walkItems").addEventListener("click", ev => { const b = ev.target.closest("button[data-walk]"); if (b) selectWalk(b.dataset.walk); });
 
   // ---- tool rail + popovers ----
-  const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop" };
+  const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop", tMark: "markPop" };
   const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
-  for (const [b, p] of Object.entries(pops)) $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
+  for (const [b, p] of Object.entries(pops)) if (b !== "tMark") $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
   $("setBtn").addEventListener("click", () => $("tLayers").click());
   // outside clicks close Layers/Search; the statistics panel stays open while you watch
-  document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn, .transport")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
   const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 400); }, 1800); };
-  $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; (bookmarks[E.walk] = bookmarks[E.walk] || []).push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
+  // ---- bookmarks with a note (comments) ----
+  async function cmLoad() {
+    CM.list = [];
+    try { const r = await fetch(`${E.project.processed}/comments.json`, { cache: "no-store" }); if (r.ok) CM.list = (await r.json()).comments || []; } catch (e) {}
+    if (!CM.list.length) { try { CM.list = JSON.parse(localStorage.getItem(`shukComments:${E.project.id}`) || "[]"); } catch (e) {} }
+    renderMarks();
+  }
+  async function cmSave() {
+    try { localStorage.setItem(`shukComments:${E.project.id}`, JSON.stringify(CM.list)); } catch (e) {}
+    try {
+      const r = await fetch(`/api/comments?project=${encodeURIComponent(E.project.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comments: CM.list }) });
+      return r.ok;
+    } catch (e) { return false; }
+  }
+  function cmSwatches() { $("markSw").innerHTML = CM_COLS.map(c => `<button data-col="${c}" style="background:${c}" aria-label="Colour ${c}" aria-pressed="${c.toLowerCase() === CM.color.toLowerCase()}"></button>`).join(""); }
+  function cmOpen(c) {
+    if (E.playing) setPlay(E.play(false));
+    CM.edit = c || null; CM.color = c ? c.color : CM.color;
+    $("markTitle").textContent = c ? "Bookmark" : "New bookmark"; $("markWhen").textContent = `${cap(E.walkShort(E.walk))} · ${fmt(c ? c.t : E.time())}`;
+    $("markText").value = c ? c.text : ""; $("markDel").hidden = !c; $("markDel").textContent = "Delete"; $("markDel").dataset.confirm = ""; $("markSt").textContent = "";
+    cmSwatches(); closePops("markPop"); $("markPop").hidden = false; $("tMark").setAttribute("aria-pressed", "true"); $("markText").focus();
+  }
+  const cmClose = () => { $("markPop").hidden = true; $("tMark").setAttribute("aria-pressed", "false"); };
+  $("tMark").addEventListener("click", () => { if (!$("markPop").hidden) cmClose(); else if (E.state) cmOpen(null); });
+  $("markSw").addEventListener("click", ev => { const b = ev.target.closest("button[data-col]"); if (b) { CM.color = b.dataset.col; cmSwatches(); } });
+  $("markText").addEventListener("keydown", ev => ev.stopPropagation());
+  $("markCancel").addEventListener("click", cmClose);
+  $("markSave").addEventListener("click", async () => {
+    const text = $("markText").value.trim(); if (!text) { $("markSt").textContent = "Write a note first"; return; }
+    const now = new Date().toISOString();
+    if (CM.edit) Object.assign(CM.edit, { text, color: CM.color, updated: now });
+    else CM.list.push({ id: `c${Date.now().toString(36)}`, walk: E.walk, t: +E.time().toFixed(2), yaw: +E.yaw.toFixed(1), pitch: +E.pitch.toFixed(1), text, color: CM.color, created: now, updated: now });
+    const ok = await cmSave(); renderMarks();
+    if (ok) { cmClose(); toast("Bookmark saved"); } else $("markSt").textContent = "Saved in this browser only (server not reachable)";
+  });
+  $("markDel").addEventListener("click", async () => {
+    if (!CM.edit) return;
+    if ($("markDel").dataset.confirm !== "1") { $("markDel").dataset.confirm = "1"; $("markDel").textContent = "Delete?"; return; }
+    CM.list = CM.list.filter(c => c !== CM.edit); await cmSave(); renderMarks(); cmClose(); toast("Bookmark deleted");
+  });
   $("searchIn").addEventListener("keydown", ev => {
     ev.stopPropagation();                      // keep typing out of the viewer's keyboard shortcuts
     if (ev.key !== "Enter") return;
