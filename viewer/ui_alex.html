@@ -82,7 +82,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .person .badge { background: var(--person); color: #1a1a1a; } .object .badge { background: var(--object); color: #fff; } .space .badge { background: var(--space); color: #fff; }
 .card.compact { padding: 8px 14px 8px 10px; min-width: 200px; max-width: 260px; cursor: pointer; }
 .card.compact:hover { box-shadow: 0 12px 34px rgba(0,0,0,.5); }
-.card.full { width: 300px; padding: 10px 12px 12px; }
+.card.full { width: 300px; padding: 10px 12px 12px; max-height: calc(100vh - 210px); overflow-y: auto; scrollbar-width: thin; }
 .card.full .hd { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; font-weight: 600; font-size: 14.5px; }
 .card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--win-soft); }
 .card.full .hd button + button { margin-left: 0; }
@@ -99,6 +99,15 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .person .conf .meter i { background: var(--person); } .object .conf .meter i { background: var(--object); } .space .conf .meter i { background: var(--space); }
 .conf b { color: #fff; font-variant-numeric: tabular-nums; }
 .note { color: var(--win-soft); font-size: 11px; padding-top: 8px; }
+.files { border-top: 1px solid rgba(255,255,255,.1); padding-top: 6px; margin-top: 6px; display: grid; gap: 2px; }
+.files .fh { font-size: 11px; color: var(--win-soft); padding: 2px 0; }
+.files .f { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.files .f a { flex: 1; min-width: 0; color: #fff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 0; }
+.files .f a:hover { color: var(--person); text-decoration: underline; }
+.files .f button { border: 0; background: none; color: var(--win-soft); cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 6px; }
+.files .f button:hover { background: rgba(255,255,255,.1); color: #fff; }
+.files .add { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; border: 1px dashed rgba(255,255,255,.25); border-radius: 10px; background: none; color: #fff; padding: 7px 10px; cursor: pointer; font-size: 13px; }
+.files .add:hover { border-color: var(--person); color: var(--person); }
 .signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
 
 /* ---- round mini map (Lens look) ---- */
@@ -124,6 +133,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .track .mk.object { background: var(--object); border-radius: 1px; top: 4px; }
 .track .mk.space { background: var(--space); border-radius: 0; width: 12px; height: 11px; margin-left: -6px; top: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .track .mk.bookmark { background: #fff; border: 2px solid var(--ink); top: 3px; width: 11px; height: 11px; }
+.track .mk.file { top: 1px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
 .track .mk:hover { transform: scale(1.35); }
 .track .thumb { position: absolute; top: 9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #fff; border: 2px solid #c6cbd6; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; }
 .track .tip { position: absolute; bottom: 34px; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
@@ -288,6 +298,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="statsNote"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
+  <input type="file" id="atFile" multiple hidden>
   <aside class="jv glass" id="jv" data-no-drag hidden aria-label="Ask Jeeves">
     <div class="jvh"><b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</b><select id="jvChats" aria-label="Earlier chats"></select>
       <button class="hbtn" id="jvNew" title="New chat" aria-label="New chat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -368,7 +379,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`${E.project.processed}/${w}/forward.json`); } catch (e) { FW = null; }
-    buildMotion(d); buildMarks(d); buildTrends(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
 
@@ -433,6 +444,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     lang: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-10 4 10M14.5 17.5h5"/></svg>`,
     focus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-8 8M10 4H4v16h16v-6"/></svg>`,
     close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+    clip: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11.5 12.2 19.3a5 5 0 0 1-7-7l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3"/></svg>`,
   };
   const R = (k, v, soft) => `<div class="r"><div class="k">${k}</div><div class="v${soft ? " soft" : ""}">${v}</div></div>`;
   const R2 = (k, lbl, v) => `<div class="r"><div class="k">${k}</div><div class="v"><small>${lbl}</small>${v}</div></div>`;
@@ -445,8 +457,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   function compactHtml(e, g, st) {
     if (g === "person") {
       const m = motionOf(e.id, st.fi), vis = visibleS(e, st);
+      const nf = (atOf(E.walk, e.id) || { files: [] }).files.length;
       return R(`<span class="badge">${badgeOf(e, g)}</span>`, m ? `≈${m.spd.toFixed(1)} m/s` : (e.dist ? `${e.dist.toFixed(1)} m away` : "—")) +
-        R(IC.walk, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true) + R(IC.eye, m ? m.dir : "Direction unknown");
+        R(IC.walk, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true) + R(IC.eye, m ? m.dir : "Direction unknown") +
+        (nf ? R(IC.clip, `${nf} attached file${nf > 1 ? "s" : ""}`) : "");
     }
     if (g === "space") return R(`<span class="badge">${badgeOf(e, g)}</span>`, `<span dir="auto" style="unicode-bidi:plaintext">${esc(e.text)}</span>`) + R(IC.tag, "Readable sign", true);
     return R(`<span class="badge">${badgeOf(e, g)}</span>`, `${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}`) + R(IC.clock, `${objVisibleS(e, st).toFixed(1)} s (visible)`, true) +
@@ -461,7 +475,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
         `<div class="rows">${R2(IC.walk, "Movement", m ? (m.dir === "Standing" ? "Standing" : `≈${m.spd.toFixed(1)} m/s · ${m.dir}`) : "—")}` +
         `${R2(IC.clock, "Visible", vis != null ? `${vis.toFixed(1)} s so far · ${Math.round((t[1] - t[0]) / d.fps)} s in total` : "—")}` +
         `${R2(IC.ruler, "Distance", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}${R2(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}` +
-        `${R2(IC.group, "Social context", social)}</div>${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
+        `${R2(IC.group, "Social context", social)}</div>${atFilesHtml(e.id)}${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
     }
     if (g === "space") {
       const info = (d.signs || {})[e.id] || [];
@@ -487,6 +501,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   function onCardClick(key, ev) {
     const act = ev.target.closest("[data-act]"), [kind, id] = key.split(":"), e = (E.state?.entities || []).find(x => keyOf(x) === key);
     if (act && act.dataset.act === "close") { unpin(key); return; }
+    if (act && act.dataset.act === "attach") { if (!AT.busy) { AT.track = +id; $("atFile").click(); } return; }
+    if (act && act.dataset.act === "rmfile") { atRemove(+id, act.dataset.name); return; }
+    if (ev.target.closest(".files a")) return;
     if (act && act.dataset.act === "focus") { if (e) { setFollow(false); E.look(e.yaw, (e.pt + e.pb) / 2); } return; }
     if (!isPinned(key)) pin({ kind, id: +id });
   }
@@ -501,7 +518,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     for (const it of list) {
       const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
       card.el.className = `card ${g} ${full ? "full" : "compact"}`;
-      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${Math.floor(st.t * 2)}`;
+      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${Math.floor(st.t * 2)}|${g === "person" ? atSig(e.id) : ""}`;
       if (card.sig !== sig) {
         const keep = card.el.querySelector("[data-photo]"); card.el.innerHTML = full ? fullHtml(e, g, st) : compactHtml(e, g, st); card.sig = sig;
         const ph = card.el.querySelector("[data-photo]"); if (ph && keep && keep.dataset.ok) { ph.getContext("2d").drawImage(keep, 0, 0); ph.dataset.ok = 1; }
@@ -548,6 +565,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       c.globalAlpha = Math.min(1, e.alpha * 1.3);
       if (isPin || isHov) { c.fillStyle = COL[g] + "55"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
       mark(c, g, x, y, r, 2.2 * k);
+      if (g === "person" && atOf(E.walk, e.id)) {                       // files attached: a small paperclip disc beside the dot
+        const cx = x + r * 1.9, cy = y - r * 1.9, rr = 7.5 * k;
+        c.beginPath(); c.arc(cx, cy, rr, 0, 7); c.fillStyle = "#1d2433"; c.fill(); c.lineWidth = 1.5 * k; c.strokeStyle = "#fff"; c.stroke();
+        E.draw.emoji(c, "📎", cx, cy + 0.5 * k, 9 * k);
+      }
       if (g === "person" && (isPin || isHov)) {          // viewfinder corners around the head
         const rr = e.rect, hw = Math.min((rr[2] - rr[0]) * 0.26, (rr[3] - rr[1]) * 0.085), cx = (rr[0] + rr[2]) / 2, top = rr[1] - hw * 0.2, hh = hw * 2.5, L = Math.min(10 * k, hw * .7);
         c.strokeStyle = COL.person; c.lineWidth = 2 * k; c.beginPath();
@@ -778,15 +800,16 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
   function renderMarks() {
     const d = E.data; if (!d) return;
-    const all = [...marks, ...(bookmarks[E.walk] || []).map(f => ({ f, k: "bookmark", t: "Bookmark" }))];
-    $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}" data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}"></button>`).join("");
+    const files = atHere().map(a => ({ f: a.frame ?? ((d.tracks[a.track] || [0])[0]), k: "file", p: a.track, t: `P${a.track} · ${a.files.map(x => x.name).join(", ")}` }));
+    const all = [...marks, ...(bookmarks[E.walk] || []).map(f => ({ f, k: "bookmark", t: "Bookmark" })), ...files];
+    $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}"${m.p != null ? ` data-p="${m.p}"` : ""} data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}">${m.k === "file" ? "📎" : ""}</button>`).join("");
   }
 
   // ---- transport ----
   const track = $("track");
   const tOf = ev => { const r = track.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * E.duration(); };
   let scrub = false;
-  track.addEventListener("pointerdown", ev => { const mk = ev.target.closest(".mk"); if (mk) { E.seekFrame(+mk.dataset.f); return; } scrub = true; track.setPointerCapture(ev.pointerId); E.seek(tOf(ev)); });
+  track.addEventListener("pointerdown", ev => { const mk = ev.target.closest(".mk"); if (mk && mk.dataset.p) { goPerson(+mk.dataset.p, +mk.dataset.f); return; } if (mk) { E.seekFrame(+mk.dataset.f); return; } scrub = true; track.setPointerCapture(ev.pointerId); E.seek(tOf(ev)); });
   track.addEventListener("pointermove", ev => {
     if (scrub) E.seek(tOf(ev));
     const mk = ev.target.closest(".mk"), tip = $("tip"), r = track.getBoundingClientRect();
@@ -842,6 +865,61 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
   }));
   $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
+
+  // ---- 📎 files attached to specific people (interviews, notes, photos): pipeline/attach_api.py via serve.py ----
+  const AT = { list: [], busy: "", track: null, confirm: "" };
+  const atVar = () => (E.data && /stab/.test(E.data.variant || "") ? "stab" : "");          // track ids differ between overlay variants
+  const atOf = (w, id) => AT.list.find(a => a.walk === w && a.variant === atVar() && a.track === id);
+  const atHere = () => AT.list.filter(a => a.walk === E.walk && a.variant === atVar());
+  const atSig = id => { const a = atOf(E.walk, id); return `${a ? a.files.map(f => f.name).join("|") : ""}#${AT.busy}#${AT.confirm}`; };
+  async function atLoad() {
+    try { const r = await fetch(`/api/attachments?project=${encodeURIComponent(E.project.id)}`, { cache: "no-store" }); if (r.ok) AT.list = (await r.json()).people || []; } catch (e) {}
+    renderMarks();
+  }
+  function atFilesHtml(id) {
+    const a = atOf(E.walk, id), files = a ? a.files : [];
+    return `<div class="files">${files.length ? `<div class="fh">Files</div>` : ""}` + files.map(f => `<div class="f"><a href="${a.dir}/${encodeURIComponent(f.name)}" target="_blank" rel="noopener" title="${esc(f.name)} · added ${esc(f.added)}">📄 ${esc(f.name)}</a>` +
+      `<button data-act="rmfile" data-name="${esc(f.name)}" aria-label="Remove ${esc(f.name)}">${AT.confirm === f.name ? "Remove?" : "✕"}</button></div>`).join("") +
+      `<button class="add" data-act="attach">${IC.clip}${AT.busy ? esc(AT.busy) : "Attach file"}</button></div>`;
+  }
+  async function atRemove(id, name) {
+    if (AT.confirm !== name) { AT.confirm = name; return; }               // second click removes
+    AT.confirm = "";
+    try {
+      const r = await fetch(`/api/attach/delete?project=${encodeURIComponent(E.project.id)}`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walk: E.walk, variant: atVar(), track: id, name }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+    } catch (e) { toast(`Could not remove: ${e.message}`); }
+    await atLoad();
+  }
+  function atUpload(file, id, where) {
+    return new Promise((ok, bad) => {
+      const q = new URLSearchParams({ project: E.project.id, walk: E.walk, variant: atVar(), track: id, filename: file.name, ...where });
+      const x = new XMLHttpRequest(); x.open("PUT", `/api/attach?${q}`);
+      x.upload.onprogress = ev => { if (ev.lengthComputable) AT.busy = `Uploading · ${Math.round(100 * ev.loaded / ev.total)}%`; };
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {}
+        if (x.status === 200) ok(j); else bad(new Error(x.status === 404 ? "the server is older than this page - restart start_viewer.bat" : (j.error || x.status))); };
+      x.onerror = () => bad(new Error("server not reachable"));
+      x.send(file);
+    });
+  }
+  $("atFile").addEventListener("change", async () => {
+    const files = [...$("atFile").files], id = AT.track ?? (pinned.length ? (pinned.filter(p => p.kind === "person").pop() || {}).id : null); $("atFile").value = "";
+    if (!files.length || id == null) return;
+    const st = E.state, d = E.data, r = st && d.frames[st.fi] && d.frames[st.fi].p.find(x => x[0] === id);     // where the person is now (to find them again)
+    const where = { frame: String(st ? st.fi : 0) }; if (r) Object.assign(where, { yaw: r[2].toFixed(2), pitch: ((r[5] + r[6]) / 2).toFixed(2) });
+    let err = "";
+    for (const f of files) { try { await atUpload(f, id, where); } catch (e) { err = `${f.name}: ${e.message}`; } }
+    AT.busy = ""; AT.track = null; await atLoad();
+    toast(err ? `Not attached: ${err}` : `Attached to P${id}`);
+  });
+  // jump to a person: the moment they are seen best (or a given frame), open their card, look at them
+  function goPerson(id, f) {
+    const d = E.data; if (!d || !d.tracks[id]) { toast(`P${id} is not shown on this walk`); return; }
+    if (f == null || !d.frames[f] || !d.frames[f].p.some(x => x[0] === id)) f = bestFrameOf(id);
+    if (f == null) return;
+    const r = d.frames[f].p.find(x => x[0] === id); setFollow(false); E.seekFrame(f); pin({ kind: "person", id }); E.look(r[2], (r[5] + r[6]) / 2 - 4);
+  }
 
   // ---- 🎩 Ask Jeeves: the project's question-answering / data-analysis agent (pipeline/jeeves.py via serve.py) ----
   const JV = { chat: null, job: null, timer: null };
@@ -921,8 +999,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (E.walk !== b.dataset.w) await selectWalk(b.dataset.w);
     setFollow(false);
     if (b.dataset.p) {                                         // a person: jump to their first frame, open their card, look at them
-      const id = +b.dataset.p, f = bestFrameOf(id); if (f == null) { toast(`P${id} is not shown on this walk`); return; }
-      const r = E.data.frames[f].p.find(x => x[0] === id); E.seekFrame(f); pin({ kind: "person", id }); E.look(r[2], (r[5] + r[6]) / 2 - 4);
+      goPerson(+b.dataset.p);
     } else { E.seek(+b.dataset.t); if (b.dataset.y) E.look(+b.dataset.y, -5); }
   });
 
