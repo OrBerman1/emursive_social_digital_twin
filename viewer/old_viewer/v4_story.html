@@ -187,7 +187,7 @@ button, select, input { font-family: inherit; }
 <div class="loading glass" id="loading">Loading the walk…</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="engine.js"></script>
+<script src="../engine.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -392,7 +392,7 @@ button, select, input { font-family: inherit; }
     }
     if (e.kind === "frontage") {
       const p = e.info;
-      return `<h3><span class="em">🧱</span>Frontage ${close}</h3><img src="../data/processed/${esc(p.crop)}" alt="What the camera saw at this frontage"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}${row("Side", esc(p.side || "—"))}${row("Along walk", p.chainage_m != null ? Math.round(p.chainage_m) + " m" : "—")}</dl><div class="chips">${(p.materials || []).map(m => `<span>${esc(m)}</span>`).join("") || "—"}</div><div class="note">Experimental material survey · F${p.id}</div>`;
+      return `<h3><span class="em">🧱</span>Frontage ${close}</h3><img src="/data/processed/${esc(p.crop)}" alt="What the camera saw at this frontage"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}${row("Side", esc(p.side || "—"))}${row("Along walk", p.chainage_m != null ? Math.round(p.chainage_m) + " m" : "—")}</dl><div class="chips">${(p.materials || []).map(m => `<span>${esc(m)}</span>`).join("") || "—"}</div><div class="note">Experimental material survey · F${p.id}</div>`;
     }
     if (e.kind === "sign") return `<h3><span class="em">🪧</span>Sign ${close}</h3><div class="signtext" dir="auto">${esc(e.text || "—")}</div><div class="note">Text read by OCR${e.lang ? " · " + esc(e.lang) : ""} · T${e.id}</div>`;
     if (e.kind === "pictured") return `<h3><span class="em">🖼️</span>Pictured person ${close}</h3><div>A person in a picture on a sign — not counted as a visitor.</div>`;

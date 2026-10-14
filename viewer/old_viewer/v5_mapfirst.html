@@ -236,7 +236,7 @@ h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="engine.js"></script>
+<script src="../engine.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -329,7 +329,7 @@ h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
     }
     if (e.kind === "frontage") {
       const p = e.info;
-      return `<h3>🧱 Frontage ${close}</h3><img src="../data/processed/${esc(p.crop)}" alt="Frontage photo"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}</dl><div style="margin-top:4px">${p.materials.map(esc).join(" · ") || "—"}</div><span class="tag">Experimental · vision-model reading</span>`;
+      return `<h3>🧱 Frontage ${close}</h3><img src="/data/processed/${esc(p.crop)}" alt="Frontage photo"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}</dl><div style="margin-top:4px">${p.materials.map(esc).join(" · ") || "—"}</div><span class="tag">Experimental · vision-model reading</span>`;
     }
     if (e.kind === "sign") return `<h3>🪧 Sign ${close}</h3><div dir="auto" style="font-size:16px;unicode-bidi:plaintext">${esc(e.text || "—")}</div><span class="tag">Read by OCR · may contain errors</span>`;
     return `<h3>${ShukEngine.emojiOf(e.cls)} ${esc(e.cls)} ${close}</h3><dl>${row("Type", "Food on display")}${row("Confidence", e.conf.toFixed(2))}</dl>`;
@@ -360,7 +360,7 @@ h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
     // frontage
     for (const p of E.geo.frontage) {
       const mk = L.marker([p.lat, p.lon], { pane: "frontP", icon: L.divIcon({ className: "", html: `<div class="emo sm" style="--c:${P.frontage}">🧱</div>`, iconSize: [18, 18], iconAnchor: [9, 9] }), keyboard: true, title: `Frontage ${p.id}` });
-      mk.bindPopup(() => `<div class="pp"><h3>🧱 ${esc(p.facade)} frontage</h3><div class="sub">${esc(p.structure)} structure · ${esc(E.walkLabel(p.walk))}</div><img src="../data/processed/${esc(p.crop)}" alt="Frontage photo"><div class="mats">${(p.materials || []).map(x => `<span>${esc(x)}</span>`).join("")}</div><button data-jump="${p.walk}|${p.frame}|${p.yaw}">Look at it in the video ▸</button></div>`, { maxWidth: 260 });
+      mk.bindPopup(() => `<div class="pp"><h3>🧱 ${esc(p.facade)} frontage</h3><div class="sub">${esc(p.structure)} structure · ${esc(E.walkLabel(p.walk))}</div><img src="/data/processed/${esc(p.crop)}" alt="Frontage photo"><div class="mats">${(p.materials || []).map(x => `<span>${esc(x)}</span>`).join("")}</div><button data-jump="${p.walk}|${p.frame}|${p.yaw}">Look at it in the video ▸</button></div>`, { maxWidth: 260 });
       frontLayer.addLayer(mk);
     }
     // camera

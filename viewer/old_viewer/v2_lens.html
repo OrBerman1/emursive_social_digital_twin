@@ -179,7 +179,7 @@ header { display: flex; align-items: center; gap: 16px; }
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="engine.js"></script>
+<script src="../engine.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -391,7 +391,7 @@ header { display: flex; align-items: center; gap: 16px; }
     }
     if (e.kind === "frontage") {
       const p = e.info;
-      return head(e, "Frontage") + `<img src="../data/processed/${esc(p.crop)}" alt="Shop front seen from the walk">${"<dl>" + row("Facade", esc(p.facade)) + row("Structure", esc(p.structure)) + "</dl>"}<div class="chips">${(p.materials || []).map(x => `<span>${esc(x)}</span>`).join("") || "<span>—</span>"}</div><span class="tag">Experimental · F${p.id}</span>`;
+      return head(e, "Frontage") + `<img src="/data/processed/${esc(p.crop)}" alt="Shop front seen from the walk">${"<dl>" + row("Facade", esc(p.facade)) + row("Structure", esc(p.structure)) + "</dl>"}<div class="chips">${(p.materials || []).map(x => `<span>${esc(x)}</span>`).join("") || "<span>—</span>"}</div><span class="tag">Experimental · F${p.id}</span>`;
     }
     if (e.kind === "sign") return head(e, "Sign") + `<div class="sign" dir="auto">${esc(e.text || "—")}</div><span class="tag">Read from the video · T${e.id}</span>`;
     if (e.kind === "food") return head(e, e.cls) + `<dl>${row("Item", esc(e.cls))}${row("Confidence", e.conf.toFixed(2))}</dl>`;

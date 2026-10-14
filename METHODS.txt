@@ -1,6 +1,6 @@
 SHUK HATIKVAH 360 - METHODS USED (what algorithm / code solves each problem)
 Last updated: 13 Oct 2026 (VLM sign reading added). Keep this file current whenever a method changes.
-Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: viewer\index.html.
+Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: viewer\ui_alex.html (earlier viewers in viewer\old_viewer\).
 
 1. INPUT / STITCHING  (pipeline\extract_frames.py, encode_video.py)
    - Camera: Insta360 ONE RS, raw dual-fisheye .insv (3968x1920, 29.97 fps).
@@ -110,7 +110,7 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Every expensive stage writes outputs + manifest.json (stage version, parameters,
      input fingerprints) and is skipped when unchanged. Cheap stages always rerun.
 
-13. VIEWER  (viewer\index.html, pipeline\serve.py, start_viewer.bat)
+13. VIEWER  (viewer\old_viewer\index.html since 15 Oct; main viewer = viewer\ui_alex.html; pipeline\serve.py)
    - WebGL fragment shader renders the equirectangular video as a perspective view;
      overlays projected with the same yaw/pitch maths (pipeline\spherical.py).
    - Local server with HTTP Range + HTTP/1.1 (needed for video seeking on Windows).
@@ -310,7 +310,7 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      materials, "Go to video"), a clickable 🧱 badge in the 360 view while passing (+-3 s), layer
      "Frontage materials (experimental)". Not tied to GIS store names.
 
-21. VIEWER DESIGN VARIANTS  (viewer/engine.js; viewer/v1_atelier ... v5_mapfirst.html; start_viewer_1..5_*.bat)
+21. VIEWER DESIGN VARIANTS  (viewer/engine.js; viewer/old_viewer/v1_atelier ... v5_mapfirst.html + launchers)
    - Shared engine: WebGL equirect rendering (same maths as before), data loading, per-frame entity list
      blended between 5 fps analysis frames with the same confidence / 1 s filters, counts and walk totals by
      unique track ID, camera position/heading on the map, ground motion arrows, drag/zoom/keys, hit testing.
