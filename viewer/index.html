@@ -1869,7 +1869,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const q = new URLSearchParams({ project: PROJ.id, walk: S.walk, variant: atVar(), track: id, filename: file.name, ...where });
       const x = new XMLHttpRequest(); x.open("PUT", `/api/attach?${q}`);
       x.upload.onprogress = e => { if (e.lengthComputable) AT.busy = `Uploading ${file.name} · ${Math.round(100 * e.loaded / e.total)}%`; };
-      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} x.status === 200 ? ok(j) : bad(new Error(j.error || x.status)); };
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {}
+        if (x.status === 200) ok(j);
+        else bad(new Error(x.status === 404 ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : (j.error || x.status))); };
       x.onerror = () => bad(new Error("server not reachable"));
       x.send(file);
     });
@@ -1883,7 +1885,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     let err = "";
     for (const f of files) { try { await atUpload(f, id, where); } catch (e) { err = `${f.name}: ${e.message}`; } }
     AT.busy = err ? `Not attached: ${err}` : ""; await atLoad();
-    if (err) setTimeout(() => { AT.busy = ""; $("vcard").dataset.html = ""; }, 5000);
+    if (err) setTimeout(() => { AT.busy = ""; $("vcard").dataset.html = ""; }, 15000);
   });
   $("flags").addEventListener("click", e => {
     const b = e.target.closest(".clip"); if (!b) return;
