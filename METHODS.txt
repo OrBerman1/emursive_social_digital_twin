@@ -513,3 +513,5 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      (0.3-0.5 m from the lens) is softly doubled in the blend band; parallax, unavoidable with two lenses.
    - Stabilisation on the restitched video (deg/frame, raw -> stabilised): walk 1 video 0.873 -> 0.236, frames
      3.459 -> 0.903; walk 2 video 0.619 -> 0.309, frames 2.914 -> 0.967 (old stitch: 0.242 / 1.070 and 0.310 / 1.357).
+   - Default (user, 14 Oct): the viewers open the restitched project when the link names none (config/viewer.json,
+     returned as "default" by /api/projects); the original project's results are kept, at ?project=shuk_hatikvah.

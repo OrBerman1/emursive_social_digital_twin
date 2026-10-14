@@ -107,12 +107,14 @@
 
     // ---- project (?project=<id>; projects.html / pipeline/projects_api.py): data paths, walks and their labels ----
     const J = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return r.json(); };
-    E.project = { id: new URLSearchParams(location.search).get("project") || "shuk_hatikvah", name: "Shuk HaTikvah",
+    const urlProject = new URLSearchParams(location.search).get("project");     // none -> the server's default (config/viewer.json)
+    E.project = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah",
                   processed: "../data/processed", interim: "../data/interim",
                   walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback: the original project
     async function loadProject() {
       try {
-        const ps = (await J("/api/projects")).projects || [], pr = ps.find(x => x.id === E.project.id) || ps[0];
+        const pj = await J("/api/projects"), ps = pj.projects || [];
+        const pr = ps.find(x => x.id === (urlProject || pj.default || E.project.id)) || ps[0];
         if (pr) Object.assign(E.project, { id: pr.id, name: pr.name, processed: pr.urls.processed, interim: pr.urls.interim,
           walks: Object.fromEntries(Object.entries(pr.walks).filter(([, v]) => v.analysed).map(([w, v]) => [w, { label: v.label }])) });
       } catch (e) { /* old server without the projects API: original project */ }

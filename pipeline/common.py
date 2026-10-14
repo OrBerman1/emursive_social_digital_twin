@@ -49,6 +49,15 @@ def load_project(pid: str) -> dict:
     return proj
 
 
+def viewer_default_project() -> str:
+    """Project the viewers open when the link names none (config/viewer.json; falls back to the original project)."""
+    try:
+        pid = json.loads((ROOT / "config" / "viewer.json").read_text(encoding="utf-8")).get("default_project") or DEFAULT_PROJECT
+    except (OSError, ValueError):
+        return DEFAULT_PROJECT
+    return pid if pid == DEFAULT_PROJECT or (PROJECTS_DIR / pid / "project.json").exists() else DEFAULT_PROJECT
+
+
 def list_projects() -> list[dict]:
     ids = {DEFAULT_PROJECT} | ({p.parent.name for p in PROJECTS_DIR.glob("*/project.json")} if PROJECTS_DIR.exists() else set())
     return [load_project(i) for i in sorted(ids)]
