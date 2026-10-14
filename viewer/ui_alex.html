@@ -310,9 +310,66 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; direction: rtl; }   /* flipped: solid (0%) on the right */
 .uipop .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
+
+/* ---- dark mode (sun button -> Theme): the same design, dark surfaces; info windows over the video and the category colours stay ---- */
+.themes { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 4px; margin-top: 8px; border-top: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.tseg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; }
+.tseg button { border: 0; background: none; border-radius: 999px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; color: var(--soft); cursor: pointer; }
+.tseg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+:root[data-theme="dark"] { --ink: #e8ebf2; --soft: #9aa3b5; --line: #2c3445; --glass: rgba(24,28,38,.86); --shadow: 0 10px 30px rgba(0,0,0,.5);
+  --surf: #161a23; --surf2: #232a38; --hov: #273149; color-scheme: dark; }
+:root[data-theme="dark"] body { background: #0b0e14; }
+:root[data-theme="dark"] header { background: var(--surf); }
+:root[data-theme="dark"] .hbtn:hover, :root[data-theme="dark"] .menu button:hover, :root[data-theme="dark"] .menu-link:hover,
+:root[data-theme="dark"] .tbtn:hover, :root[data-theme="dark"] .tbtn[aria-pressed="true"],
+:root[data-theme="dark"] .rail button:hover, :root[data-theme="dark"] .rail button[aria-pressed="true"],
+:root[data-theme="dark"] .mapx .mbar button:hover, :root[data-theme="dark"] .mapx .mbar button[aria-pressed="true"] { background: var(--hov); }
+:root[data-theme="dark"] .rail button { color: #c9cfdb; }
+:root[data-theme="dark"] .menu { background: var(--surf2); }
+:root[data-theme="dark"] .avatar { border-color: var(--line); }
+:root[data-theme="dark"] .chip .n { background: var(--surf2); color: var(--ink); }
+:root[data-theme="dark"] .chip[data-k="person"] .ic { background: rgba(245,197,24,.18); } :root[data-theme="dark"] .chip[data-k="object"] .ic { background: rgba(239,75,95,.2); }
+:root[data-theme="dark"] .chip[data-k="space"] .ic { background: rgba(61,139,255,.22); } :root[data-theme="dark"] .chip[data-k="food"] .ic { background: rgba(0,158,115,.24); }
+:root[data-theme="dark"] .chip[data-k="space"] .lbl { color: #7fb0ff; } :root[data-theme="dark"] .chip[data-k="food"] .lbl { color: #3fcf9f; } :root[data-theme="dark"] .chip[data-k="object"] .lbl { color: #ff7d8e; }
+:root[data-theme="dark"] .mini { border-color: #2a3142; background: #141820; }
+:root[data-theme="dark"] .mini .n { background: rgba(23,27,37,.95); }
+:root[data-theme="dark"] .play { background: var(--surf2); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+:root[data-theme="dark"] .track .rail-line { background: #3a4254; } :root[data-theme="dark"] .track .done { background: #8d96a8; }
+:root[data-theme="dark"] .track .ticks { background: repeating-linear-gradient(90deg, #3a4254 0 1px, transparent 1px 1.25%); }
+:root[data-theme="dark"] .track .thumb { background: var(--surf2); border-color: #6b7488; }
+:root[data-theme="dark"] .track .mk.bookmark { border-color: #e8ebf2; }
+:root[data-theme="dark"] .askbtn { background: var(--surf2); border-color: var(--line); color: var(--ink); }
+:root[data-theme="dark"] .askbtn:hover, :root[data-theme="dark"] .askbtn[aria-pressed="true"] { background: rgba(61,139,255,.18); border-color: rgba(61,139,255,.45); color: #8db8ff; }
+:root[data-theme="dark"] .seg { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); box-shadow: none; }
+:root[data-theme="dark"] .seg .ind { background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.07)); border-color: rgba(255,255,255,.2); box-shadow: 0 4px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.28); }
+:root[data-theme="dark"] .seg button { color: #9aa3b5; } :root[data-theme="dark"] .seg button:hover { color: #d6dbe5; }
+:root[data-theme="dark"] .leg { color: #c8cdd8; }
+:root[data-theme="dark"] .dt, :root[data-theme="dark"] .pair .dt2, :root[data-theme="dark"] .trend .tlbl, :root[data-theme="dark"] .dt small { color: #9aa3b5; }
+:root[data-theme="dark"] .donut path { stroke: #1d222d; }
+:root[data-theme="dark"] .tseg { background: rgba(255,255,255,.07); } :root[data-theme="dark"] .tseg button[aria-pressed="true"] { background: var(--hov); color: var(--ink); }
+:root[data-theme="dark"] .pop input[type=text], :root[data-theme="dark"] .pop.mark textarea, :root[data-theme="dark"] .jvin textarea, :root[data-theme="dark"] .jvex button,
+:root[data-theme="dark"] .jv .jvh select, :root[data-theme="dark"] .ichips button, :root[data-theme="dark"] .pbtn2, :root[data-theme="dark"] .pbtns button:not(.primary),
+:root[data-theme="dark"] .mapx .mside select, :root[data-theme="dark"] .mapx .fchips button, :root[data-theme="dark"] .mapx .segp .btns button:not(.primary),
+:root[data-theme="dark"] .mapx .pbtn { background: var(--surf2); color: var(--ink); border-color: var(--line); }
+:root[data-theme="dark"] .ichips button[aria-pressed="true"] { background: rgba(61,139,255,.2); border-color: rgba(61,139,255,.5); color: #8db8ff; }
+:root[data-theme="dark"] .jvex button:hover { background: var(--hov); }
+:root[data-theme="dark"] .jvq, :root[data-theme="dark"] .mapx .segp .tags span { background: var(--surf2); }
+:root[data-theme="dark"] .pop label, :root[data-theme="dark"] .menu-sep { border-color: var(--line); }
+:root[data-theme="dark"] .mapx { background: #11151d; }
+:root[data-theme="dark"] .mapx .segp .kv2 dt { color: #c8cdd8; }
+:root[data-theme="dark"] .soft-tiles { filter: invert(1) hue-rotate(180deg) grayscale(.65) brightness(.85) contrast(.95); }
+:root[data-theme="dark"] .leaflet-container { background: #11151d; }
+:root[data-theme="dark"] .leaflet-popup-content-wrapper, :root[data-theme="dark"] .leaflet-popup-tip { background: var(--surf2); color: var(--ink); }
+:root[data-theme="dark"] .leaflet-popup-close-button { color: var(--soft) !important; }
+:root[data-theme="dark"] .leaflet-bar a { background: var(--surf2); color: var(--ink); border-color: var(--line); }
+:root[data-theme="dark"] .leaflet-control-attribution { background: rgba(23,27,37,.8) !important; color: var(--soft); } :root[data-theme="dark"] .leaflet-control-attribution a { color: #8db8ff; }
+/* these use the ink colour as their background: keep their text dark when ink turns light */
+:root[data-theme="dark"] .tip, :root[data-theme="dark"] .tip2, :root[data-theme="dark"] .dtip, :root[data-theme="dark"] .toast, :root[data-theme="dark"] .mapx .mhint,
+:root[data-theme="dark"] .rail button[data-tip]:hover::after, :root[data-theme="dark"] .seg-ab, :root[data-theme="dark"] .track .mk.file { color: #11151d; }
 </style>
 </head>
 <body>
+<script>try { const t = localStorage.getItem("ui_alex.theme") || "light"; document.documentElement.dataset.theme = t === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : t; } catch (e) {}</script>
 <header>
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
   <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false"><span id="projName">Shuk HaTikvah</span> <small id="walkName">· Hatikvah St</small>
@@ -435,6 +492,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label for="uiAlpha">Transparency of the overlays <b id="uiAlphaLbl">0%</b></label>
     <input type="range" id="uiAlpha" min="0" max="80" step="5" value="0" aria-label="Transparency of everything over the video">
     <div class="ends"><span>see-through</span><span>solid</span></div>
+    <div class="themes"><span>Theme</span><div class="tseg" id="themeSeg"><button data-th="light">Light</button><button data-th="dark">Dark</button><button data-th="system">System</button></div></div>
   </div>
   <input type="file" id="atFile" multiple hidden>
   <aside class="jv glass" id="jv" data-no-drag hidden aria-label="Ask Jeeves">
@@ -1070,6 +1128,17 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("uiAlpha").addEventListener("input", () => setAlpha(+$("uiAlpha").value));
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest("#uiPop, #setBtn")) { $("uiPop").hidden = true; $("setBtn").setAttribute("aria-expanded", "false"); } });
   setAlpha(+(localStorage.getItem("ui_alex.alpha") || 0));
+  // theme: light / dark / follow the system; remembered between visits
+  const sysDark = matchMedia("(prefers-color-scheme: dark)");
+  let theme = "light"; try { theme = localStorage.getItem("ui_alex.theme") || "light"; } catch (e) {}
+  const applyTheme = t => {
+    theme = t; document.documentElement.dataset.theme = t === "system" ? (sysDark.matches ? "dark" : "light") : t;
+    document.querySelectorAll("#themeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.th === t)));
+    try { localStorage.setItem("ui_alex.theme", t); } catch (e) {}
+  };
+  $("themeSeg").addEventListener("click", ev => { const b = ev.target.closest("button[data-th]"); if (b) applyTheme(b.dataset.th); });
+  sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
+  applyTheme(theme);
   // outside clicks close Layers/Search; the statistics panel stays open while you watch
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn, .transport")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
