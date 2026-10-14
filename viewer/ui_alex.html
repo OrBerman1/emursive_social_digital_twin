@@ -6,13 +6,15 @@
 <title>Shuk HaTikvah · 360° Exploration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-/* ui_alex: full-bleed 360 stage with floating glass UI. Entities are marked with a pointer dot + leader line to a
-   card (no boxes): compact cards for a few salient entities, expanded cards (photo crop + attributes) when pinned. */
+/* ui_alex: full-bleed 360 stage with floating UI. The view follows the walking direction until the user drags.
+   Entities are marked with a pointer dot + leader line to a dark info window (no boxes). Bottom right: a heading-up
+   map dial (people + trails, objects, view cone) with the compass ring built in; aerial imagery once the walk is
+   placed on the map (data/processed/<walk>/georef.json). */
 :root {
-  --person: #f2b705; --object: #e8475f; --space: #2f7cf6; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
+  --person: #f5c518; --object: #ef4b5f; --space: #3d8bff; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
   --glass: rgba(255,255,255,.92); --shadow: 0 10px 30px rgba(20,25,40,.18);
+  --win: rgba(16,18,24,.82); --win-soft: #b9bfcb;
   --sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
@@ -25,7 +27,7 @@ svg { display: block; }
 /* ---- top bar ---- */
 header { height: 54px; flex: none; background: #fff; display: flex; align-items: center; padding: 0 18px; gap: 18px; border-bottom: 1px solid var(--line); z-index: 20; }
 .logo { width: 32px; height: 32px; }
-.place { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; border: 0; background: none; cursor: pointer; padding: 6px 8px; border-radius: 8px; border-left: 1px solid var(--line); border-radius: 0; padding-left: 18px; }
+.place { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; border: 0; background: none; cursor: pointer; border-left: 1px solid var(--line); padding: 6px 8px 6px 18px; }
 .place small { font-weight: 500; color: var(--soft); font-size: 13px; }
 .place:hover small { color: var(--ink); }
 .tabs { display: flex; height: 100%; margin-left: 18px; border-left: 1px solid var(--line); padding-left: 18px; gap: 4px; }
@@ -33,7 +35,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .tabs button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--space); }
 .tabs button:disabled { cursor: default; opacity: .55; }
 .grow { flex: 1; }
-.meta { color: var(--soft); font-variant-numeric: tabular-nums; display: flex; gap: 14px; }
+.meta { color: var(--soft); font-variant-numeric: tabular-nums; }
 .hbtn { width: 36px; height: 36px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: var(--ink); }
 .hbtn:hover { background: #f1f3f7; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 600; font-size: 13px; }
@@ -64,54 +66,45 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .chip[data-k="space"] .ic { background: #e2ecff; color: var(--space); }
 .chip[data-k="object"] .lbl { color: var(--object); } .chip[data-k="space"] .lbl { color: var(--space); }
 
-/* entity cards (positioned every frame; leader lines are drawn on the overlay canvas) */
-.card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        box-shadow: var(--shadow); border: 1.5px solid transparent; z-index: 8; will-change: transform; }
-.card.person { border-color: rgba(242,183,5,.75); } .card.object { border-color: rgba(232,71,95,.6); } .card.space { border-color: rgba(47,124,246,.55); }
-.card.compact { width: 236px; padding: 9px 10px; display: flex; gap: 10px; align-items: center; cursor: pointer; }
-.card.compact:hover { box-shadow: 0 12px 34px rgba(20,25,40,.28); }
-.card.compact b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card.compact small { display: block; color: var(--soft); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; }
-.card.compact .tx { flex: 1; min-width: 0; }
-.card.compact .chev { color: var(--soft); font-size: 18px; }
-.badge { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; }
-.person .badge { background: #fff3c4; color: #b88a00; } .object .badge { background: #ffe1e6; color: var(--object); } .space .badge { background: #e2ecff; color: var(--space); }
-.card.full { width: 286px; padding: 12px 14px 14px; }
-.card.full .hd { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14.5px; padding-bottom: 10px; }
-.card.full .hd .id { color: var(--soft); font-weight: 500; font-size: 12px; }
-.card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--soft); }
+/* ---- info windows (dark, colour-coded border; positioned every frame, leader lines on the overlay canvas) ---- */
+.card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--win); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 2px solid; box-shadow: 0 10px 28px rgba(0,0,0,.35); z-index: 8; will-change: transform; }
+.card.person { border-color: var(--person); } .card.object { border-color: var(--object); } .card.space { border-color: var(--space); }
+.card .r { display: flex; align-items: center; gap: 12px; padding: 3px 0; font-size: 14px; white-space: nowrap; }
+.card .r .k { min-width: 40px; display: flex; justify-content: center; flex: none; color: #e9ecf2; }
+.card .r .v { overflow: hidden; text-overflow: ellipsis; }
+.card .r .v.soft { color: var(--win-soft); }
+.card .r + .r { border-top: 1px solid rgba(255,255,255,.08); }
+.badge { font: 700 13px var(--sans); padding: 3px 7px; border-radius: 6px; min-width: 34px; text-align: center; }
+.person .badge { background: var(--person); color: #1a1a1a; } .object .badge { background: var(--object); color: #fff; } .space .badge { background: var(--space); color: #fff; }
+.card.compact { padding: 8px 14px 8px 10px; min-width: 200px; max-width: 260px; cursor: pointer; }
+.card.compact:hover { box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+.card.full { width: 300px; padding: 10px 12px 12px; }
+.card.full .hd { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; font-weight: 600; font-size: 14.5px; }
+.card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--win-soft); }
 .card.full .hd button + button { margin-left: 0; }
-.card.full .hd button:hover { background: #eef0f4; color: var(--ink); }
-.who { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
-.who canvas { width: 64px; height: 64px; border-radius: 10px; background: #e9ebf0; flex: none; }
+.card.full .hd button:hover { background: rgba(255,255,255,.1); color: #fff; }
+.who { display: flex; gap: 12px; align-items: center; padding: 8px 0 10px; border-top: 1px solid rgba(255,255,255,.1); }
+.who canvas { width: 64px; height: 64px; border-radius: 10px; background: #2a2f3a; flex: none; }
 .who b { display: block; font-size: 15px; }
-.who small { color: var(--soft); font-size: 12.5px; }
-.rows { border-top: 1px solid var(--line); }
-.rw { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
-.rw .ri { width: 26px; display: grid; place-items: center; color: #8a6a00; flex: none; }
-.object .rw .ri { color: var(--object); } .space .rw .ri { color: var(--space); }
-.rw small { display: block; color: var(--soft); font-size: 11.5px; }
-.rw span { display: block; font-size: 13px; }
-.conf { display: flex; align-items: center; gap: 10px; padding-top: 10px; font-size: 12.5px; color: var(--soft); }
-.conf .bar { flex: 1; height: 6px; border-radius: 999px; background: #eceef3; overflow: hidden; }
-.conf .bar i { display: block; height: 100%; border-radius: 999px; }
-.person .conf .bar i { background: var(--person); } .object .conf .bar i { background: var(--object); } .space .conf .bar i { background: var(--space); }
-.conf b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.note { color: var(--soft); font-size: 11px; padding-top: 8px; }
-.signtext { font-size: 18px; font-weight: 600; padding: 10px 0; border-top: 1px solid var(--line); unicode-bidi: plaintext; direction: auto; }
+.who small { color: var(--win-soft); font-size: 12.5px; }
+.card.full .rows { border-top: 1px solid rgba(255,255,255,.1); padding-top: 4px; }
+.card.full .r small { display: block; color: var(--win-soft); font-size: 11px; }
+.conf { display: flex; align-items: center; gap: 10px; padding-top: 10px; font-size: 12.5px; color: var(--win-soft); }
+.conf .meter { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+.conf .meter i { display: block; height: 100%; border-radius: 999px; }
+.person .conf .meter i { background: var(--person); } .object .conf .meter i { background: var(--object); } .space .conf .meter i { background: var(--space); }
+.conf b { color: #fff; font-variant-numeric: tabular-nums; }
+.note { color: var(--win-soft); font-size: 11px; padding-top: 8px; }
+.signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
 
-/* compass + radar */
-.compass { position: absolute; left: 18px; bottom: 100px; width: 112px; height: 112px; border-radius: 50%; z-index: 9; pointer-events: none; }
-.compass-cap { position: absolute; left: 18px; bottom: 76px; width: 112px; text-align: center; color: #fff; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,.8); pointer-events: none; z-index: 9; }
-.radar { position: absolute; right: 18px; bottom: 96px; width: 176px; height: 176px; border-radius: 50%; z-index: 9; }
-.minimap { position: absolute; right: 18px; bottom: 92px; width: 210px; height: 210px; border-radius: 50%; overflow: hidden; z-index: 9; border: 3px solid #fff; }
-.minimap #mm { position: absolute; inset: 0; background: #e8eaee; }
-.minimap .leaflet-control-attribution { font-size: 8px; padding: 0 4px; border-radius: 4px; margin: 0 52px 22px 0; background: rgba(255,255,255,.75); }
-.mm-north { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); font: 700 11px var(--sans); color: var(--ink); background: rgba(255,255,255,.85); border-radius: 999px; padding: 1px 6px; z-index: 500; pointer-events: none; }
-.mm-arrow { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+/* ---- map dial: heading-up map with the compass ring ---- */
+.dial { position: absolute; right: 18px; bottom: 120px; width: 262px; height: 262px; z-index: 9; border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer; }
+.dial canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
+.dial-cap { white-space: pre-line; position: absolute; right: 18px; bottom: 84px; width: 262px; text-align: center; color: #fff; font-size: 11.5px; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; z-index: 9; }
 
-/* bottom transport */
-.transport { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px; width: min(1340px, calc(100% - 300px)); height: 60px; border-radius: 999px; display: flex; align-items: center; gap: 14px; padding: 0 22px 0 10px; z-index: 10; }
+/* ---- bottom transport ---- */
+.transport { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px; width: min(1340px, calc(100% - 40px)); height: 60px; border-radius: 999px; display: flex; align-items: center; gap: 14px; padding: 0 22px 0 10px; z-index: 10; }
 .play { width: 42px; height: 42px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: grid; place-items: center; cursor: pointer; flex: none; }
 .time { font-variant-numeric: tabular-nums; min-width: 92px; color: var(--soft); }
 .time b { color: var(--ink); font-weight: 600; }
@@ -130,7 +123,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .tbtn:disabled { opacity: .35; cursor: default; }
 .sep { width: 1px; height: 26px; background: var(--line); }
 
-/* popovers */
+/* ---- popovers ---- */
 .pop { position: absolute; left: 70px; top: 54px; width: 290px; border-radius: 16px; padding: 14px 16px; z-index: 30; }
 .pop h4 { margin: 0 0 10px; font-size: 14px; }
 .pop label { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
@@ -158,9 +151,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button role="tab" aria-selected="false" disabled title="Coming in a later version">Analysis</button>
   </nav>
   <div class="grow"></div>
-  <div class="meta"><span title="Recording date">Aug 25, 2025</span></div>
+  <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-  <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
   <div class="avatar" title="Alex Alvisi">AA</div>
 </header>
 <div class="menu" id="walkMenu" role="menu" hidden>
@@ -168,12 +161,12 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <button role="menuitemradio" data-walk="walk2" aria-checked="false">Walk 2 · Hamevasser St</button>
 </div>
 
-<div class="stage" id="stage" aria-label="360 degree view. Drag to look around, scroll to zoom, click a dot for details.">
+<div class="stage" id="stage" aria-label="360 degree view. Follows the walking direction; drag to look around, scroll to zoom, click a dot for details.">
   <canvas id="gl"></canvas><canvas id="ov"></canvas>
   <div id="cards"></div>
 
   <div class="rail glass" data-no-drag>
-    <button id="tCenter" data-tip="Look ahead (walking direction)" aria-label="Look ahead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+    <button id="tCenter" data-tip="Follow the walking direction" aria-label="Follow the walking direction" aria-pressed="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
     <button id="tSearch" data-tip="Find a person by ID" aria-label="Find"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>
     <button id="tStats" data-tip="What's in view" aria-label="Statistics"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M7 17v-6M12 17V6M17 17v-9"/></svg></button>
     <button id="tMark" data-tip="Bookmark this moment" aria-label="Bookmark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>
@@ -186,10 +179,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg></span><span class="lbl">Space</span><span class="n" id="nS">0</span></button>
   </div>
 
-  <canvas class="compass" id="compass" width="224" height="224" aria-hidden="true"></canvas>
-  <div class="compass-cap" id="compassCap"></div>
-  <canvas class="radar glass" id="radar" width="352" height="352" aria-label="Radar: people and objects around the camera" data-no-drag></canvas>
-  <div class="minimap glass" id="minimap" data-no-drag hidden aria-label="Map: your position, view direction and what is around you"><div id="mm"></div><div class="mm-north">N</div></div>
+  <div class="dial" id="dialBox" data-no-drag title="Map: heading up. Click a dot to open its card."><canvas id="dial" width="560" height="560"></canvas></div>
+  <div class="dial-cap" id="dialCap"></div>
 
   <div class="transport glass" data-no-drag>
     <button class="play" id="play" aria-label="Play"><svg id="playIc" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></button>
@@ -209,7 +200,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="object" checked><span>Objects &amp; market items</span></label>
     <label><input type="checkbox" data-show="decor"><span>Decor (lamps, flags)</span></label>
     <label><input type="checkbox" data-show="space" checked><span>Space: readable signs</span></label>
-    <label><input type="checkbox" data-show="labels" checked><span>Auto labels for nearby entities</span></label>
+    <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
+    <label><input type="checkbox" data-show="trails" checked><span>Trails on the map</span></label>
     <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
   </div>
   <div class="pop glass" id="searchPop" data-no-drag hidden>
@@ -226,7 +218,6 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="toast" id="toast" hidden></div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="engine.js"></script>
 <script>
 (() => {
@@ -234,19 +225,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const COL = { person: css("--person"), object: css("--object"), space: css("--space") };
   const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
-  const stage = $("stage");
-  const show = { person: true, object: true, decor: false, space: true, labels: true };
+  const stage = $("stage"), D2R = Math.PI / 180;
+  const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true };
   const DECOR = new Set(["hanging lamp", "flag", "awning"]);
   const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
   const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
-  // view yaw that looks where the person holding the camera walks: opposite the operator, who sits at a fixed camera
-  // direction (walk 1: operator at ~176 deg on the stabilised detections; walk 2: checked on frames, the street runs at 75 deg)
-  const FORWARD = { walk1: -4, walk2: 75 };
-  const fwd = () => FORWARD[E.walk] || 0;
-  const lookAhead = () => { E.look(fwd(), -5); E.fov = 90; };
   let auto = [], autoAt = 0, hover = null;
+  const wrap = a => ((a + 540) % 360) - 180;
 
-  // UI group of an engine entity: person / object / space (readable signs), or null = not shown
   const groupOf = e => e.kind === "person" ? "person" : (e.kind === "object" || e.kind === "level2") ? (DECOR.has(e.cls) ? (show.decor ? "object" : null) : "object")
     : (e.kind === "sign" && e.readable) ? "space" : null;
   const keyOf = e => `${e.kind}:${e.id}`;
@@ -255,11 +241,54 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const pad2 = n => String(n).padStart(2, "0");
   const fmt = s => `${pad2(Math.floor(s / 60))}:${pad2(Math.floor(s % 60))}`;
 
+  // ---- walking direction (pipeline/forward_dir.py -> forward.json): the view follows it until the user drags ----
+  let FW = null, follow = true;
+  const fwdAt = fi => FW ? FW.fwd_deg[Math.max(0, Math.min(FW.fwd_deg.length - 1, fi))] : 0;
+  const setFollow = on => { follow = on; $("tCenter").setAttribute("aria-pressed", String(on)); };
+  stage.addEventListener("pointermove", ev => { if (ev.buttons && !ev.target.closest("[data-no-drag]")) setFollow(false); });
+  stage.addEventListener("keydown", ev => { if (ev.key.startsWith("Arrow")) setFollow(false); });
+
+  // ---- camera path + ground positions of people (dead reckoning along the walking direction at the walk pace) ----
+  // world frame = stabilised view-yaw frame (x = yaw 90, y = yaw 0), metres; good for speeds and short trails
+  let CAM = null, PP = null;
+  function buildMotion(d) {
+    const n = d.n_frames, v = d.pace_m_s || 0.9, dt = 1 / d.fps; CAM = new Float32Array(n * 2); PP = new Map();
+    let x = 0, y = 0;
+    for (let f = 0; f < n; f++) {
+      if (f > 0 && FW && FW.moving[Math.min(f, FW.moving.length - 1)]) { const a = fwdAt(f) * D2R; x += v * dt * Math.sin(a); y += v * dt * Math.cos(a); }
+      CAM[2 * f] = x; CAM[2 * f + 1] = y;
+      for (const e of d.frames[f].p) if (e[7]) {
+        let m = PP.get(e[0]); if (!m) PP.set(e[0], m = new Map());
+        m.set(f, [x + e[7] * Math.sin(e[2] * D2R), y + e[7] * Math.cos(e[2] * D2R)]);
+      }
+    }
+  }
+  const camAt = f => CAM ? [CAM[2 * f], CAM[2 * f + 1]] : [0, 0];      // CAM is built once forward.json has loaded
+  // speed + direction relative to the camera, from ground positions ~1.6 s before and after
+  function motionOf(id, fi) {
+    const m = PP && PP.get(id); if (!m) return null;
+    let k0 = null, k1 = null;
+    for (let k = fi - 8; k <= fi - 3; k++) if (m.has(k)) { k0 = k; break; }
+    for (let k = fi + 8; k >= fi; k--) if (m.has(k)) { k1 = k; break; }
+    if (k0 == null || k1 == null || k1 - k0 < 4) return null;
+    const p0 = m.get(k0), p1 = m.get(k1), dt = (k1 - k0) / E.data.fps, vx = (p1[0] - p0[0]) / dt, vy = (p1[1] - p0[1]) / dt, spd = Math.hypot(vx, vy);
+    const p = m.get(fi) || p1, c = camAt(fi), tx = c[0] - p[0], ty = c[1] - p[1], cosT = (vx * tx + vy * ty) / (spd * Math.hypot(tx, ty) || 1);
+    let dir;
+    if (spd < 0.35) dir = "Standing";
+    else if (cosT > 0.55) dir = "Toward camera";
+    else if (cosT < -0.55) dir = "Away from camera";
+    else { const side = vx * Math.cos(E.yaw * D2R) - vy * Math.sin(E.yaw * D2R); dir = side > 0 ? "Crossing →" : "Crossing ←"; }
+    return { spd, dir };
+  }
+
   // older overlay files store signs without the conf column the engine expects: insert it once after loading
+  const J = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return r.json(); };
   const load = async w => {
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
-    buildMarks(d); lookAhead(); mapWalk(); return d;
+    try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
+    buildMotion(d); buildMarks(d); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    return d;
   };
 
   // ---- pointer anchor: upper torso for people, centre for objects and signs ----
@@ -271,13 +300,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const SEX = { man: "male", woman: "female" };
   function personTitle(e) {
     const [a, yrs] = AGE[e.age] || AGE.uncertain, s = SEX[e.sex];
-    const t = e.age === "child" ? "Child" : s ? (a === "Person" ? cap(s) : `${a} ${s}`) : a;
-    return [t, yrs];
+    return [e.age === "child" ? "Child" : s ? (a === "Person" ? cap(s) : `${a} ${s}`) : a, yrs];
   }
-  // social context: other people within 1.5 m on the ground plane (from yaw + distance in this frame)
   function nearby(e, st) {
     const F = st.data.frames[st.fi]; if (!F || !e.dist) return null;
-    const P = (yw, d) => [d * Math.sin(yw * E.deg), d * Math.cos(yw * E.deg)], me = P(e.yaw, e.dist);
+    const P = (yw, d) => [d * Math.sin(yw * D2R), d * Math.cos(yw * D2R)], me = P(e.yaw, e.dist);
     let n = 0; for (const o of F.p) { if (o[0] === e.id || o[7] == null) continue; const q = P(o[2], o[7]); if (Math.hypot(q[0] - me[0], q[1] - me[1]) < 1.5) n++; }
     return n;
   }
@@ -290,67 +317,69 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
 
   // ---- photo crop of an entity straight from the equirect video frame ----
-  function rawOf(e, st) {
-    const F = st.data.frames[st.fi]; if (!F) return null;
-    const ii = { p: 0, o: 7, l2: 8, s: 0 }[e.key]; return (F[e.key] || []).find(x => x[ii] === e.id) || null;
-  }
+  function rawOf(e, st) { const F = st.data.frames[st.fi]; if (!F) return null; const ii = { p: 0, o: 7, l2: 8, s: 0 }[e.key]; return (F[e.key] || []).find(x => x[ii] === e.id) || null; }
   function crop(cv, e, st) {
     const v = E.video, raw = rawOf(e, st); if (!raw || v.readyState < 2 || !v.videoWidth) return false;
     const W = v.videoWidth, H = v.videoHeight, u = y => (y / 360 + 0.5) * W, w = p => (0.5 - p / 180) * H;
     let x0 = u(raw[3]), x1 = u(raw[4]); if (x1 < x0) x1 += W;
-    const y0 = w(raw[5]), y1 = w(raw[6]), bw = x1 - x0, bh = y1 - y0;
-    let side, cx = (x0 + x1) / 2, top;
-    if (e.kind === "person") { side = Math.max(bw * 1.05, bh * 0.42); top = y0 - side * 0.04; }
-    else { side = Math.max(bw, bh) * 1.25; top = (y0 + y1) / 2 - side / 2; }
+    const y0 = w(raw[5]), y1 = w(raw[6]), bw = x1 - x0, bh = y1 - y0, cx = (x0 + x1) / 2;
+    let side, top;
+    if (e.kind === "person") { side = Math.max(bw * 1.05, bh * 0.42); top = y0 - side * 0.04; } else { side = Math.max(bw, bh) * 1.25; top = (y0 + y1) / 2 - side / 2; }
     side = Math.max(side, 24); top = Math.max(0, Math.min(H - side, top));
-    const c = cv.getContext("2d"); c.fillStyle = "#e9ebf0"; c.fillRect(0, 0, cv.width, cv.height);
+    const c = cv.getContext("2d"); c.fillStyle = "#2a2f3a"; c.fillRect(0, 0, cv.width, cv.height);
     c.drawImage(v, Math.max(0, Math.min(W - side, cx - side / 2)), top, side, side, 0, 0, cv.width, cv.height);
     return true;
   }
 
-  // ---- icons ----
+  // ---- icons (white line icons for the dark windows) ----
   const IC = {
-    person: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>`,
-    object: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>`,
-    space: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg>`,
-    bag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
-    walk: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="13" cy="4.5" r="2"/><path d="m9 21 2.5-6 2.5 2v4M8 12l2-4.5 3 .5 2.5 3.5 2.5 1M11.5 15 10 8"/></svg>`,
-    group: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></svg>`,
-    clock: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
-    tag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4"/></svg>`,
-    lang: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-10 4 10M14.5 17.5h5"/></svg>`,
+    walk: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="13" cy="4" r="2.2"/><path d="M10.2 7.6 7 9.6V13h2v-2.3l1.4-.8L9 21h2.2l1.2-5.5 2.1 2V21h2v-5l-2.2-2.2.6-3.1A6 6 0 0 0 19 13v-2a4 4 0 0 1-3.4-2l-1-1.6a2 2 0 0 0-2.5-.8z"/></svg>`,
+    eye: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    clock: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+    ruler: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M4 9v6M20 9v6"/></svg>`,
+    bag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
+    group: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></svg>`,
+    tag: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4"/></svg>`,
+    lang: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-10 4 10M14.5 17.5h5"/></svg>`,
     focus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-8 8M10 4H4v16h16v-6"/></svg>`,
     close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
   };
-  const row = (ic, lbl, val) => `<div class="rw"><div class="ri">${ic}</div><div><small>${lbl}</small><span>${val}</span></div></div>`;
-  const confRow = v => `<div class="conf">Confidence <div class="bar"><i style="width:${Math.round(v * 100)}%"></i></div><b>${Math.round(v * 100)}%</b></div>`;
+  const R = (k, v, soft) => `<div class="r"><div class="k">${k}</div><div class="v${soft ? " soft" : ""}">${v}</div></div>`;
+  const R2 = (k, lbl, v) => `<div class="r"><div class="k">${k}</div><div class="v"><small>${lbl}</small>${v}</div></div>`;
+  const confRow = v => `<div class="conf">Confidence <div class="meter"><i style="width:${Math.round(v * 100)}%"></i></div><b>${Math.round(v * 100)}%</b></div>`;
   const KIND_TXT = { object: "Object", level2: "Market item" };
+  const visibleS = (e, st) => { const t = st.data.tracks[e.id]; return t ? Math.max(0, (st.fi - t[0]) / st.data.fps) : null; };
+  const objVisibleS = (e, st) => ((st.data.obj_len || {})[e.id] || 0) / st.data.fps;
+  const badgeOf = (e, g) => g === "person" ? `P${e.id}` : g === "space" ? `S${e.id}` : `O${e.id % 100000}`;
 
-  function compactHtml(e, g) {
-    if (g === "person") { const [t, yrs] = personTitle(e); return `<div class="badge">${IC.person}</div><div class="tx"><b>Person · ${esc(t)}</b><small>${esc(yrs)}${e.dist ? ` · ${e.dist.toFixed(1)} m away` : ""}</small></div><div class="chev">›</div>`; }
-    if (g === "space") return `<div class="badge">${IC.space}</div><div class="tx"><b>Space · Sign</b><small dir="auto">${esc(e.text)}</small></div><div class="chev">›</div>`;
-    return `<div class="badge">${IC.object}</div><div class="tx"><b>${KIND_TXT[e.kind]} · ${esc(cap(e.cls))}</b><small>${ShukEngine.emojiOf(e.cls)} ${Math.round(e.conf * 100)}% confidence</small></div><div class="chev">›</div>`;
+  function compactHtml(e, g, st) {
+    if (g === "person") {
+      const m = motionOf(e.id, st.fi), vis = visibleS(e, st);
+      return R(`<span class="badge">${badgeOf(e, g)}</span>`, m ? `≈${m.spd.toFixed(1)} m/s` : (e.dist ? `${e.dist.toFixed(1)} m away` : "—")) +
+        R(IC.walk, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true) + R(IC.eye, m ? m.dir : "Direction unknown");
+    }
+    if (g === "space") return R(`<span class="badge">${badgeOf(e, g)}</span>`, `<span dir="auto" style="unicode-bidi:plaintext">${esc(e.text)}</span>`) + R(IC.tag, "Readable sign", true);
+    return R(`<span class="badge">${badgeOf(e, g)}</span>`, `${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}`) + R(IC.clock, `${objVisibleS(e, st).toFixed(1)} s (visible)`, true) +
+      R(IC.eye, `${Math.round(e.conf * 100)}% confidence`);
   }
   function fullHtml(e, g, st) {
-    const d = st.data, hd = (ic, name, id) => `<div class="hd"><div class="badge">${ic}</div>${name} <span class="id">${id}</span><button data-act="focus" aria-label="Look at it" title="Look at it">${IC.focus}</button><button data-act="close" aria-label="Close" title="Close">${IC.close}</button></div>`;
+    const d = st.data, hd = (title) => `<div class="hd"><span class="badge">${badgeOf(e, g)}</span>${title}<button data-act="focus" aria-label="Look at it" title="Look at it">${IC.focus}</button><button data-act="close" aria-label="Close" title="Close">${IC.close}</button></div>`;
     if (g === "person") {
-      const t = d.tracks[e.id] || [], [title, yrs] = personTitle(e), n = nearby(e, st), carry = carrying(e, st);
-      const seen = t.length ? `${Math.round((t[1] - t[0]) / d.fps)} s on this walk` : "—";
+      const t = d.tracks[e.id] || [], [title, yrs] = personTitle(e), n = nearby(e, st), carry = carrying(e, st), m = motionOf(e.id, st.fi), vis = visibleS(e, st);
       const social = n == null ? "—" : n === 0 ? "Alone (no group detected)" : `With ${n} other${n > 1 ? "s" : ""} within 1.5 m`;
-      return hd(IC.person, "Person", `P-${e.id}`) +
-        `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${esc(title)}</b><small>${esc(yrs)} · perceived</small></div></div>` +
-        `<div class="rows">${row(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}${row(IC.walk, "Position", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}` +
-        `${row(IC.group, "Social context", social)}${row(IC.clock, "Seen for", seen)}</div>${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity.</div>`;
+      return hd("Person") + `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${esc(title)}</b><small>${esc(yrs)} · perceived</small></div></div>` +
+        `<div class="rows">${R2(IC.walk, "Movement", m ? (m.dir === "Standing" ? "Standing" : `≈${m.spd.toFixed(1)} m/s · ${m.dir}`) : "—")}` +
+        `${R2(IC.clock, "Visible", vis != null ? `${vis.toFixed(1)} s so far · ${Math.round((t[1] - t[0]) / d.fps)} s in total` : "—")}` +
+        `${R2(IC.ruler, "Distance", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}${R2(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}` +
+        `${R2(IC.group, "Social context", social)}</div>${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
     }
     if (g === "space") {
       const info = (d.signs || {})[e.id] || [];
-      return hd(IC.space, "Space · Sign", `S-${e.id}`) + `<div class="signtext" dir="auto">${esc(e.text)}</div>` +
-        `<div class="rows">${row(IC.lang, "Language", { he: "Hebrew", en: "English", ar: "Arabic" }[info[1]] || esc(info[1] || "—"))}</div>${confRow(Math.min(1, (info[2] || 0) / 100))}<div class="note">Read with OCR (Tesseract).</div>`;
+      return hd("Sign") + `<div class="signtext" dir="auto">${esc(e.text)}</div><div class="rows">${R2(IC.lang, "Language", { he: "Hebrew", en: "English", ar: "Arabic" }[info[1]] || esc(info[1] || "—"))}</div>` +
+        `${confRow(Math.min(1, (info[2] || 0) / 100))}<div class="note">Read with OCR (Tesseract).</div>`;
     }
-    const len = (d.obj_len || {})[e.id] || 0;
-    return hd(IC.object, KIND_TXT[e.kind], `O-${e.id}`) +
-      `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}</b><small>${e.kind === "level2" ? "Market item (open-vocabulary)" : "Everyday object"}</small></div></div>` +
-      `<div class="rows">${row(IC.tag, "Category", e.kind === "level2" ? "Market infrastructure" : "Object / vehicle")}${row(IC.clock, "Seen for", `${(len / d.fps).toFixed(0)} s on this walk`)}</div>${confRow(e.conf)}`;
+    return hd(KIND_TXT[e.kind]) + `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}</b><small>${e.kind === "level2" ? "Market item (open-vocabulary)" : "Everyday object"}</small></div></div>` +
+      `<div class="rows">${R2(IC.tag, "Category", e.kind === "level2" ? "Market infrastructure" : "Object / vehicle")}${R2(IC.clock, "Visible", `${objVisibleS(e, st).toFixed(0)} s on this walk`)}</div>${confRow(e.conf)}`;
   }
 
   // ---- card pool: create/update/position DOM cards; leader lines go on the canvas ----
@@ -358,17 +387,18 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   function cardFor(key) {
     let c = pool.get(key);
     if (!c) {
-      c = { el: document.createElement("div"), sig: "", photoAt: 0 }; c.el.dataset.noDrag = ""; c.el.setAttribute("data-no-drag", "");
+      c = { el: document.createElement("div"), sig: "", photoAt: 0 }; c.el.setAttribute("data-no-drag", "");
       c.el.addEventListener("pointerdown", ev => ev.stopPropagation());
       c.el.addEventListener("click", ev => onCardClick(key, ev)); $("cards").appendChild(c.el); pool.set(key, c);
     }
     return c;
   }
+  const isPinned = key => pinned.some(p => `${p.kind}:${p.id}` === key);
   function onCardClick(key, ev) {
     const act = ev.target.closest("[data-act]"), [kind, id] = key.split(":"), e = (E.state?.entities || []).find(x => keyOf(x) === key);
     if (act && act.dataset.act === "close") { unpin(key); return; }
-    if (act && act.dataset.act === "focus") { if (e) E.look(e.yaw, (e.pt + e.pb) / 2); return; }
-    if (!pinned.some(p => `${p.kind}:${p.id}` === key)) pin({ kind, id: +id });
+    if (act && act.dataset.act === "focus") { if (e) { setFollow(false); E.look(e.yaw, (e.pt + e.pb) / 2); } return; }
+    if (!isPinned(key)) pin({ kind, id: +id });
   }
   function pin(p) { unpin(`${p.kind}:${p.id}`); pinned.push(p); while (pinned.length > 3) pinned.shift(); }
   function unpin(key) { const i = pinned.findIndex(p => `${p.kind}:${p.id}` === key); if (i >= 0) pinned.splice(i, 1); }
@@ -376,60 +406,59 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const overlap = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
   function layoutCards(st, c, list) {
     const k = E.k, Wc = stage.clientWidth, Hc = stage.clientHeight;
-    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [0, Hc - 230, 150, Hc], [Wc - 210, Hc - 290, Wc, Hc], [0, Hc - 92, Wc, Hc]];
+    const blocked = [[0, 0, 70, 330], [Wc - 520, 0, Wc, 74], [Wc - 300, Hc - 410, Wc, Hc], [0, Hc - 92, Wc, Hc]];
     const placed = [], used = new Set();
     for (const it of list) {
       const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
       card.el.className = `card ${g} ${full ? "full" : "compact"}`;
-      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${full ? Math.floor(st.t) : Math.round((e.dist || 0) * 2)}`;
-      if (card.sig !== sig) { const keepPhoto = card.el.querySelector("[data-photo]"); card.el.innerHTML = full ? fullHtml(e, g, st) : compactHtml(e, g); card.sig = sig;
-        const ph = card.el.querySelector("[data-photo]"); if (ph && keepPhoto && keepPhoto.dataset.ok) { ph.getContext("2d").drawImage(keepPhoto, 0, 0); ph.dataset.ok = 1; } }
+      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${Math.floor(st.t * 2)}`;
+      if (card.sig !== sig) {
+        const keep = card.el.querySelector("[data-photo]"); card.el.innerHTML = full ? fullHtml(e, g, st) : compactHtml(e, g, st); card.sig = sig;
+        const ph = card.el.querySelector("[data-photo]"); if (ph && keep && keep.dataset.ok) { ph.getContext("2d").drawImage(keep, 0, 0); ph.dataset.ok = 1; }
+      }
       const ph = card.el.querySelector("[data-photo]");
       if (ph && (!ph.dataset.ok || performance.now() - card.photoAt > 1500)) { if (crop(ph, e, st)) { ph.dataset.ok = 1; card.photoAt = performance.now(); } }
       const w = card.el.offsetWidth, h = card.el.offsetHeight, [ax, ay] = anchor(e).map(v => v / k), right = ax < Wc * 0.55;
-      const cands = (right ? [[40, -h - 30], [40, 30], [-w - 40, -h - 30], [-w - 40, 30], [60, -h / 2]] : [[-w - 40, -h - 30], [-w - 40, 30], [40, -h - 30], [40, 30], [-w - 60, -h / 2]])
+      const cands = (right ? [[36, -h - 26], [36, 26], [-w - 36, -h - 26], [-w - 36, 26], [56, -h / 2]] : [[-w - 36, -h - 26], [-w - 36, 26], [36, -h - 26], [36, 26], [-w - 56, -h / 2]])
         .map(([dx, dy]) => { const x = Math.max(76, Math.min(Wc - w - 12, ax + dx)), y = Math.max(12, Math.min(Hc - h - 96, ay + dy)); return [x, y, x + w, y + h]; });
       const score = r => placed.filter(p => overlap(p, r)).length * 10 + blocked.filter(b => overlap(b, r)).length * 3;
       const best = cands.reduce((a, b) => score(b) < score(a) ? b : a);
       if (!full && placed.some(q => overlap(q, best))) { card.el.style.opacity = 0; continue; }
       placed.push(best); card.el.style.transform = `translate(${best[0]}px, ${best[1]}px)`; card.el.style.opacity = full ? 1 : Math.min(1, e.alpha * 1.4);
-      // leader line from the dot to the nearest point of the card edge
       const tx = Math.max(best[0], Math.min(best[2], ax)), ty = Math.max(best[1], Math.min(best[3], ay));
-      c.strokeStyle = COL[g]; c.lineWidth = 1.6 * k; c.globalAlpha = full ? 1 : 0.85;
-      c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke(); c.globalAlpha = 1;
+      c.strokeStyle = COL[g]; c.lineWidth = 2 * k; c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke();
+      c.fillStyle = COL[g]; c.beginPath(); c.arc(tx * k, ty * k, 3 * k, 0, 7); c.fill();
     }
     for (const [key, card] of pool) if (!used.has(key)) { card.el.remove(); pool.delete(key); }
   }
 
   // ---- per frame ----
   E.onFrame = (st, c) => {
+    if (follow && !spinning) { const t = fwdAt(st.fi), dy = wrap(t - E.yaw); E.look(E.yaw + dy * 0.12, E.pitch); }   // ease toward the walking direction
     const k = E.k, shown = [];
     let nP = 0, nO = 0, nS = 0;
     for (const e of st.entities) {
       const g = groupOf(e); if (!g) continue;
       if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else nS++; }
-      if (!show[g]) continue;
-      shown.push([e, g]);
+      if (show[g]) shown.push([e, g]);
     }
-    // auto labels: the closest people + the largest object + a readable sign, re-chosen every 1.5 s to stay calm
     const now = performance.now();
-    if (now - autoAt > 1500) {
+    if (now - autoAt > 1500) {                        // re-choose the auto info windows every 1.5 s to stay calm
       autoAt = now;
       const big = e => (e.rect[2] - e.rect[0]) * (e.rect[3] - e.rect[1]);
-      const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, 2);
+      const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, 3);
       const obj = shown.filter(([e, g]) => g === "object" && e.alpha > .6).sort((a, b) => big(b[0]) - big(a[0])).slice(0, 1);
       const sgn = shown.filter(([e, g]) => g === "space" && e.alpha > .6).slice(0, 1);
       auto = [...ppl, ...obj, ...sgn].map(([e]) => keyOf(e));
     }
     const pinnedKeys = new Set(pinned.map(p => `${p.kind}:${p.id}`)), byKey = new Map(shown.map(x => [keyOf(x[0]), x]));
-    // dots
     for (const [e, g] of shown) {
-      const [x, y] = anchor(e), isPin = pinnedKeys.has(keyOf(e)), isHov = hover && keyOf(hover) === keyOf(e), r = (g === "person" ? 5 : 4.2) * k;
+      const [x, y] = anchor(e), isPin = pinnedKeys.has(keyOf(e)), isHov = hover && keyOf(hover) === keyOf(e), r = (g === "person" ? 5.5 : 4.5) * k;
       c.globalAlpha = Math.min(1, e.alpha * 1.3);
-      if (isPin || isHov) { c.fillStyle = COL[g] + "44"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
+      if (isPin || isHov) { c.fillStyle = COL[g] + "55"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
       c.fillStyle = "#fff"; c.beginPath(); c.arc(x, y, r + 2.2 * k, 0, 7); c.fill();
       c.fillStyle = COL[g]; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
-      if (g === "person" && (isPin || isHov)) {          // corner brackets around the head, like a viewfinder
+      if (g === "person" && (isPin || isHov)) {          // viewfinder corners around the head
         const rr = e.rect, hw = Math.min((rr[2] - rr[0]) * 0.26, (rr[3] - rr[1]) * 0.085), cx = (rr[0] + rr[2]) / 2, top = rr[1] - hw * 0.2, hh = hw * 2.5, L = Math.min(10 * k, hw * .7);
         c.strokeStyle = COL.person; c.lineWidth = 2 * k; c.beginPath();
         for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const px = cx + sx * hw, py = sy < 0 ? top : top + hh; c.moveTo(px, py - sy * L); c.lineTo(px, py); c.lineTo(px - sx * L, py); }
@@ -443,74 +472,114 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (show.labels) for (const key of auto) if (!pinnedKeys.has(key) && byKey.has(key)) { const [e, g] = byKey.get(key); list.push({ e, g, full: false }); }
     layoutCards(st, c, list);
     $("nP").textContent = nP; $("nO").textContent = nO; $("nS").textContent = nS;
-    drawRadar(st); drawCompass(st); updateStats(st);
+    drawDial(st); updateStats(st);
   };
   E.onHover = h => { hover = h && groupOf(h) ? h : null; stage.style.cursor = hover ? "pointer" : ""; };
-  E.onClick = h => { if (!h || !groupOf(h)) return; const key = keyOf(h); if (pinned.some(p => `${p.kind}:${p.id}` === key)) unpin(key); else pin({ kind: h.kind, id: h.id }); };
+  E.onClick = h => { if (!h || !groupOf(h)) return; const key = keyOf(h); if (isPinned(key)) unpin(key); else pin({ kind: h.kind, id: h.id }); };
 
-  // ---- radar: everything detected around the camera this frame; the view cone points up ----
-  function drawRadar(st) {
-    const cv = $("radar"), c = cv.getContext("2d"), S = cv.width, R = S / 2 - 14, o = S / 2, F = st.data.frames[st.fi];
-    c.clearRect(0, 0, S, S);
-    c.strokeStyle = "#dfe3ea"; c.lineWidth = 1.5; for (const f of [1, 0.66, 0.33]) { c.beginPath(); c.arc(o, o, R * f, 0, 7); c.stroke(); }
-    const half = E.fov / 2 * E.deg, g = c.createRadialGradient(o, o, 0, o, o, R);
-    g.addColorStop(0, "rgba(47,124,246,.55)"); g.addColorStop(1, "rgba(47,124,246,.04)");
-    c.fillStyle = g; c.beginPath(); c.moveTo(o, o); c.arc(o, o, R, -Math.PI / 2 - half, -Math.PI / 2 + half); c.closePath(); c.fill();
-    if (!F) return;
-    const dot = (yw, dist, col, rad) => { const a = (yw - E.yaw) * E.deg, rr = Math.min(1, dist / 14) * R; c.fillStyle = col; c.beginPath(); c.arc(o + Math.sin(a) * rr, o - Math.cos(a) * rr, rad, 0, 7); c.fill(); };
-    if (show.object) { for (const x of F.o) if (x[1] >= E.conf) dot(x[2], 11, COL.object, 4.5); for (const x of F.l2) if (x[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(x[0])) dot(x[2], x[7] || 9, COL.object, 4.5); }
-    if (show.person) for (const x of F.p) if (x[1] >= E.conf && x[7]) dot(x[2], x[7], COL.person, 5.5);
-    c.fillStyle = COL.space; c.beginPath(); c.arc(o, o, 7, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 2.5; c.stroke();
-    c.fillStyle = "#8a93a6"; c.font = "600 18px Inter, sans-serif"; c.textAlign = "center"; c.fillText("14 m", o, o - R + 22);
+  // ---- map dial: heading-up (view direction = up), camera low in the circle, compass ring around ----
+  // Aerial imagery (Esri World Imagery) is drawn under it when the walk is placed on the map (georef.json).
+  const tiles = new Map();
+  function tile(z, x, y) {
+    const key = `${z}/${x}/${y}`; let t = tiles.get(key);
+    if (!t) { t = new Image(); t.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`; tiles.set(key, t); }
+    return t.complete && t.naturalWidth ? t : null;
   }
-
-  // ---- compass: real bearing when the walk is placed on the map (georef), otherwise relative to the walking direction ----
-  function drawCompass(st) {
-    const cv = $("compass"), c = cv.getContext("2d"), S = cv.width, o = S / 2, R = o - 6;
+  let dialHits = [];
+  function drawDial(st) {
+    const cv = $("dial"), c = cv.getContext("2d"), S = cv.width, o = S / 2, RING = 40, Ri = o - RING, cx = o, cy = o + Ri * 0.38, s = Ri / 15;   // px per metre
+    const d = st.data, fi = st.fi, F = d.frames[fi], geo = st.cam, h = E.yaw * D2R;
+    dialHits = [];
     c.clearRect(0, 0, S, S);
-    c.fillStyle = "rgba(255,255,255,.92)"; c.beginPath(); c.arc(o, o, R, 0, 7); c.fill();
-    c.strokeStyle = "#e3e6ec"; c.lineWidth = 2; c.beginPath(); c.arc(o, o, R - 30, 0, 7); c.stroke();
-    const rel = ((E.yaw - fwd() + 540) % 360) - 180, geo = !!st.cam, head = geo ? st.cam.bearing : rel, labels = geo ? ["N", "E", "S", "W"] : ["Ahead", "R", "Back", "L"];
-    c.fillStyle = "#1d2433"; c.textAlign = "center"; c.textBaseline = "middle";
-    labels.forEach((t, i) => { const a = (i * 90 - head) * E.deg; c.font = `600 ${t.length > 1 ? 17 : 21}px Inter, sans-serif`; c.fillText(t, o + Math.sin(a) * (R - 16), o - Math.cos(a) * (R - 16)); });
-    c.fillStyle = COL.space; c.beginPath(); c.moveTo(o, o - 34); c.lineTo(o + 15, o + 14); c.lineTo(o, o + 5); c.lineTo(o - 15, o + 14); c.closePath(); c.fill();
-    const deg = Math.round(((head % 360) + 360) % 360);
-    $("compassCap").textContent = (geo ? `facing ${deg}° · ` : "") + (Math.abs(rel) < 8 ? "looking ahead" : `${Math.abs(Math.round(rel))}° ${rel > 0 ? "right" : "left"} of walking direction`);
-  }
-
-  // ---- mini map (needs data/processed/<walk>/georef.json): OSM streets + buildings, route, view arrow + cone, nearby entities ----
-  let mm = null, mmRoute = null, mmCone = null, mmMe = null, mmDots = null;
-  const ARROW = `<svg class="mm-arrow" viewBox="0 0 34 34"><path d="M17 3 28 30 17 23.5 6 30z" fill="#2f7cf6" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
-  const offset = (lat, lon, brg, m) => [lat + m * Math.cos(brg * E.deg) / 110574, lon + m * Math.sin(brg * E.deg) / (111320 * Math.cos(lat * E.deg))];
-  function mapWalk() {
-    E.ready.then(() => {
-      const g = E.geo.walks[E.walk], has = !!(g && window.L);
-      $("minimap").hidden = !has; $("radar").hidden = has;
-      if (!has) return;
-      if (!mm) {
-        mm = L.map("mm", { zoomControl: false, attributionControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 });
-        mm.attributionControl.setPrefix("");
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 21, maxNativeZoom: 19, attribution: "© OpenStreetMap" }).addTo(mm);
-        mmCone = L.polygon([[0, 0]], { stroke: false, fillColor: "#2f7cf6", fillOpacity: .28, interactive: false }).addTo(mm);
-        mmDots = L.layerGroup().addTo(mm);
-        mmMe = L.marker([0, 0], { icon: L.divIcon({ className: "", html: ARROW, iconSize: [0, 0] }), interactive: false, zIndexOffset: 1000 }).addTo(mm);
+    c.save(); c.beginPath(); c.arc(o, o, Ri, 0, 7); c.clip();
+    // background
+    if (geo) {
+      const z = 19, lat = geo.lat, mpp = 40075016.686 * Math.cos(lat * D2R) / (256 * 2 ** z), k = s * mpp;   // canvas px per tile px
+      const n = 2 ** z, X = (geo.lon + 180) / 360 * n, Y = (1 - Math.log(Math.tan(lat * D2R) + 1 / Math.cos(lat * D2R)) / Math.PI) / 2 * n;
+      c.fillStyle = "#3b4150"; c.fillRect(0, 0, S, S);
+      c.save(); c.translate(cx, cy); c.rotate(-geo.bearing * D2R);
+      const span = Math.ceil(S / (256 * k)) + 1;
+      for (let ty = Math.floor(Y) - span; ty <= Math.floor(Y) + span; ty++) for (let tx = Math.floor(X) - span; tx <= Math.floor(X) + span; tx++) {
+        const im = tile(z, tx, ty); if (im) c.drawImage(im, (tx - X) * 256 * k, (ty - Y) * 256 * k, 256 * k + 1, 256 * k + 1);
       }
-      if (mmRoute) mmRoute.remove();
-      mmRoute = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(x => x[0] != null), { color: "#1d2433", weight: 3, opacity: .45, dashArray: "4 5", interactive: false }).addTo(mm);
-      const i0 = g.lat.findIndex(v => v != null); mm.setView([g.lat[i0], g.lon[i0]], 19.25);
-    });
+      c.restore();
+      c.fillStyle = "rgba(10,14,22,.18)"; c.fillRect(0, 0, S, S);
+    } else {
+      const g = c.createRadialGradient(cx, cy, 0, cx, cy, Ri * 1.6); g.addColorStop(0, "#39414f"); g.addColorStop(1, "#1b2029"); c.fillStyle = g; c.fillRect(0, 0, S, S);
+      // a 5 m ground grid that moves with the walk
+      const cam = camAt(fi), G = 5; c.strokeStyle = "rgba(255,255,255,.07)"; c.lineWidth = 2;
+      c.save(); c.translate(cx, cy); c.rotate(-h);
+      for (let gx = Math.floor((cam[0] - 30) / G) * G; gx <= cam[0] + 30; gx += G) { c.beginPath(); c.moveTo((gx - cam[0]) * s, -30 * s); c.lineTo((gx - cam[0]) * s, 30 * s); c.stroke(); }
+      for (let gy = Math.floor((cam[1] - 30) / G) * G; gy <= cam[1] + 30; gy += G) { c.beginPath(); c.moveTo(-30 * s, -(gy - cam[1]) * s); c.lineTo(30 * s, -(gy - cam[1]) * s); c.stroke(); }
+      c.restore();
+    }
+    // world (m) -> dial px, heading-up
+    const cam = camAt(fi), toDial = (wx, wy) => { const dx = wx - cam[0], dy = wy - cam[1]; return [cx + (dx * Math.cos(h) - dy * Math.sin(h)) * s, cy - (dx * Math.sin(h) + dy * Math.cos(h)) * s]; };
+    const polar = (yw, dist) => [cx + Math.sin((yw - E.yaw) * D2R) * dist * s, cy - Math.cos((yw - E.yaw) * D2R) * dist * s];
+    // view cone
+    const half = E.fov / 2 * D2R, L = 13 * s, cg = c.createRadialGradient(cx, cy, 0, cx, cy, L);
+    cg.addColorStop(0, "rgba(90,175,255,.55)"); cg.addColorStop(1, "rgba(90,175,255,.06)");
+    c.fillStyle = cg; c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, L, -Math.PI / 2 - half, -Math.PI / 2 + half); c.closePath(); c.fill();
+    c.strokeStyle = "rgba(140,200,255,.8)"; c.lineWidth = 2;
+    for (const rr of [0.45, 0.8]) { c.beginPath(); c.arc(cx, cy, L * rr, -Math.PI / 2 - half, -Math.PI / 2 + half); c.stroke(); }
+    c.setLineDash([6, 8]); c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(-half) * L * 1.15, cy - Math.cos(half) * L * 1.15); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(half) * L * 1.15, cy - Math.cos(half) * L * 1.15); c.stroke(); c.setLineDash([]);
+    // walk path behind the camera
+    c.strokeStyle = "rgba(90,175,255,.9)"; c.lineWidth = 3; c.setLineDash([8, 8]); c.beginPath();
+    for (let f = Math.max(0, fi - 60); f <= fi; f += 2) { const p = toDial(...camAt(f)); f === Math.max(0, fi - 60) ? c.moveTo(...p) : c.lineTo(...p); } c.stroke(); c.setLineDash([]);
+    if (F) {
+      // objects: red squares (distance from the box bottom on the ground when not stored)
+      if (show.object) {
+        const hcam = d.camera_height_m || 1.3, sq = (yw, dist) => { const [x, y] = polar(yw, dist); c.fillStyle = COL.object; c.strokeStyle = "#fff"; c.lineWidth = 2.5; c.beginPath(); c.rect(x - 9, y - 9, 18, 18); c.fill(); c.stroke(); };
+        for (const x of F.l2) if (x[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(x[0]) && x[7] && x[7] < 25) sq(x[2], x[7]);
+        for (const x of F.o) if (x[1] >= E.conf && x[6] < -3) { const dist = hcam / Math.tan(-x[6] * D2R); if (dist < 25) sq(x[2], dist); }
+      }
+      // people: trails (last 5 s) + dots
+      if (show.person) for (const x of F.p) {
+        if (x[1] < E.conf || !x[7] || ((d.tracks[x[0]] || [])[2] || 0) < E.minLen) continue;
+        const m = PP && PP.get(x[0]);
+        if (show.trails && m) {
+          c.strokeStyle = "rgba(245,197,24,.9)"; c.lineWidth = 3.5; c.setLineDash([7, 7]); c.beginPath(); let started = false;
+          for (let f = fi - 25; f <= fi; f++) { const p = m.get(f); if (!p) continue; const q = toDial(p[0], p[1]); started ? c.lineTo(...q) : c.moveTo(...q); started = true; }
+          c.stroke(); c.setLineDash([]);
+        }
+        const [px, py] = polar(x[2], x[7]), pin_ = isPinned(`person:${x[0]}`);
+        c.fillStyle = COL.person; c.strokeStyle = pin_ ? "#fff" : "#3a2f00"; c.lineWidth = pin_ ? 5 : 2.5; c.beginPath(); c.arc(px, py, 11, 0, 7); c.fill(); c.stroke();
+        dialHits.push([px, py, { kind: "person", id: x[0] }]);
+      }
+    }
+    // camera
+    c.fillStyle = "#4aa3ff"; c.strokeStyle = "#fff"; c.lineWidth = 5; c.beginPath(); c.arc(cx, cy, 15, 0, 7); c.fill(); c.stroke();
+    c.restore();
+    // compass ring
+    c.lineWidth = RING; c.strokeStyle = "rgba(255,255,255,.94)"; c.beginPath(); c.arc(o, o, Ri + RING / 2, 0, 7); c.stroke();
+    c.strokeStyle = "rgba(0,0,0,.08)"; c.lineWidth = 2; c.beginPath(); c.arc(o, o, Ri, 0, 7); c.stroke();
+    const ringAt = deg => [o + Math.sin(deg * D2R) * (Ri + RING / 2), o - Math.cos(deg * D2R) * (Ri + RING / 2)];
+    // the ring is centred on the circle while the camera sits lower; directions are drawn as seen from the camera position projected to the ring
+    const dirOnRing = rel => { const a = rel * D2R, dx = Math.sin(a), dy = -Math.cos(a), bx = cx - o, by = cy - o, R0 = Ri + RING / 2;
+      const b = bx * dx + by * dy, t = -b + Math.sqrt(b * b - (bx * bx + by * by - R0 * R0)); return [cx + dx * t, cy + dy * t]; };
+    c.strokeStyle = "#9aa2b1"; c.lineWidth = 2;
+    const base = geo ? -geo.bearing : wrap(fwdAt(fi) - E.yaw);
+    for (let a = 0; a < 360; a += 15) { const rel = a + base; const [x, y] = dirOnRing(rel), [ux, uy] = [(x - o) / (Ri + RING / 2), (y - o) / (Ri + RING / 2)], L2 = a % 90 === 0 ? 0 : (a % 45 === 0 ? 9 : 5);
+      if (L2) { c.beginPath(); c.moveTo(x - ux * L2, y - uy * L2); c.lineTo(x + ux * L2, y + uy * L2); c.stroke(); } }
+    c.textAlign = "center"; c.textBaseline = "middle";
+    if (geo) {
+      [["N", 0], ["E", 90], ["S", 180], ["W", 270]].forEach(([t, a]) => { const [x, y] = dirOnRing(a - geo.bearing); c.fillStyle = t === "N" ? "#e8475f" : "#1d2433"; c.font = "800 30px Inter, sans-serif"; c.fillText(t, x, y); });
+    } else {
+      const rel = wrap(fwdAt(fi) - E.yaw);
+      [["AHEAD", rel, "#2f7cf6"], ["BACK", rel + 180, "#4b5365"], ["L", rel - 90, "#4b5365"], ["R", rel + 90, "#4b5365"]].forEach(([t, a, col]) => {
+        const [x, y] = dirOnRing(a); c.fillStyle = col; c.font = `800 ${t.length > 1 ? 22 : 28}px Inter, sans-serif`; c.fillText(t, x, y); });
+    }
+    // view marker at the top of the ring
+    c.fillStyle = "#2f7cf6"; c.beginPath(); c.moveTo(o, RING + 4); c.lineTo(o + 11, RING + 20); c.lineTo(o - 11, RING + 20); c.closePath(); c.fill();   // view marker, inside the ring
+    const rel = Math.round(wrap(E.yaw - fwdAt(fi)));
+    $("dialCap").textContent = (geo ? `facing ${Math.round(geo.bearing)}° · ` : "") + (follow ? "following the walking direction" : Math.abs(rel) < 8 ? "looking ahead" : `${Math.abs(rel)}° ${rel > 0 ? "right" : "left"} of the walking direction`) +
+      (geo ? "" : "\naerial map: needs the shop table");
   }
-  setInterval(() => {
-    const st = E.state; if (!mm || !st || !st.cam || $("minimap").hidden) return;
-    const { lat, lon, bearing, yaw0 } = st.cam;
-    mm.setView([lat, lon], mm.getZoom(), { animate: false });
-    mmMe.setLatLng([lat, lon]); const svg = mmMe.getElement() && mmMe.getElement().querySelector("svg"); if (svg) svg.style.transform = `rotate(${bearing}deg)`;
-    const cone = [[lat, lon]]; for (let k = -4; k <= 4; k++) cone.push(offset(lat, lon, bearing + k * E.fov / 8, 16)); mmCone.setLatLngs(cone);
-    mmDots.clearLayers(); const F = st.data.frames[st.fi]; if (!F) return;
-    const put = (yw, dist, col, r) => L.circleMarker(offset(lat, lon, yaw0 + yw, dist), { radius: r, weight: 1.5, color: "#fff", fillColor: col, fillOpacity: 1, interactive: false }).addTo(mmDots);
-    if (show.object) for (const x of F.l2) if (x[7] && x[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(x[0])) put(x[2], x[7], COL.object, 3.5);
-    if (show.person) for (const x of F.p) if (x[7] && x[1] >= E.conf) put(x[2], x[7], COL.person, 4.5);
-  }, 150);
+  $("dial").addEventListener("click", ev => {
+    const r = $("dial").getBoundingClientRect(), k = $("dial").width / r.width, x = (ev.clientX - r.left) * k, y = (ev.clientY - r.top) * k;
+    const hit = dialHits.find(([hx, hy]) => Math.hypot(hx - x, hy - y) < 16);
+    if (hit) { const key = `${hit[2].kind}:${hit[2].id}`; isPinned(key) ? unpin(key) : pin(hit[2]); }
+  });
 
   // ---- stats popover ----
   function updateStats(st) {
@@ -562,13 +631,13 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const SPEEDS = [0.5, 1, 1.5, 2];
   $("speed").addEventListener("click", () => { const s = SPEEDS[(SPEEDS.indexOf(E.speed) + 1) % SPEEDS.length]; E.setSpeed(s); $("speed").textContent = s.toFixed(1) + "x"; });
   let spinning = false;
-  $("spin").addEventListener("click", () => { spinning = !spinning; $("spin").setAttribute("aria-pressed", String(spinning)); });
+  $("spin").addEventListener("click", () => { spinning = !spinning; $("spin").setAttribute("aria-pressed", String(spinning)); if (spinning) setFollow(false); });
   setInterval(() => { if (spinning) E.look(E.yaw + 0.25); }, 16);
   const fsToggle = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
   $("fs").addEventListener("click", fsToggle); $("fsTop").addEventListener("click", fsToggle);
   setInterval(() => {
     const st = E.state; if (!st) return;
-    $("tNow").textContent = fmt(st.t); $("tDur").textContent = fmt(st.duration); 
+    $("tNow").textContent = fmt(st.t); $("tDur").textContent = fmt(st.duration);
     const p = st.duration ? st.t / st.duration * 100 : 0; $("thumb").style.left = p + "%"; $("done").style.width = p + "%";
   }, 100);
 
@@ -585,16 +654,16 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   for (const [b, p] of Object.entries(pops)) $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
   $("setBtn").addEventListener("click", () => $("tLayers").click());
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops(); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
-  $("tCenter").addEventListener("click", lookAhead);
+  $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
   const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 400); }, 1800); };
   $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; bookmarks[E.walk].push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
   $("searchIn").addEventListener("keydown", ev => {
     ev.stopPropagation();                      // keep typing out of the viewer's keyboard shortcuts
     if (ev.key !== "Enter") return;
     const id = parseInt($("searchIn").value.replace(/\D/g, ""), 10), t = E.data && E.data.tracks[id];
-    if (!t) { $("searchHint").textContent = `No person P-${isNaN(id) ? "?" : id} on this walk.`; return; }
-    E.seekFrame(t[0] + 1); pin({ kind: "person", id }); closePops(); $("searchHint").textContent = "Jumps to when they first appear and opens their card.";
-    setTimeout(() => { const e = (E.state?.entities || []).find(x => x.kind === "person" && x.id === id); if (e) E.look(e.yaw); else { const F = E.data.frames[t[0] + 1], r = F && F.p.find(x => x[0] === id); if (r) E.look(r[2]); } }, 300);
+    if (!t) { $("searchHint").textContent = `No person P${isNaN(id) ? "?" : id} on this walk.`; return; }
+    E.seekFrame(t[0] + 1); pin({ kind: "person", id }); closePops(); setFollow(false); $("searchHint").textContent = "Jumps to when they first appear and opens their card.";
+    setTimeout(() => { const F = E.data.frames[t[0] + 1], r = F && F.p.find(x => x[0] === id); if (r) E.look(r[2]); }, 300);
   });
   document.querySelectorAll("[data-show]").forEach(i => i.addEventListener("change", () => {
     show[i.dataset.show] = i.checked; const chip = document.querySelector(`.chip[data-k="${i.dataset.show}"]`); if (chip) chip.setAttribute("aria-pressed", String(i.checked)); autoAt = 0;
