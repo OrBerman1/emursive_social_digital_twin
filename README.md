@@ -13,6 +13,13 @@ immersive 360° viewer with the observations anchored in the scene, plus GIS-rea
 
 ---
 
+> **macOS (Apple Silicon):** use `setup_mac.command` and `start_viewer_mac.command` instead of the `.bat`
+> files (double-click in Finder, or run them in Terminal). Install first: `brew install python@3.13 ffmpeg
+> tesseract tesseract-lang rust`. The GPU stages use Apple MPS, video is encoded with VideoToolbox, and the
+> gyro reader is built from source into `.venv` (no `.venv-imu` needed). If the LABAI files sit in the folder
+> above the repo, `setup_mac.command` links them into `data/raw/LABAI/`. Run the pipeline with
+> `.venv/bin/python pipeline/run_all.py`.
+
 ## 1. Requirements
 
 - **Windows 10/11** with an **NVIDIA GPU** (tested on an RTX 4060 Laptop, 8 GB). A CPU works but detection is many times slower.
@@ -100,6 +107,10 @@ It is safe to run again; existing environments and downloads are reused.
 To force a stage to recompute, run it alone with `--force`.
 
 ## 5. Open the viewer
+
+**Main viewer (design `ui_alex`):** double-click **`start_viewer_ui_alex.bat`** → http://localhost:8006/viewer/ui_alex.html
+(Mac: `start_viewer_ui_alex_mac.command`). Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at
+the top. The original viewer below still works and has the same data.
 
 1. Double-click **`start_viewer.bat`**. A black window (the local server) opens and the viewer opens in
    your browser at **http://localhost:8000/viewer/**. Keep the black window open while viewing.

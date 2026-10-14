@@ -92,6 +92,8 @@ def detect_text(walk: str, variant: str, step: int, force: bool) -> pd.DataFrame
     import torch
     if torch.cuda.is_available():
         det = det.cuda()          # docTR predictors default to CPU (~80 min/walk); GPU is minutes
+    elif torch.backends.mps.is_available():
+        det = det.to("mps")
     index = json.loads((fdir / "index.json").read_text(encoding="utf-8"))[::step]
     first = cv2.imread(str(fdir / index[0]["file"]))
     sampler = TileSampler(tiles, first.shape[1], first.shape[0])

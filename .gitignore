@@ -14,3 +14,6 @@ projects/*/config/anchor_files/
 .venv-imu/
 __pycache__/
 *.pyc
+
+# macOS Finder metadata
+.DS_Store

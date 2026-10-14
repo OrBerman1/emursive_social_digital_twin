@@ -14,9 +14,12 @@
   definitions unresolved) — shown instead as locations (`frontage.py`).
 - **Viewers:** original `viewer/index.html` (`start_viewer.bat`, port 8000) + five design variants on the
   shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
-  (`start_viewer_1..5_*.bat`, ports 8001–8005). Design is PARKED until all features are done (user,
-  14 Oct): add new features to the base viewer `viewer/index.html` only, and list each one in PLAN.md
-  ("to port to the designs") so the chosen design can pick them up later.
+  (`start_viewer_1..5_*.bat`, ports 8001–8005). **Chosen design language (user, 14 Oct): Alex's `ui_alex`**
+  (`viewer/ui_alex.html` on `engine.js`, branch `ui_alex`, `start_viewer_ui_alex.bat`, port 8006): light glass
+  floating UI, Inter, three groups people (yellow circle) / objects (red square) / places (blue triangle), dark
+  info cards with leader lines, tool rail, marker timeline, round map. All features are ported there (project
+  awareness, Ask Jeeves, attached files, bookmarks = comments, full map with layers / filters / speed map / crowds /
+  segment summary, food, frontage, pictured people). New UI work goes into `ui_alex.html` in this language.
 - **Projects (14 Oct):** `viewer/projects.html` + `pipeline/projects_api.py`: add data to a project or create a
   new area; analysis = `run_all.py --project <id>` (conditional plan, progress in `<processed>/job.json`). Paths come
   from `common.py` (`SHUK_PROJECT`; default `shuk_hatikvah` = the original `data/` + `config/`). New projects live in

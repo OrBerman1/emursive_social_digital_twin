@@ -5,72 +5,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shuk Twin · Projects</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Projects page: same tokens as the viewer (viewer/index.html) */
+/* Projects page in the ui_alex design language (viewer/ui_alex.html): light, Inter, blue accent, pill buttons; same dark mode */
 :root {
-  --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f; --accent: #4fb3bb;
-  --ok: #5ec962; --warn: #E69F00; --bad: #ff8a80;
-  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-  color-scheme: dark;
+  --person: #f5c518; --object: #ef4b5f; --space: #3d8bff; --food: #009E73; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
+  --bg: #f4f6f9; --surf: #ffffff; --surf2: #f3f5f9; --hov: #eef2fb; --shadow: 0 10px 30px rgba(20,25,40,.10);
+  --ok: #009E73; --bad: #d64545; --sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; color-scheme: light;
 }
+:root[data-theme="dark"] { --ink: #e8ebf2; --soft: #9aa3b5; --line: #2c3445; --bg: #0b0e14; --surf: #161a23; --surf2: #232a38; --hov: #273149;
+  --shadow: 0 10px 30px rgba(0,0,0,.5); --ok: #3fcf9f; --bad: #ff7d8e; color-scheme: dark; }
 * { box-sizing: border-box; } [hidden] { display: none !important; }
-html, body { margin: 0; } body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--body); }
-.wrap { max-width: 1300px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
-header { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
-h1 { font: 700 1.45rem var(--display); margin: 0; } h1 span { color: var(--muted); font: 500 1rem var(--body); }
-h2 { font: 700 1.05rem var(--display); margin: 0; } h3 { font: 600 11px var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin: 0; }
-a { color: var(--accent); }
-button, .btn { font: 600 13px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 7px 13px; cursor: pointer; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
-button.primary, .btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-button:disabled { opacity: .45; cursor: default; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-input, select { font: 13px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 7px 9px; }
-.main { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
+html, body { margin: 0; } body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
+header { height: 54px; background: var(--surf); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding: 0 18px; position: sticky; top: 0; z-index: 5; }
+header .logo { width: 32px; height: 32px; }
+header h1 { margin: 0; font-size: 16px; font-weight: 600; border-left: 1px solid var(--line); padding-left: 16px; }
+header h1 small { font-weight: 500; color: var(--soft); font-size: 13px; margin-left: 6px; }
+.grow { flex: 1; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 22px 18px 40px; }
+h2 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); margin: 0; }
+a { color: var(--space); }
+button, .btn { font: 600 13px var(--sans); color: var(--ink); background: var(--surf); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer;
+  text-decoration: none; display: inline-flex; gap: 7px; align-items: center; }
+button:hover, .btn:hover { background: var(--hov); }
+button.primary, .btn.primary { background: var(--space); color: #fff; border-color: var(--space); box-shadow: 0 2px 8px rgba(61,139,255,.3); }
+button.primary:hover, .btn.primary:hover { filter: brightness(1.06); background: var(--space); }
+button:disabled { opacity: .45; cursor: default; box-shadow: none; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--space); outline-offset: 2px; }
+input, select { font: 13px var(--sans); background: var(--surf); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; }
+input[type=file] { padding: 6px; background: var(--surf2); }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--space); }
+.main { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
 @media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--surf); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 16px; min-width: 0; box-shadow: var(--shadow); }
 .plist { display: grid; gap: 8px; }
-.pitem { text-align: left; display: grid; gap: 3px; padding: 10px 12px; width: 100%; }
-.pitem[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.pitem b { font: 700 .95rem var(--display); } .pitem small { color: var(--muted); font-size: 12px; }
+.pitem { text-align: left; display: grid; gap: 2px; padding: 11px 14px; width: 100%; border-radius: 14px; background: var(--surf); }
+.pitem[aria-current="true"] { border-color: var(--space); background: var(--hov); box-shadow: inset 3px 0 0 var(--space); }
+.pitem b { font-size: 14.5px; } .pitem small { color: var(--soft); font-size: 12px; font-weight: 500; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1100px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
-.drop { border: 1.5px dashed var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 8px; align-content: start; min-height: 150px; transition: border-color .15s, background .15s; }
-.drop.over { border-color: var(--accent); background: rgba(79,179,187,.08); }
-.drop .t { font-weight: 600; } .drop .muted { font-size: 12px; }
-.muted { color: var(--muted); }
-.bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; } .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.drop { border: 1.5px dashed var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 9px; align-content: start; min-height: 170px; background: var(--surf2); transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--space); background: var(--hov); }
+.drop .t { font-weight: 700; display: flex; align-items: center; gap: 9px; font-size: 14px; }
+.drop .t .ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; }
+.drop[data-kind="video"] .ic { background: #e2ecff; color: var(--space); } .drop[data-kind="store"] .ic { background: #ffe1e6; color: var(--object); } .drop[data-kind="anchors"] .ic { background: #fff3c4; color: #b88a00; }
+:root[data-theme="dark"] .drop[data-kind="video"] .ic { background: rgba(61,139,255,.22); } :root[data-theme="dark"] .drop[data-kind="store"] .ic { background: rgba(239,75,95,.2); }
+:root[data-theme="dark"] .drop[data-kind="anchors"] .ic { background: rgba(245,197,24,.18); color: var(--person); }
+.drop .muted { font-size: 12.5px; } .drop code { font-size: 11.5px; background: var(--surf); border: 1px solid var(--line); border-radius: 6px; padding: 0 4px; }
+.muted { color: var(--soft); }
+.bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; } .bar > i { display: block; height: 100%; width: 0; background: var(--space); border-radius: 999px; transition: width .3s; }
 .msg { font-size: 12.5px; } .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; } th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 500; font-size: 12px; } td.n { font-family: var(--mono); }
-.stages { display: grid; gap: 4px; }
-.stage { display: grid; grid-template-columns: 22px minmax(0, 1fr) 120px 48px; gap: 8px; align-items: center; font-size: 13px; }
-.stage .note { grid-column: 2 / -1; color: var(--muted); font-size: 11.5px; white-space: pre-wrap; margin-top: -2px; }
-.stage.skipped { opacity: .55; } .stage.failed .note { color: var(--bad); }
-.stage .pct { font-family: var(--mono); font-size: 12px; text-align: right; }
-.big { font: 700 1.6rem var(--display); }
-.chip { font: 600 11px var(--mono); border: 1px solid var(--line); border-radius: 10px; padding: 1px 7px; }
-.chip.ok { color: var(--ok); border-color: var(--ok); } .chip.no { color: var(--muted); }
-dialog { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 16px; width: min(560px, 92vw); }
-dialog::backdrop { background: rgba(0,0,0,.55); }
-dialog form { display: grid; gap: 10px; }
-label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; } th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--soft); font-weight: 600; font-size: 12px; } td.n { font-variant-numeric: tabular-nums; }
+.stages { display: grid; gap: 6px; }
+.stage { display: grid; grid-template-columns: 22px minmax(0, 1fr) 140px 46px; gap: 10px; align-items: center; font-size: 13.5px; }
+.stage .st { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; }
+.stage.done .st { background: var(--ok); } .stage.running .st { background: var(--space); animation: pulse 1.2s infinite; } .stage.failed .st { background: var(--bad); }
+.stage.pending .st { border: 2px solid var(--line); } .stage.skipped .st { border: 2px dashed var(--line); }
+@keyframes pulse { 50% { opacity: .45; } }
+.stage .note { grid-column: 2 / -1; color: var(--soft); font-size: 12px; white-space: pre-wrap; margin-top: -3px; }
+.stage.skipped { opacity: .6; } .stage.failed .note { color: var(--bad); }
+.stage .pct { font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; color: var(--soft); }
+.big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chip { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 9px; background: var(--surf2); color: var(--soft); }
+.chip.ok { background: rgba(0,158,115,.12); color: var(--ok); } .chip.no { color: var(--soft); }
+dialog { background: var(--surf); color: var(--ink); border: 1px solid var(--line); border-radius: 20px; padding: 22px; width: min(560px, 92vw); box-shadow: var(--shadow); }
+dialog::backdrop { background: rgba(10,14,22,.45); backdrop-filter: blur(3px); }
+dialog form { display: grid; gap: 12px; }
+label.f { display: grid; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--soft); }
+.tseg { display: flex; background: var(--surf2); border-radius: 999px; padding: 3px; border: 1px solid var(--line); }
+.tseg button { border: 0; background: none; box-shadow: none; padding: 4px 11px; font-size: 12px; color: var(--soft); }
+.tseg button[aria-pressed="true"] { background: var(--surf); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.sect { display: grid; gap: 10px; }
+.keybox { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 9px; }
 </style>
+<script>try { const t = localStorage.getItem("ui_alex.theme") || "light"; document.documentElement.dataset.theme = t === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : t; } catch (e) {}</script>
 </head>
 <body>
+<header>
+  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
+  <h1>Projects <small>market walks, analysed once, explored in the viewer</small></h1>
+  <div class="grow"></div>
+  <div class="tseg" id="themeSeg" aria-label="Theme"><button data-th="light">Light</button><button data-th="dark">Dark</button><button data-th="system">System</button></div>
+  <button class="primary" id="newBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>New project</button>
+  <a class="btn" id="openViewer" href="ui_alex.html">Open viewer ↗</a>
+</header>
 <div class="wrap">
-  <header>
-    <h1>Projects <span>· market walks, analysed once, explored in the viewer</span></h1>
-    <div class="row"><button class="primary" id="newBtn">＋ New project</button><a class="btn" id="openViewer" href="index.html">Open viewer ↗</a></div>
-  </header>
   <div class="main">
     <aside class="card">
       <h3>Your projects</h3>
       <div class="plist" id="plist"></div>
-      <div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px">
+      <div class="keybox">
         <h3>Claude key</h3>
-        <div class="muted" style="font-size:12.5px">Anthropic API key (sk-ant-…) or Amazon Bedrock API key (ABSK…). Used by 🎩 Ask Jeeves and for reading signs, the pictured-people check and stall materials (without a key these run automatically, weaker). Stored on this computer only, outside the project.</div>
+        <div class="muted" style="font-size:12.5px">Anthropic API key (sk-ant-…) or Amazon Bedrock API key (ABSK…). Used by Ask Jeeves and for reading signs, the pictured-people check and stall materials (without a key these run automatically, weaker). Stored on this computer only, outside the project.</div>
         <div class="row"><span class="chip" id="keyState">…</span></div>
         <input type="password" id="keyIn" placeholder="sk-ant-… or ABSK…" autocomplete="off" aria-label="Claude key">
         <div class="row"><button id="keySave">Save key</button><button id="keyCheck">Check</button><button id="keyDel">Remove</button></div>
@@ -80,38 +109,41 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
 
     <section class="card" id="detail">
       <div class="row" style="justify-content:space-between"><h2 id="pName">—</h2><a class="btn" id="pOpen" href="#">Open in viewer ↗</a></div>
-      <div>
+      <div class="sect">
         <h3>Data in this project</h3>
         <table><thead><tr><th>Walk</th><th>Street / label</th><th>Video</th><th>Analysed</th><th>Anchors</th></tr></thead><tbody id="walks"></tbody></table>
-        <div class="row muted" style="margin-top:6px;font-size:12.5px">Store table: <span id="storeState"></span></div>
+        <div class="row muted" style="font-size:13px">Store table: <span id="storeState"></span></div>
       </div>
-      <div>
+      <div class="sect">
         <h3>Add data</h3>
-        <div class="grid3" style="margin-top:8px">
+        <div class="grid3">
           <div class="drop" data-kind="video">
-            <span class="t">🎥 360 video</span><span class="muted">Insta360 ONE RS <b>.insv</b> (one walk). Required for any analysis.</span>
+            <span class="t"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="m16 10.5 5-3v9l-5-3"/></svg></span>360 video</span>
+            <span class="muted">Insta360 ONE RS <b>.insv</b> (one walk). Required for any analysis.</span>
             <input type="text" id="vLabel" placeholder="Street / walk name (e.g. Etzel St)" aria-label="Walk name">
             <input type="file" id="vFile" accept=".insv" aria-label="Choose .insv video">
             <div class="bar"><i></i></div><div class="msg"></div>
           </div>
           <div class="drop" data-kind="store">
-            <span class="t">🏪 Store table</span><span class="muted"><b>.xlsx</b> with Shop_Name, X, Y (WGS84) and the other columns of the team's table. Needed for the map.</span>
+            <span class="t"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 10h16v10H4z"/><path d="M3 10 5 4h14l2 6"/><path d="M10 20v-5h4v5"/></svg></span>Store table</span>
+            <span class="muted"><b>.xlsx</b> with Shop_Name, X, Y (WGS84) and the other columns of the team's table. Needed for the map.</span>
             <input type="file" id="sFile" accept=".xlsx" aria-label="Choose store table">
             <div class="bar"><i></i></div><div class="msg"></div>
           </div>
           <div class="drop" data-kind="anchors">
-            <span class="t">📍 Anchor points</span><span class="muted"><b>.txt</b>: <code>Store f104 yaw -8; Other store f163 yaw 150</code> (frame and view yaw from the viewer). Needed for the map.</span>
+            <span class="t"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/></svg></span>Anchor points</span>
+            <span class="muted"><b>.txt</b>: <code>Store f104 yaw -8; Other store f163 yaw 150</code> (frame and view yaw from the viewer). Needed for the map.</span>
             <select id="aWalk" aria-label="Walk of these anchors"></select>
             <input type="file" id="aFile" accept=".txt" aria-label="Choose anchors file">
             <div class="bar"><i></i></div><div class="msg"></div>
           </div>
         </div>
       </div>
-      <div>
-        <div class="row" style="justify-content:space-between"><h3>Analysis</h3><span class="muted" id="jobWhen"></span></div>
-        <div class="row" style="margin-top:8px;align-items:center"><button class="primary" id="runBtn">▶ Run analysis</button><span class="big" id="jobPct"></span><span id="jobStatus" class="muted"></span></div>
-        <div class="bar" style="margin:8px 0 10px"><i id="jobBar"></i></div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:6px">Runs once per project, offline; finished steps are cached and skipped next time. A new walk takes about 1–1.5 h on the GPU; adding a store table or anchors only re-runs the map steps.</div>
+      <div class="sect">
+        <div class="row" style="justify-content:space-between"><h3>Analysis</h3><span class="muted" id="jobWhen" style="font-size:12.5px"></span></div>
+        <div class="row" style="align-items:center;gap:12px"><button class="primary" id="runBtn"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></svg>Run analysis</button><span class="big" id="jobPct"></span><span id="jobStatus" class="muted"></span></div>
+        <div class="bar"><i id="jobBar"></i></div>
+        <div class="muted" style="font-size:12.5px">Runs once per project, offline; finished steps are cached and skipped next time. A new walk takes about 1–1.5 h on the GPU; adding a store table or anchors only re-runs the map steps.</div>
         <div class="stages" id="stages"></div>
       </div>
     </section>
@@ -121,13 +153,13 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
 <dialog id="newDlg">
   <form method="dialog" id="newForm">
     <h2>New project</h2>
-    <div class="muted" style="font-size:12.5px">A project is one area (for example another market). A 360 video is required; the store table and anchor points can be added now or later — without them the map features stay off.</div>
+    <div class="muted" style="font-size:13px">A project is one area (for example another market). A 360 video is required; the store table and anchor points can be added now or later — without them the map features stay off.</div>
     <label class="f">Project name<input id="nName" required maxlength="80" placeholder="e.g. Carmel Market"></label>
     <label class="f">360 video (.insv, required)<input type="file" id="nVideo" accept=".insv" required></label>
     <label class="f">Street / walk name<input id="nLabel" placeholder="e.g. HaCarmel St"></label>
     <label class="f">Store table (.xlsx, optional)<input type="file" id="nStore" accept=".xlsx"></label>
     <label class="f">Anchor points for this walk (.txt, optional)<input type="file" id="nAnchors" accept=".txt"></label>
-    <label class="row" style="font-size:13px"><input type="checkbox" id="nRun" checked> Start the analysis when the upload is done</label>
+    <label class="row" style="font-size:13px;font-weight:500"><input type="checkbox" id="nRun" checked> Start the analysis when the upload is done</label>
     <div class="bar"><i id="nBar"></i></div><div class="msg" id="nMsg"></div>
     <div class="row" style="justify-content:flex-end"><button value="cancel" formnovalidate id="nCancel">Cancel</button><button class="primary" id="nCreate" value="default">Create project</button></div>
   </form>
@@ -152,7 +184,7 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
   function renderDetail() {
     const p = projects.find(x => x.id === cur); if (!p) return;
     $("pName").textContent = p.name;
-    $("pOpen").href = `index.html?project=${encodeURIComponent(p.id)}`; $("openViewer").href = $("pOpen").href;
+    $("pOpen").href = `ui_alex.html?project=${encodeURIComponent(p.id)}`; $("openViewer").href = $("pOpen").href;
     const ws = Object.entries(p.walks);
     $("walks").innerHTML = ws.map(([w, v]) => `<tr><td>${w}</td><td>${esc(v.label)}</td><td>${v.has_video ? '<span class="chip ok">✓</span>' : '<span class="chip no">missing</span>'}</td>` +
       `<td>${v.analysed ? '<span class="chip ok">✓</span>' : '<span class="chip no">not yet</span>'}</td><td class="n">${v.anchors || "—"}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">No walks yet — add a 360 video.</td></tr>`;
@@ -163,12 +195,12 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
   }
   async function loadJob() {
     const j = await api(`/api/job?project=${encodeURIComponent(cur)}`).catch(() => null); if (!j) return;
-    const ICON = { done: "✅", running: "⏳", pending: "○", skipped: "⤼", failed: "❌" };
+    const ICON = { done: "✓", running: "", pending: "", skipped: "", failed: "!" };
     $("jobPct").textContent = j.stages.length ? `${Math.round(j.overall_pct || 0)}%` : "";
     $("jobBar").style.width = `${j.overall_pct || 0}%`;
     $("jobStatus").textContent = { done: "finished", running: "running…", failed: "failed", stopped: "stopped", "never run": "not run yet" }[j.status] || j.status;
     $("jobWhen").textContent = j.finished ? `last run ${j.finished}` : j.started ? `started ${j.started}` : "";
-    $("stages").innerHTML = j.stages.map(s => `<div class="stage ${s.state}"><span>${ICON[s.state] || ""}</span><span>${esc(s.label)}</span>` +
+    $("stages").innerHTML = j.stages.map(s => `<div class="stage ${s.state}"><span class="st">${ICON[s.state] || ""}</span><span>${esc(s.label)}</span>` +
       `<div class="bar"><i style="width:${s.state === "done" ? 100 : s.pct || 0}%"></i></div><span class="pct">${s.state === "skipped" ? "skip" : s.state === "done" ? "100%" : `${Math.round(s.pct || 0)}%`}</span>` +
       (s.note ? `<span class="note">${esc(s.note)}</span>` : "") + `</div>`).join("") + (j.error ? `<div class="msg bad">${esc(j.error)}</div>` : "");
     $("runBtn").disabled = j.running || !Object.values(projects.find(x => x.id === cur)?.walks || {}).some(v => v.has_video);
@@ -233,7 +265,16 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
   $("keyDel").addEventListener("click", async () => { await api("/api/settings/apikey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "" }) }); keyMsg("Removed.", true); keyState(); });
   $("keyCheck").addEventListener("click", async () => { keyMsg("Checking…", true); const r = await api("/api/settings/apikey/check", { method: "POST" }).catch(e => ({ ok: false, message: e.message })); keyMsg(r.message, r.ok); });
 
-  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer.bat.</div>`; });
+  // theme: shared with the viewer (ui_alex.theme)
+  const sysDark = matchMedia("(prefers-color-scheme: dark)");
+  let theme = "light"; try { theme = localStorage.getItem("ui_alex.theme") || "light"; } catch (e) {}
+  const applyTheme = t => { theme = t; document.documentElement.dataset.theme = t === "system" ? (sysDark.matches ? "dark" : "light") : t;
+    document.querySelectorAll("#themeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.th === t))); try { localStorage.setItem("ui_alex.theme", t); } catch (e) {} };
+  $("themeSeg").addEventListener("click", ev => { const b = ev.target.closest("button[data-th]"); if (b) applyTheme(b.dataset.th); });
+  sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
+  applyTheme(theme);
+
+  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer_ui_alex.bat.</div>`; });
 })();
 </script>
 </body>

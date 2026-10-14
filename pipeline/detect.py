@@ -67,6 +67,8 @@ def run(walk: str, model_name: str, prompts: str | None, conf: float, imgsz: int
     else:
         model = YOLO(model_name)
     names = model.names
+    import torch
+    dev = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")  # ultralytics won't pick MPS itself
 
     first = cv2.imread(str(frames_dir / index[0]["file"]))
     sampler = TileSampler(tiles, first.shape[1], first.shape[0])
@@ -79,7 +81,7 @@ def run(walk: str, model_name: str, prompts: str | None, conf: float, imgsz: int
             for tile, img in zip(tiles, sampler.cut(equi)):
                 imgs.append(img)
                 meta.append((fr, tile))
-        results = model.predict(imgs, conf=conf, imgsz=imgsz, verbose=False, half=True)
+        results = model.predict(imgs, conf=conf, imgsz=imgsz, verbose=False, half=dev != "cpu", device=dev)
         for (fr, tile), res in zip(meta, results):
             if res.boxes is None or len(res.boxes) == 0:
                 continue
