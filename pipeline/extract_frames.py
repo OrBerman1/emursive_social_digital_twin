@@ -4,6 +4,8 @@ Stitch settings were tuned by eye on walk 1 (12 Oct 2026): the Insta360 ONE RS s
 side (3968x1920, each ~1984 px wide); ffmpeg's dual-fisheye model with a 190 deg lens FOV lines up the seams,
 and roll=180 turns the upside-down handheld footage upright. Hebrew signage reads correctly (not mirrored).
 This is a fast approximate stitch; Insta360 Studio / MediaSDK give cleaner seams if needed later.
+Projects with config/stitch.json use the calibrated, blended stitch instead (pipeline/stitch.py: no missing strip and
+no hard line at the lens seams; same frame times, same orientation as the v360 frames).
 
 usage:  python pipeline/extract_frames.py [walk1 walk2] [--fps 5] [--force]
 """
@@ -15,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from common import INTERIM, WALKS, Stage, file_fingerprint
+from common import CONFIG, INTERIM, WALKS, Stage, file_fingerprint
 
 VERSION = 1
 
@@ -31,7 +33,11 @@ def ffprobe_duration(path: Path) -> float:
 def run(walk: str, fps: float, width: int, lens_fov: float, quality: int, force: bool) -> Path:
     src = WALKS[walk]
     out_dir = INTERIM / walk / "frames"
+    import stitch
+    cal = stitch.load(CONFIG)
     params = {"fps": fps, "width": width, "height": width // 2, "lens_fov": lens_fov, "roll": 180, "jpeg_q": quality}
+    if cal:
+        params = {"fps": fps, "width": width, "height": width // 2, "stitch": "calibrated", "stitch_params": {k: cal[k] for k in ("f", "c", "rot1", "G", "r_max", "blend_deg")}, "jpeg": 95}
     st = Stage("frames", VERSION, out_dir, params, {"video": src.name, "fingerprint": file_fingerprint(src)})
     if st.done() and not force:
         print(f"[frames] {walk}: cached ({out_dir})")
@@ -40,17 +46,26 @@ def run(walk: str, fps: float, width: int, lens_fov: float, quality: int, force:
     for old in out_dir.glob("*.jpg"):
         old.unlink()
 
-    vf = (
-        f"fps={fps},"
-        f"v360=input=dfisheye:output=e:ih_fov={lens_fov}:iv_fov={lens_fov}:roll=180"
-        f":w={width}:h={width // 2}:interp=cubic"
-    )
-    cmd = [
-        "ffmpeg", "-v", "error", "-stats", "-y", "-i", str(src), "-an", "-sn",
-        "-vf", vf, "-q:v", str(quality), "-start_number", "0", str(out_dir / "%06d.jpg"),
-    ]
-    print(f"[frames] {walk}: extracting at {fps} fps -> {out_dir}")
-    subprocess.run(cmd, check=True)
+    if cal:                                                              # calibrated blended stitch (pipeline/stitch.py)
+        import cv2
+        n_est = int(ffprobe_duration(src) * fps)
+        print(f"[frames] {walk}: calibrated stitch at {fps} fps -> {out_dir}", flush=True)
+        for i, im in enumerate(stitch.stream(src, cal, width, width // 2, fps)):
+            cv2.imwrite(str(out_dir / f"{i:06d}.jpg"), im, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            if i % 25 == 0:
+                print(f"[frames] {walk} {i}/{n_est}", flush=True)
+    else:
+        vf = (
+            f"fps={fps},"
+            f"v360=input=dfisheye:output=e:ih_fov={lens_fov}:iv_fov={lens_fov}:roll=180"
+            f":w={width}:h={width // 2}:interp=cubic"
+        )
+        cmd = [
+            "ffmpeg", "-v", "error", "-stats", "-y", "-i", str(src), "-an", "-sn",
+            "-vf", vf, "-q:v", str(quality), "-start_number", "0", str(out_dir / "%06d.jpg"),
+        ]
+        print(f"[frames] {walk}: extracting at {fps} fps -> {out_dir}")
+        subprocess.run(cmd, check=True)
 
     frames = sorted(out_dir.glob("*.jpg"))
     duration = ffprobe_duration(src)

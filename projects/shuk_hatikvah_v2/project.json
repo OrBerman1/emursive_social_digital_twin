@@ -1,0 +1,24 @@
+{
+  "id": "shuk_hatikvah_v2",
+  "name": "Shuk HaTikvah · restitched",
+  "created": "2026-10-14",
+  "paths": {
+    "raw": "projects/shuk_hatikvah_v2/data/raw",
+    "interim": "projects/shuk_hatikvah_v2/data/interim",
+    "processed": "projects/shuk_hatikvah_v2/data/processed",
+    "config": "projects/shuk_hatikvah_v2/config",
+    "osm": "projects/shuk_hatikvah_v2/data/interim/osm"
+  },
+  "walks": {
+    "walk1": {
+      "file": "1_Hatikvah St.insv",
+      "label": "Hatikvah St"
+    },
+    "walk2": {
+      "file": "2_Hamevasser St.insv",
+      "label": "Hamevasser St"
+    }
+  },
+  "store_table": "Shops_In_hatikva_30_7_26.xlsx",
+  "note": "Same recordings as shuk_hatikvah, re-stitched with the calibrated blended stitch (pipeline/stitch.py); the original project is untouched."
+}
