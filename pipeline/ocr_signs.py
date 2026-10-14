@@ -16,7 +16,10 @@ import argparse
 import concurrent.futures as cf
 import hashlib
 import json
+import os
+import os
 import re
+import shutil
 import shutil
 
 import cv2
@@ -27,7 +30,21 @@ from common import INTERIM, WALKS, Stage
 from spherical import Tile, TileSampler, box_to_sphere
 
 VERSION_DET, VERSION_OCR = 1, 1
-TESS = shutil.which("tesseract") or r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+def find_tesseract() -> str:
+    """TESSERACT_CMD env var, then PATH, then the usual Windows install folders."""
+    cands = [os.environ.get("TESSERACT_CMD"), shutil.which("tesseract")]
+    for var in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        base = os.environ.get(var)
+        if base:
+            cands += [os.path.join(base, "Tesseract-OCR", "tesseract.exe"),
+                      os.path.join(base, "Programs", "Tesseract-OCR", "tesseract.exe")]
+    for c in cands:
+        if c and os.path.isfile(c):
+            return c
+    raise FileNotFoundError("Tesseract not found: run setup.bat, or set the TESSERACT_CMD environment variable")
+
+
+TESS = find_tesseract()
 HEB = re.compile(r"[\u0590-\u05FF]")
 ARA = re.compile(r"[\u0600-\u06FF]")
 LAT = re.compile(r"[A-Za-z]")
