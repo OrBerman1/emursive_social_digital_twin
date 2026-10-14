@@ -12,7 +12,7 @@
    Entities are marked with a pointer dot + leader line to a dark info window (no boxes). Bottom right: a round
    north-up mini map like the Lens design; live once the walk is placed on the map (data/processed/<walk>/georef.json). */
 :root {
-  --person: #f5c518; --object: #ef4b5f; --space: #3d8bff; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
+  --person: #f5c518; --object: #ef4b5f; --space: #3d8bff; --food: #009E73; --ink: #1d2433; --soft: #6b7385; --line: #e7e9ef;
   --glass: rgba(255,255,255,.92); --shadow: 0 10px 30px rgba(20,25,40,.18);
   --win: rgba(16,18,24,.82); --win-soft: #b9bfcb;
   --sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
@@ -67,18 +67,20 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .chip[aria-pressed="false"] { opacity: .45; }
 .chip[data-k="person"] .ic { background: #fff3c4; color: #b88a00; } .chip[data-k="object"] .ic { background: #ffe1e6; color: var(--object); }
 .chip[data-k="space"] .ic { background: #e2ecff; color: var(--space); }
+.chip[data-k="food"] .ic { background: #d6f1e6; color: var(--food); } .chip[data-k="food"] .lbl { color: var(--food); }
 .chip[data-k="object"] .lbl { color: var(--object); } .chip[data-k="space"] .lbl { color: var(--space); }
 
 /* ---- info windows (dark, colour-coded border; positioned every frame, leader lines on the overlay canvas) ---- */
 .card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--win); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         border: 2px solid; box-shadow: 0 10px 28px rgba(0,0,0,.35); z-index: 8; will-change: transform; }
-.card.person { border-color: var(--person); } .card.object { border-color: var(--object); } .card.space { border-color: var(--space); }
+.card.person { border-color: var(--person); } .card.object { border-color: var(--object); } .card.space { border-color: var(--space); } .card.food { border-color: var(--food); }
 .card .r { display: flex; align-items: center; gap: 12px; padding: 3px 0; font-size: 14px; white-space: nowrap; }
 .card .r .k { min-width: 40px; display: flex; justify-content: center; flex: none; color: #e9ecf2; }
 .card .r .v { overflow: hidden; text-overflow: ellipsis; }
 .card .r .v.soft { color: var(--win-soft); }
 .card .r + .r { border-top: 1px solid rgba(255,255,255,.08); }
 .badge { font: 700 13px var(--sans); padding: 3px 7px; border-radius: 6px; min-width: 34px; text-align: center; }
+.food .badge { background: var(--food); color: #fff; } .food .conf .meter i { background: var(--food); }
 .person .badge { background: var(--person); color: #1a1a1a; } .object .badge { background: var(--object); color: #fff; } .space .badge { background: var(--space); color: #fff; }
 .card.compact { padding: 8px 14px 8px 10px; min-width: 200px; max-width: 260px; cursor: pointer; }
 .card.compact:hover { box-shadow: 0 12px 34px rgba(0,0,0,.5); }
@@ -144,7 +146,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .sep { width: 1px; height: 26px; background: var(--line); }
 
 /* ---- Ask Jeeves (pipeline/jeeves.py): header pill + glass chat panel on the right ---- */
-.askbtn { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.askbtn { text-decoration: none; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--ink); }
 .askbtn:hover, .askbtn[aria-pressed="true"] { background: #eef2fb; border-color: #cfdcf7; color: var(--space); }
 .jv { position: absolute; right: 16px; top: 16px; bottom: 96px; width: min(420px, calc(100% - 32px)); border-radius: 18px; z-index: 35; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
 .jv .jvh { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px 16px; border-bottom: 1px solid var(--line); }
@@ -232,6 +234,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=range] { width: 100%; accent-color: var(--space); }
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
+.pop.layers-pop { max-height: calc(100% - 150px); overflow-y: auto; }
+.ichips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
+.ichips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink); display: flex; gap: 6px; align-items: center; }
+.ichips button[aria-pressed="true"] { background: #eef2fb; border-color: #cfdcf7; color: var(--space); font-weight: 600; }
+.ichips button i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.pbtn2 { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.card .fol { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; border: 1.5px solid var(--c, var(--person)); border-radius: 10px; background: none; color: #fff; padding: 7px 10px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.card .fol:hover { background: rgba(255,255,255,.08); } .card .fol[disabled] { opacity: .45; cursor: default; }
 /* bookmark = a note on the timeline (shared with the base viewer: <processed>/comments.json via serve.py) */
 .pop.mark { top: 190px; }
 .pop.mark h4 { display: flex; justify-content: space-between; align-items: baseline; } .pop.mark h4 small { font-weight: 500; color: var(--soft); font-variant-numeric: tabular-nums; }
@@ -293,6 +303,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button role="tab" aria-selected="false" disabled title="Coming in a later version">Analysis</button>
   </nav>
   <div class="grow"></div>
+  <a class="askbtn" id="projBtn" href="projects.html" title="Add data to this project (video, store table, anchor points) or start a new area"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7h6l2 2h10v10H3z"/><path d="M12 12v5M9.5 14.5h5"/></svg>Projects</a>
   <button class="askbtn" id="jvOpen" aria-pressed="false" title="Ask questions about this project, or give it a data task"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</button>
   <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -320,6 +331,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="chips glass" data-no-drag>
     <button class="chip" data-k="person" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="var(--person)" stroke="#fff" stroke-width="2"/></svg></span><span class="lbl">People</span><span class="n" id="nP">0</span></button>
     <button class="chip" data-k="object" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="var(--object)" stroke="#fff" stroke-width="2"/></svg></span><span class="lbl">Objects</span><span class="n" id="nO">0</span></button>
+    <button class="chip" data-k="food" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 3.5 20.5 12 12 20.5 3.5 12z" fill="var(--food)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="lbl">Food</span><span class="n" id="nF">0</span></button>
     <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 3.5 21 19.5H3z" fill="var(--space)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="lbl">Places</span><span class="n" id="nS">0</span></button>
   </div>
 
@@ -338,7 +350,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <button class="tbtn" id="fs" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
 
-  <div class="pop glass" id="layersPop" data-no-drag hidden>
+  <div class="pop glass layers-pop" id="layersPop" data-no-drag hidden>
     <h4>Layers &amp; filters</h4>
     <label><input type="checkbox" data-show="person" checked><span>People</span></label>
     <label><input type="checkbox" data-show="object" checked><span>Objects &amp; market items</span></label>
@@ -348,6 +360,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="frontage" checked><span>Frontage materials <small style="color:var(--soft)">experimental</small></span></label>
     <label><input type="checkbox" data-show="pictured"><span>Pictured people on signs</span></label>
     <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
+    <label><input type="checkbox" data-show="arrows"><span>Walking arrows for everyone</span></label>
+    <h4 style="margin-top:14px">Info windows show</h4>
+    <div class="row" style="padding-top:0">People at once <b id="infoNLbl"></b><input type="range" id="infoN" min="0" max="6" step="1"></div>
+    <div class="ichips" id="infoChips"></div>
+    <div id="folBox" hidden><h4 style="margin-top:14px">Followed people <button class="pbtn2" id="folClear">Clear</button></h4><div class="ichips" id="folChips"></div></div>
         <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
   </div>
   <div class="pop glass" id="searchPop" data-no-drag hidden>
@@ -411,10 +428,15 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 (() => {
   const $ = id => document.getElementById(id);
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const COL = { person: css("--person"), object: css("--object"), space: css("--space") };
+  const COL = { person: css("--person"), object: css("--object"), space: css("--space"), food: css("--food") };
   const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
   const stage = $("stage"), D2R = Math.PI / 180;
-  const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true, food: true, frontage: true, pictured: false };
+  const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true, food: true, frontage: true, pictured: false, arrows: false };
+  // what the automatic info windows show (Layers popover; remembered in this browser)
+  const INFO = { n: 3, age: true, gender: false, speed: true, visible: true, direction: true, distance: false, files: true, objects: true, food: true, places: true };
+  try { Object.assign(INFO, JSON.parse(localStorage.getItem("uaInfo") || "{}")); } catch (e) {}
+  const INFO_CHIPS = [["age", "Age group"], ["gender", "Gender"], ["speed", "Speed"], ["visible", "Time visible"], ["direction", "Direction"], ["distance", "Distance"],
+                      ["files", "Attached files"], ["objects", "Objects"], ["food", "Food"], ["places", "Signs & places"]];
   const DECOR = new Set(["hanging lamp", "flag", "awning"]);
   const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
   const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
@@ -422,7 +444,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const wrap = a => ((a + 540) % 360) - 180;
 
   const groupOf = e => e.kind === "person" ? "person" : (e.kind === "object" || e.kind === "level2") ? (DECOR.has(e.cls) ? (show.decor ? "object" : null) : "object")
-    : e.kind === "food" ? (show.food && e.cls !== "Food picture (menu/sign)" ? "object" : null)
+    : e.kind === "food" ? (e.cls !== "Food picture (menu/sign)" ? "food" : null)
     : (e.kind === "sign" && e.readable) ? "space" : e.kind === "frontage" ? (show.frontage ? "space" : null) : e.kind === "pictured" ? (show.pictured ? "space" : null) : null;
   const keyOf = e => `${e.kind}:${e.id}`;
   const cap = s => String(s || "").replace(/^./, c => c.toUpperCase());
@@ -485,6 +507,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     c.beginPath();
     if (g === "person") c.arc(x, y, r, 0, 7);
     else if (g === "object") c.rect(x - r * .9, y - r * .9, r * 1.8, r * 1.8);
+    else if (g === "food") { const q = r * 1.2; c.moveTo(x, y - q); c.lineTo(x + q, y); c.lineTo(x, y + q); c.lineTo(x - q, y); c.closePath(); }   // green diamond
     else { c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.15, y + r * .8); c.lineTo(x - r * 1.15, y + r * .8); c.closePath(); }
     c.fillStyle = COL[g]; c.fill(); c.lineWidth = lw; c.strokeStyle = "#fff"; c.lineJoin = "round"; c.stroke();
   }
@@ -556,9 +579,18 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (g === "person") {
       const m = motionOf(e.id, st.fi), vis = visibleS(e, st);
       const nf = (atOf(E.walk, e.id) || { files: [] }).files.length;
-      return R(`<span class="badge">${badgeOf(e, g)}</span>`, m ? `≈${m.spd.toFixed(1)} m/s` : (e.dist ? `${e.dist.toFixed(1)} m away` : "—")) +
-        R(IC.walk, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true) + R(IC.eye, m ? m.dir : "Direction unknown") +
-        (nf ? R(IC.clip, `${nf} attached file${nf > 1 ? "s" : ""}`) : "");
+      // first line: who (perceived age group / gender) if chosen, else the speed; then the chosen details
+      const [a, yrs] = AGE[e.age] || AGE.uncertain, s = SEX[e.sex];
+      const who = INFO.age && INFO.gender ? personTitle(e)[0] : INFO.age ? (e.age === "uncertain" ? "Age uncertain" : `${a} · ${yrs}`) : INFO.gender ? (s ? cap(s) : "Gender uncertain") : null;
+      const spd = m ? `≈${m.spd.toFixed(1)} m/s` : "speed unknown";
+      let html = R(`<span class="badge">${badgeOf(e, g)}</span>`, who ? esc(who) : (INFO.speed ? spd : (e.dist ? `${e.dist.toFixed(1)} m away` : "Person")));
+      if (who && INFO.speed) html += R(IC.walk, spd, true);
+      if (INFO.visible) html += R(IC.clock, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true);
+      if (INFO.direction) html += R(IC.eye, m ? m.dir : "Direction unknown");
+      if (INFO.distance && e.dist) html += R(IC.ruler, `${e.dist.toFixed(1)} m from camera`, true);
+      if (INFO.files && nf) html += R(IC.clip, `${nf} attached file${nf > 1 ? "s" : ""}`);
+      if (FOL.has(E.gidOf(e.id))) html += R(`<span style="color:${FOL.get(E.gidOf(e.id))}">●</span>`, "Followed");
+      return html;
     }
     if (e.kind === "food") return R(`<span class="badge">${badgeOf(e, g)}</span>`, `${ShukEngine.emojiOf(e.cls)} ${esc(e.cls)}`) + R(IC.tag, `Food on display · ${esc((st.data.food_group || {})[e.cls] || "")}`, true) +
       R(IC.clock, `${foodVisibleS(e, st).toFixed(1)} s (visible)`, true);
@@ -577,7 +609,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
         `<div class="rows">${R2(IC.walk, "Movement", m ? (m.dir === "Standing" ? "Standing" : `≈${m.spd.toFixed(1)} m/s · ${m.dir}`) : "—")}` +
         `${R2(IC.clock, "Visible", vis != null ? `${vis.toFixed(1)} s so far · ${Math.round((t[1] - t[0]) / d.fps)} s in total` : "—")}` +
         `${R2(IC.ruler, "Distance", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}${R2(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}` +
-        `${R2(IC.group, "Social context", social)}</div>${atFilesHtml(e.id)}${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
+        `${R2(IC.group, "Social context", social)}</div>${folBtnHtml(e.id)}${atFilesHtml(e.id)}${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
     }
     if (e.kind === "food") {
       return hd("Food on display") + `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${ShukEngine.emojiOf(e.cls)} ${esc(e.cls)}</b><small>${esc((d.food_group || {})[e.cls] || "food")}</small></div></div>` +
@@ -620,6 +652,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   function onCardClick(key, ev) {
     const act = ev.target.closest("[data-act]"), [kind, id] = key.split(":"), e = (E.state?.entities || []).find(x => keyOf(x) === key);
     if (act && act.dataset.act === "close") { unpin(key); return; }
+    if (act && act.dataset.act === "follow") { folToggle(+id); return; }
     if (act && act.dataset.act === "attach") { if (!AT.busy) { AT.track = +id; $("atFile").click(); } return; }
     if (act && act.dataset.act === "rmfile") { atRemove(+id, act.dataset.name); return; }
     if (ev.target.closest(".files a")) return;
@@ -637,7 +670,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     for (const it of list) {
       const { e, g, full } = it, key = keyOf(e), card = cardFor(key); used.add(key);
       card.el.className = `card ${g} ${full ? "full" : "compact"}`;
-      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${Math.floor(st.t * 2)}|${g === "person" ? atSig(e.id) : ""}`;
+      const sig = `${full}|${e.age}|${e.sex}|${e.text || ""}|${Math.floor(st.t * 2)}|${g === "person" ? atSig(e.id) + "|" + (FOL.get(E.gidOf(e.id)) || "") : ""}|${INFO.sig}`;
       if (card.sig !== sig) {
         const keep = card.el.querySelector("[data-photo]"); card.el.innerHTML = full ? fullHtml(e, g, st) : compactHtml(e, g, st); card.sig = sig;
         const ph = card.el.querySelector("[data-photo]"); if (ph && keep && keep.dataset.ok) { ph.getContext("2d").drawImage(keep, 0, 0); ph.dataset.ok = 1; }
@@ -662,10 +695,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   E.onFrame = (st, c) => {
     if (follow && !spinning) { const t = fwdAt(st.fi), dy = wrap(t - E.yaw); E.look(E.yaw + dy * 0.12, E.pitch); }   // ease toward the walking direction
     const k = E.k, shown = [];
-    let nP = 0, nO = 0, nS = 0;
+    let nP = 0, nO = 0, nS = 0, nF = 0;
     for (const e of st.entities) {
       const g = groupOf(e); if (!g) continue;
-      if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else nS++; }
+      if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else if (g === "food") nF++; else nS++; }
       if (show[g] && (e.kind !== "pictured" || show.pictured)) shown.push([e, g]);
     }
     const now = performance.now(), vis = new Set(shown.map(([e]) => keyOf(e))), alive = auto.filter(k => vis.has(k)).length;
@@ -673,10 +706,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (now - autoAt > 1500 || (alive < Math.min(2, shown.length) && now - autoAt > 300)) {
       autoAt = now;
       const big = e => (e.rect[2] - e.rect[0]) * (e.rect[3] - e.rect[1]);
-      const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, 3);
-      const obj = shown.filter(([e, g]) => g === "object" && e.alpha > .6).sort((a, b) => big(b[0]) - big(a[0])).slice(0, 1);
-      const sgn = shown.filter(([e, g]) => g === "space" && e.alpha > .6).slice(0, 1);
-      auto = [...ppl, ...obj, ...sgn].map(([e]) => keyOf(e));
+      const ppl = shown.filter(([e, g]) => g === "person" && e.alpha > .6 && e.dist).sort((a, b) => a[0].dist - b[0].dist).slice(0, INFO.n);
+      const obj = shown.filter(([e, g]) => g === "object" && e.alpha > .6).sort((a, b) => big(b[0]) - big(a[0])).slice(0, INFO.objects ? 1 : 0);
+      const fd = shown.filter(([e, g]) => g === "food" && e.alpha > .6).sort((a, b) => big(b[0]) - big(a[0])).slice(0, INFO.food ? 1 : 0);
+      const sgn = shown.filter(([e, g]) => g === "space" && e.alpha > .6).slice(0, INFO.places ? 1 : 0);
+      auto = [...ppl, ...obj, ...fd, ...sgn].map(([e]) => keyOf(e));
     }
     const pinnedKeys = new Set(pinned.map(p => `${p.kind}:${p.id}`)), byKey = new Map(shown.map(x => [keyOf(x[0]), x]));
     for (const [e, g] of shown) {
@@ -684,6 +718,15 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       c.globalAlpha = Math.min(1, e.alpha * 1.3);
       if (isPin || isHov) { c.fillStyle = COL[g] + "55"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
       mark(c, g, x, y, r, 2.2 * k);
+      if (g === "person") {                                               // followed: ring in their colour; arrow = walking direction on the ground
+        const fc = FOL.get(E.gidOf(e.id));
+        if (fc) { c.strokeStyle = fc; c.lineWidth = 3 * k; c.beginPath(); c.arc(x, y, r * 2.1, 0, 7); c.stroke(); }
+        if (fc || show.arrows) {
+          // direction measured on the ground (feet), drawn from the dot so it stays visible when the feet are out of view
+          const ga = E.groundArrow(e, st.fi);
+          if (ga) { const n = Math.hypot(ga.dx, ga.dy) || 1, L = Math.max(28 * k, Math.min(70 * k, n)); E.draw.arrow(c, x, y, ga.dx / n * L, ga.dy / n * L, fc || "#ffffff", k); }
+        }
+      }
       if (g === "person" && atOf(E.walk, e.id)) {                       // files attached: a small paperclip disc beside the dot
         const cx = x + r * 1.9, cy = y - r * 1.9, rr = 7.5 * k;
         c.beginPath(); c.arc(cx, cy, rr, 0, 7); c.fillStyle = "#1d2433"; c.fill(); c.lineWidth = 1.5 * k; c.strokeStyle = "#fff"; c.stroke();
@@ -702,7 +745,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     for (const p of pinned) { const x = byKey.get(`${p.kind}:${p.id}`); if (x) list.push({ e: x[0], g: x[1], full: true }); }
     if (show.labels) for (const key of auto) if (!pinnedKeys.has(key) && byKey.has(key)) { const [e, g] = byKey.get(key); list.push({ e, g, full: false }); }
     layoutCards(st, c, list);
-    $("nP").textContent = nP; $("nO").textContent = nO; $("nS").textContent = nS;
+    $("nP").textContent = nP; $("nO").textContent = nO; $("nS").textContent = nS; $("nF").textContent = nF;
     updateStats(st);
   };
   E.onHover = h => { hover = h && groupOf(h) ? h : null; stage.style.cursor = hover ? "pointer" : ""; };
@@ -776,6 +819,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       c.globalAlpha = live ? 1 : 0.8; mark(c, m.g, q.x, q.y, live ? 5.5 : 3.6, live ? 1.8 : 1.2);
     }
     c.globalAlpha = 1;
+    for (const [gid, col] of FOL) {                                      // followed people: where they are now
+      const mt = E.motion && E.motion.tracks[gid]; if (!mt) continue; const i = st.fi - mt.f0; if (i < 0 || i >= mt.lat.length || mt.lat[i] == null) continue;
+      const q = mm.latLngToContainerPoint([mt.lat[i], mt.lon[i]]); c.beginPath(); c.arc(q.x, q.y, 6, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = "#fff"; c.stroke();
+    }
     $("mmCap").textContent = `facing ${Math.round(bearing)}° · ${how}` + (APPROX[E.walk] ? "\napproximate position (fitted to the street)" : "");
   }, 120);
 
@@ -959,7 +1006,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("placeBtn").addEventListener("click", () => { const m = $("walkMenu"); m.hidden = !m.hidden; $("placeBtn").setAttribute("aria-expanded", String(!m.hidden)); });
   async function selectWalk(w) {
     document.querySelectorAll("#walkItems button").forEach(x => x.setAttribute("aria-checked", String(x.dataset.walk === w)));
-    $("walkMenu").hidden = true; pinned.length = 0; $("walkName").textContent = `· ${E.walkLabel(w)}`; await load(w);
+    $("walkMenu").hidden = true; pinned.length = 0; FOL.clear(); $("walkName").textContent = `· ${E.walkLabel(w)}`; await load(w); folDraw();
   }
   $("walkItems").addEventListener("click", ev => { const b = ev.target.closest("button[data-walk]"); if (b) selectWalk(b.dataset.walk); });
 
@@ -1104,7 +1151,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     });
     MX.me = L.marker([0, 0], { icon: L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30], html: YOU }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
     const all = shops().map(x => [x.lat, x.lon]); if (all.length) map.fitBounds(all, { padding: [30, 30] });
-    mxPanel(); crowdUI(); mxApply(); crowdsRefresh();
+    mxPanel(); crowdUI(); mxApply(); crowdsRefresh(); folDraw();
   }
   async function goTo(w, f, yaw) {
     mxClose(); if (w !== E.walk) await selectWalk(w);
@@ -1459,6 +1506,48 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("mxSeg").addEventListener("click", () => segMode(!SEG.on));
   $("conf").addEventListener("change", () => crowdsRefresh());
 
+  // ---- follow people (motion.py: positions on the map, camera motion removed): path on both maps + arrow in the video ----
+  const FOL = new Map(), FOL_COLS = ["#0072B2", "#D55E00", "#CC79A7", "#009E73", "#56B4E9", "#E69F00"];
+  let folMini = null, folFull = null;
+  function folBtnHtml(id) {
+    const gid = E.gidOf(id), fc = FOL.get(gid), mt = E.motionTrack(id);
+    if (!mt) return `<button class="fol" disabled>Too far away for a map path</button>`;
+    return `<button class="fol" data-act="follow" style="--c:${fc || "var(--person)"}">${fc ? `<span style="color:${fc}">●</span> Following · click to stop` : "📍 Follow: path on the map + walking arrow"}</button>`;
+  }
+  function folToggle(id) {
+    const gid = E.gidOf(id);
+    if (FOL.has(gid)) FOL.delete(gid);
+    else { const used = new Set(FOL.values()); FOL.set(gid, FOL_COLS.find(c => !used.has(c)) || FOL_COLS[FOL.size % FOL_COLS.length]); }
+    folDraw();
+  }
+  function folDraw() {
+    for (const [lay, map] of [[folMini, mm], [folFull, MX.map]]) if (lay) lay.clearLayers(); else if (map) { const l = L.layerGroup().addTo(map); if (map === mm) folMini = l; else folFull = l; }
+    for (const [lay] of [[folMini], [folFull]]) {
+      if (!lay) continue;
+      for (const [gid, col] of FOL) { const mt = E.motion && E.motion.tracks[gid]; if (!mt) continue;
+        const pts = []; mt.lat.forEach((a, i) => { if (a != null) pts.push([a, mt.lon[i]]); });
+        L.polyline(pts, { color: "#fff", weight: 7, opacity: .9, interactive: false }).addTo(lay);
+        L.polyline(pts, { color: col, weight: 4, opacity: 1, interactive: false }).addTo(lay); }
+    }
+    $("folBox").hidden = !FOL.size;
+    $("folChips").innerHTML = [...FOL].map(([gid, col]) => { const id = [...Object.entries((E.motion || {}).id2g || {})].filter(([, g]) => +g === +gid).map(([t]) => +t).sort((a, b) => a - b)[0] ?? gid;
+      return `<button data-fol="${gid}" data-p="${id}" title="Jump to them"><i style="background:${col}"></i>P${id}</button>`; }).join("");
+    for (const c of pool.values()) c.sig = "";                             // cards redraw their follow state
+  }
+  $("folClear").addEventListener("click", () => { FOL.clear(); folDraw(); });
+  $("folChips").addEventListener("click", ev => { const b = ev.target.closest("button[data-p]"); if (b) goPerson(+b.dataset.p); });
+  // info-window settings
+  function infoUI() {
+    $("infoN").value = INFO.n; $("infoNLbl").textContent = INFO.n;
+    $("infoChips").innerHTML = INFO_CHIPS.map(([k, lab]) => `<button data-info="${k}" aria-pressed="${!!INFO[k]}">${lab}</button>`).join("");
+    INFO.sig = INFO_CHIPS.map(([k]) => +!!INFO[k]).join("") + INFO.n;
+    try { localStorage.setItem("uaInfo", JSON.stringify({ ...INFO, sig: undefined })); } catch (e) {}
+    autoAt = 0;
+  }
+  $("infoChips").addEventListener("click", ev => { const b = ev.target.closest("button[data-info]"); if (!b) return; INFO[b.dataset.info] = !INFO[b.dataset.info]; infoUI(); });
+  $("infoN").addEventListener("input", () => { INFO.n = +$("infoN").value; infoUI(); });
+  infoUI();
+
   // ---- 📎 files attached to specific people (interviews, notes, photos): pipeline/attach_api.py via serve.py ----
   const AT = { list: [], busy: "", track: null, confirm: "" };
   const atVar = () => (E.data && /stab/.test(E.data.variant || "") ? "stab" : "");          // track ids differ between overlay variants
@@ -1599,7 +1688,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   E.ready.then(() => {
     const P = E.project, ws = E.walkIds();
     document.title = `${P.name} · 360° Exploration`; $("projName").textContent = P.name;
-    $("projLink").href = `projects.html?project=${encodeURIComponent(P.id)}`;
+    $("projLink").href = $("projBtn").href = `projects.html?project=${encodeURIComponent(P.id)}`;
     $("walkItems").innerHTML = ws.map((w, i) => `<button role="menuitemradio" data-walk="${w}" aria-checked="${i === 0}">${esc(`${cap(E.walkShort(w))} · ${E.walkLabel(w)}`)}</button>`).join("");
     if (ws.length) selectWalk(ws[0]);
     else { $("walkName").textContent = "· no analysed walk yet"; toast("No analysed walk yet: open Projects… to add a video and run the analysis"); }
