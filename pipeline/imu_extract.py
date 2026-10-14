@@ -14,13 +14,12 @@ from pathlib import Path
 
 import telemetry_parser
 
-ROOT = Path(__file__).resolve().parents[1]
-WALKS = {"walk1": "1_Hatikvah St.insv", "walk2": "2_Hamevasser St.insv"}
+from common import INTERIM, WALKS
 
 
 def run(walk: str) -> None:
-    src = ROOT / "data" / "raw" / "LABAI" / WALKS[walk]
-    out_dir = ROOT / "data" / "interim" / walk
+    src = WALKS[walk]
+    out_dir = INTERIM / walk
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "imu.csv"
     st = src.stat()

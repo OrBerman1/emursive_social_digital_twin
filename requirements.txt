@@ -6,13 +6,18 @@ opencv-python==5.0.0.93
 pandas==3.0.6
 pyarrow==26.0.0
 scipy==1.18.1
+openpyxl==3.1.5        # reads the team's store table (.xlsx) for the map
 pillow==12.3.0
 tqdm==4.70.1
 py360convert==1.0.4
 ultralytics==8.4.175
+transformers==4.57.6   # SegFormer floor segmentation (waste.py)
+tokenizers==0.22.2
+safetensors==0.8.0
 lap==0.5.13            # Hungarian assignment for the tracker
 ftfy==6.3.1            # CLIP dependencies (CLIP itself is installed from a zip by setup.bat)
 regex==2026.9.29
 pytesseract==0.3.13    # OCR (needs the Tesseract program, see setup.bat)
 symspellpy==6.10.0     # spellcheck
 python-doctr==1.1.0    # text detection only (db_resnet50)
+anthropic==1.13.0      # Claude API for the review stages of new projects (only used when an API key is set)

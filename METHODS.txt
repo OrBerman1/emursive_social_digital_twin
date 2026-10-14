@@ -1,5 +1,5 @@
 SHUK HATIKVAH 360 - METHODS USED (what algorithm / code solves each problem)
-Last updated: 13 Oct 2026 (OCR results added). Keep this file current whenever a method changes.
+Last updated: 13 Oct 2026 (VLM sign reading added). Keep this file current whenever a method changes.
 Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: viewer\index.html.
 
 1. INPUT / STITCHING  (pipeline\extract_frames.py, encode_video.py)
@@ -91,8 +91,20 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      ~6 partly, ~15 wrong. Detection (docTR) works; Tesseract recognition on painted/angled
      Hebrew does not. Also found: sign grouping too loose (neighbouring lines merged) and the
      operator's T-shirt read as a sign.
-   - PLANNED: Claude vision as the sign reader (offline, cached; user agreed the method is
-     open), per-line grouping, operator mask for text. Waiting for an API key.
+   - CURRENT READER (13 Oct, ocr_vlm.py): text lines grouped into SIGNS across frames (seen >= 2
+     times, largest line >= 18 px); one crop per sign at its best frame containing all its lines;
+     crops laid out on numbered contact sheets (16 per sheet); each sheet read by Claude (vision)
+     running as background agents inside the Claude Code session (no API key), output per crop:
+     text, language, legible yes/no, kind (shop sign / price sign / banner / packaging / other /
+     no text / operator's shirt). Merged into ocr_vlm_stab\signs.parquet; the viewer uses it.
+   - Sign boxes are tracked and smoothed like people/objects: one box per sign per frame,
+     gaps <= 1 s filled (covers the every-2nd-frame text detection), zero-phase smoothing; the
+     viewer interpolates, fades and applies the 1 s minimum-length filter to signs too.
+   - RESULT: walk 1 1,151 of 1,934 sign crops read, walk 2 1,093 of 1,817 (Tesseract: 64 / 113).
+     Mostly Hebrew, plus English, Russian, Arabic and mixed. 683 crops were the operator's T-shirt and
+     331 had no text - both removed. Independent spot check of 16 random readings: all correct or
+     correct visible fragments. Known inconsistency: readers differed on whether number-only crops
+     (prices, phones) count as legible.
 
 12. CACHING ("compute once")  (common.py: Stage)
    - Every expensive stage writes outputs + manifest.json (stage version, parameters,
@@ -102,8 +114,383 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - WebGL fragment shader renders the equirectangular video as a perspective view;
      overlays projected with the same yaw/pitch maths (pipeline\spherical.py).
    - Local server with HTTP Range + HTTP/1.1 (needed for video seeking on Windows).
+   - Boxes carry an EMOJI badge per class (e.g. person, trolley, crate, bin, sign) instead of text;
+     track ID, confidence, distance, time seen and sign text are in the card that opens on click.
+   - People boxes are coloured by estimated age group on ONE green ramp (light = child/young,
+     dark = older adult; grey = uncertain) with a matching emoji; the panel's age graph uses the
+     same colours. Perceived gender is shown per person as the emoji badge background
+     (blue = man, pink = woman, grey = uncertain; user decision 13 Oct). Both estimates are
+     unvalidated; visible errors exist (e.g. a man seen from behind labelled woman).
+   - Counts are shown as "in view / whole walk" (e.g. 13 / 565). Whole-walk totals count UNIQUE
+     TRACK IDs that pass the same filters as the view: the track's highest confidence >= the slider
+     (level 2: max(0.15, slider - 0.2)) and, with "hide tracks < 1 s", a length >= 1 s. Because
+     tracks still fragment (one person can get 2+ IDs), totals are upper bounds until validated.
 
 14. GIS EXPORT AND VALIDATION  (export_overlays.py, make_validation.py, viewer\validate.html)
    - GeoJSON of persistent entities (track ID, frames, time, confidence); route position
      from an assumed walking pace until anchor points arrive (no GPS in the videos).
    - Hand-count page: 30 frames, your count vs the model's count (target +-15%).
+
+15. MAP: WALKS ON THE GIS MAP WITHOUT GPS  (georef.py; config\anchors.json; viewer minimap)
+   - The videos have no GPS. The team gave anchors: at frame F the stabilised view at yaw Y looks at a
+     known store (name or GlobalID in Shops_In_hatikva_30_7_26.xlsx, WGS84 X/Y).
+   - Heading per frame = integrated, smoothed 1 kHz gyro heading (stabilize.py -> heading.json).
+   - Path = dead reckoning: p(f) = P0 + sum v*dt*[sin th, cos th], th = alpha + heading + beta
+     (camera carried at a fixed angle to the walking direction), piecewise-constant speed between anchors.
+   - Unknowns P0, alpha, beta, speeds fitted by robust least squares (scipy, soft-L1): every anchor's
+     view bearing must point at its store; soft priors: store 1.5-15 m from the camera, ~0.9 m/s pace,
+     smooth pace changes; multi-start over alpha/beta.
+   - Stage 1 alone fitted the anchors to ~2 deg but put 50% (walk 1) / 33% (walk 2) of the path inside
+     buildings and ran through stalls. Stage 2 = map matching on OpenStreetMap (api.openstreetmap.org,
+     cached as data/raw/osm/hatikva_osm.xml; the store points lie a median 3.3 m from OSM street
+     centrelines, so OSM and the team's GIS agree):
+       * gyro-drift and pace corrections, linear between knots every 20 s (drift prior 12 deg, smooth);
+       * distance fields on a 0.5 m grid (scipy distance_transform_edt, bilinear lookup):
+         depth inside an OSM building (penalised hard), distance to a walkable street centreline
+         (free band 3 m), distance to any store point (stalls are obstacles: keep >= 2 m);
+       * anchors as sight-ray miss distance in metres (sideways miss + "store behind the camera"),
+         noise = 1.5 m stall/GIS position + 8 deg pointing. Angles are misleading for stores 2-5 m away
+         straight ahead/behind (most of the team's anchors), where 2 m sideways = 40+ deg.
+   - Result (stage 2): inside buildings walk 1 0.4% / walk 2 2.8%; median distance to a street
+     centreline 1.6 / 1.4 m; within 1 m of a store point 1.4% / 2.7%; anchor sight-ray miss median
+     2.6 / 3.3 m; paths 272 / 231 m. Consistent outliers in every variant: Melech Haavatiach (walk 1,
+     ~10 m) and the GlobalID stall (walk 2, ~10 m): check those anchors. 'Pinat Habriut' is not in the
+     store table.
+   - Stage 3, centring between the store rows (user feedback: the walker must walk between the stalls,
+     with stores on both sides): at each frame take the store points within +-8 m along the path; the
+     widest lateral gap >= 3 m nearest the walker is the walkway -> move to its middle; with one row only,
+     keep 3 m off it on the side nearer an OSM street centreline. Shifts smoothed (Gaussian, sigma 3 s),
+     backed off where they would enter a building. Median shift 1.5 m (walk 1) / 0.9 m (walk 2).
+     Stores within 10 m of walk 2 now split 13 left / 13 right; walk 1's south stretch has stores in the
+     table on one side only, so there the path keeps 3 m off that row.
+   - IMU step energy (1 s std of |accel|, stabilize.py -> heading.json): the walker never stops in either
+     walk, so a smooth pace model is adequate.
+   - Store -> video: closest approach of each walk to each store (<= 22 m); view yaw = store bearing
+     minus the frame's map bearing of yaw 0 (drift-corrected). 138 of 220 stores are clickable.
+   - Viewer: Leaflet 1.9.4 + OpenStreetMap tiles. Heading-up round minimap (GTA-style) with route,
+     store dots and view cone; click -> full map with all stores coloured by trade and a live
+     "you are here" marker + view cone; store popup
+     "Go to video" switches walk if needed and seeks/turns to the store. The full map always opens
+     centred on the current position (zoom 19).
+
+16. PEOPLE ON THE MAP + MOTION ("OPTICAL FLOW" OF PEOPLE)  (person_flow.py, motion.py; viewer "Motion & paths")
+   - Position: camera position (georef.py) + ground distance along the map bearing of the person's feet
+     (bearing = yaw0_bearing + yaw_foot; distance = camera height / tan(foot depression), flat ground),
+     1-12 m from the camera only.
+   - v0.7 was wrong (user: "the directions are not true"). Diagnosis with STATIC ground objects (parked
+     motorcycles, chairs, crates, tables, bins, stools) run through the same pipeline, which must read 0 m/s:
+       * the map-fit camera speed was up to ~2x too fast and ~15 deg off locally: subtracting it made people
+         walking towards the camera look standing and static things look walking (static median 0.75 m/s);
+       * Gaussian smoothing mirrors the data at track ends: short tracks came out at ~0 m/s;
+       * tracker ID switches (e.g. onto the operator) jumped positions.
+   - Fixes:
+       * camera ego-motion measured in the video: each static object implies camera velocity =
+         -(its velocity relative to the camera); per frame the geometric median over static objects within
+         +-2.4 s (map-fit velocity where there are too few). Same distance scale as the people.
+       * local linear fit (Gaussian weights, sigma 1 s position / 1.5 s velocity) instead of smoothing;
+       * tracks cut at impossible jumps (> 1 m + 3 m/s), longest piece kept;
+       * second, independent estimate from dense optical flow (person_flow.py, cached): DIS flow between
+         consecutive stabilised frames; feet motion (tracked box) minus the median flow of the ground right
+         beside the feet (same distance, so it moves like a static point there: camera translation, rotation
+         residuals and horizon tilt cancel); converted to m/s with the distance at the feet; 2 s rolling median.
+       * velocity = average of both. Arrow only when 0.35-2.5 m/s and both estimates point the same way
+         (within 60 deg); otherwise a ring (standing) or a dashed ring with "?" (moving, direction uncertain).
+   - Validation:
+       * static objects held out from the ego-motion estimate: median apparent speed 0.75 m/s (v0.7) ->
+         0.33 geometry / 0.42 flow / 0.29 averaged; 25% would still be classed walking, hence the agreement
+         gate for arrows.
+       * the two estimates agree within 45 deg for 80% of clearly moving people (peak at 0 deg: no sign error);
+         radial components correlate 0.71, lateral 0.36.
+       * visual check walk 1 t=48-49 s: a shopper approaching the camera moves ~0.3-0.5 m in 0.8 s relative to
+         a crate and a paper on the ground (0.4-0.6 m/s); pipeline 0.4 m/s. Standing man -> ring; man with a
+         walker -> arrow towards the camera.
+       * reliable direction available for 58% (walk 1) / 69% (walk 2) of moving frames.
+   - Re-linking on the map: track B continues track A if B starts <= 2 s after A ends, within 1 m + 0.4 m/s
+     x gap of the predicted position (forward and backward), unambiguous, and perceived gender does not
+     conflict. ~29 / 8 re-links.
+   - Viewer: the card opens by clicking the emoji badge (bigger, easier target; boxes are clickable only
+     when emoji badges are switched off).
+   - Viewer: ground arrow at the feet (projected from the map back into the 360 view), mode None / Followed /
+     All in view / Walking / Standing; follow by card button, Shift + drag box, or everyone in view; one
+     colour per followed person on box, arrow, chip and map paths.
+   - Limits: flat ground; position error ~0.5 m at 3 m, ~2 m at 10 m (+ route error, shared by everyone);
+     noise floor ~0.3 m/s; individual directions not hand-validated beyond the spot checks above.
+
+17. PEOPLE ON SIGNS -> CATEGORY possible_rabi_sign  (depicted.py; config\depicted_review.json)
+   - Problem: the person detector (YOLO11x) also fires on pictured people: rabbi portraits, posters, adverts,
+     framed photos, menu boards. They must not be counted as people.
+   - Proposal (automatic): CLIP ViT-L/14 zero-shot on the best crops WITH context (sign frame visible):
+     "real person in a market" vs "printed picture / portrait / poster of a person" -> p_depicted; plus
+     implied body height on flat ground, feet above the horizon, closeness to detected text regions.
+     Candidates = p_depicted >= 0.3 (17 tracks walk 1, 36 walk 2).
+   - Decision (vision review, like the sign reading): contact sheets of the candidates checked by Claude ->
+     depicted / operator / real, stored in config\depicted_review.json. Why: automatic rules alone were not
+     reliable (CLIP >= 0.75 also fired on people behind glass, drivers and the operator's printed T-shirt;
+     the size rule fired on far real people). Unreviewed tracks fall back to p_depicted >= 0.9 (~75%
+     precision on the reviewed set).
+   - Recall check: 238 further tracks that sit on signs or have an implausible size were reviewed; no other
+     pictures found.
+   - Result: walk 1: 7 possible_rabi_sign + 2 operator tracks; walk 2: 15 + 5. Removed from people counts,
+     gender/age statistics, motion and map paths; shown as their own layer (yellow dotted box, picture emoji)
+     and exported to GeoJSON as class possible_rabi_sign.
+   - Side finding: ~35 more walk-1 person tracks are the camera operator (arm, T-shirt) that the operator
+     filter in tracks.py misses -> to fix next.
+
+18. FOOD ON DISPLAY  (detect.py --model yolov8x-oiv7.pt; food.py)
+   - WHERE: YOLOv8x trained on Open Images V7 (600 classes, Ultralytics release weights) on the stabilised
+     frames, food classes (conf >= 0.15), plus COCO produce already cached from YOLO11x (banana, apple, orange,
+     carrot, broccoli; conf >= 0.3). On market displays OIV7 names ~98% of its food boxes only generically
+     ("Vegetable", "Food", "Fruit"), so it is used for location only.
+   - Tracking: all food boxes tracked as one class (no label flicker) with the level-2 tracker; a track is
+     a display/stack, not single items.
+   - WHAT: CLIP ViT-L/14 zero-shot over a market vocabulary of 41 items (tomatoes, cucumbers, peppers,
+     eggplants, herbs, watermelons, bananas, citrus, dates, nuts, spices, olives, bread/pita, pastries,
+     cheese, meat, fish, eggs, prepared food, mixed fruit & vegetables, ...), averaged over the 3 widest crops.
+   - Printed food (menu boards, fruit drawings on signs): own category "Food picture (menu/sign)", shown
+     with a picture emoji and NOT counted as food on display (walk 2 is full of restaurant menu photos).
+   - Thresholds from sample checks (contact sheets): named when p >= 0.5 (~80% correct; below 0.5 ~20%,
+     so shown as "Produce (unsure)"); food picture when p >= 0.8 (7/8 correct; 0.6-0.8 were mostly real
+     stalls); "Prepared food" needs p >= 0.7 (it attracted colourful produce), else the runner-up label.
+   - Result: walk 1: 1,009 displays (504 unsure, 232 bananas, 107 mixed, 35 food pictures, potatoes,
+     tomatoes, watermelons, meat...); walk 2 (Hamevasser St): 183 (83 menu/sign pictures, 28 meat).
+   - Limits: no hand-labelled ground truth yet (planned: ~30 stall crops per walk); bananas are
+     over-represented because COCO detects them very often (one stand -> several tracks).
+
+19. WASTE ON THE FLOOR  (detect.py --prompts waste; waste.py)
+   - Candidates: YOLO-World with a waste prompt set (litter, crumpled paper, paper cup, plastic bottle, drink
+     can, plastic wrapper, plastic bag / flattened cardboard on the ground, torn cardboard box, garbage bag,
+     vegetable leaves / crushed fruit on the ground, food waste, napkin) plus look-alike prompts that are
+     dropped (shoe, manhole cover, drain grate, crate of produce, puddle); plus waste-like level-2 classes.
+     conf >= 0.1, below the horizon, small boxes.
+   - On the walkway only: SegFormer-B2 (ADE20K, nvidia/segformer-b2-finetuned-ade-512-512) segments the lower
+     band of every stabilised frame (pitch +5..-75 deg); floor = floor, road, sidewalk, earth, path, runway,
+     dirt track; masks cached per frame (reusable for walkway width / encroachment). A candidate is kept when
+     the ring around it is >= 50% floor AND the strip just under it is >= 60% floor (not a table or stall),
+     and it overlaps no person box by more than 30% (carried bags).
+   - Tracked as one class (level-2 tracker), then CLIP ViT-L/14 on up to 3 crops: 6 waste types (cardboard,
+     paper & litter, plastic bag, bottle / can, organic waste, garbage bag) vs not-waste (stock boxes, clean
+     floor, feet, drains, puddles, trolleys, carried bags, bins, tables, vehicles); waste when the waste
+     prompts sum to >= 0.5.
+   - Items at the same map spot (<= 1 m, <= 10 s apart) are merged (tracker splits); short gaps (<= 1 s)
+     inside an item are interpolated. Map position = camera position + ground distance along the bearing;
+     route position = camera chainage; density = items per 10 m.
+   - Result: walk 1: 19 items (12 cardboard, 2 plastic bags, 2 bottles/cans, 2 organic, 1 garbage bag),
+     max 3 per 10 m; walk 2: 11 items (7 cardboard, 2 paper & litter, 1 bottle/can, 1 organic).
+   - STATUS: results saved (waste_stab.json, waste.parquet) but NOT shown in the viewer (user decision 13 Oct:
+     not good enough yet). Viewer flag SHOW_WASTE = false.
+   - Visual checks (contact sheets): first version 35-40% correct (carried bags, bins, cafe tables); after
+     the person-overlap, floor-under and look-alike filters ~67% (walk 1, 14/21 before merging) and ~73%
+     (walk 2, 8/11). Remaining errors: goods for sale on the floor (detergent bottles, crates), a bag hanging
+     at a stall. Recall not measured: small litter (cigarette butts, wrappers) is below the detector's
+     resolution at 5 fps / 1024 px tiles.
+
+20. STALL MATERIALS (what the stalls are made of)  (stall_materials.py; config\stall_review.json)  - not shown yet
+   - Crops: per GIS store, the best side views (store 2-8 m away, 40-140 deg off the walking direction, so the
+     frontage is visible and the operator is behind) within +-8 s of the closest approach; 3 undistorted crops,
+     width scaled to the distance. v1 (closest-approach frame only) often showed the street or the operator.
+   - CLIP ViT-L/14 zero-shot on the survey questions (facade Open/Glass/Metal; structure steel/blocks/cement)
+     and 8 detailed materials. vs survey: facade 82.7%, structure 83.5% (99 stores) - BELOW the majority
+     baseline (always Open / steel: 93% / 97% among visible stores); detailed materials almost never fire.
+   - Vision review (Claude, 5 contact sheets): facade, structure and visible materials for 99 stores; 91 show
+     the store. Materials seen: steel frame 50, glass 28, metal roller shutter 17, fabric awning 9, plastic
+     crates 8, ceramic tiles 7, wood 7, cardboard 6, corrugated metal 2, plastic sheeting 2.
+     Agreement with the survey: facade 78%, structure 59%.
+   - Why the disagreement (checked store by store): (1) store association - stores are 2-3 m wide and densely
+     packed while the route is ~2-3 m accurate, so several stores' crops show the same dominant frontage (5
+     stores -> the glass "BAR" front, 6 -> the Pizuchei Shadi glass shop); (2) definitions - block-built butcher
+     shops with glass counters and steel shutters are coded "Open / steel" in the survey, so the survey's
+     Skeleton_Mat / Facade_Mat seem to mean something else (or are defaults).
+   - Next: associate crops to stores by shop names read on signs (OCR already reads e.g. "פיצוחי שאדי"); ask
+     Boaz for the survey definitions; or report materials per frontage segment along the route instead of
+     per GIS store.
+   - SHOWN AS LOCATIONS (user decision 13 Oct: location-based, not store-based; frontage.py): each reviewed
+     crop is placed where the camera looked (camera position at the view frame + distance along the view
+     bearing), with route chainage and side; crops of the same frontage within 3 m are merged -> 82 frontage
+     points (walk 1: 66, walk 2: 16). Viewer: 🧱 markers on both maps (popup: crop, facade, structure,
+     materials, "Go to video"), a clickable 🧱 badge in the 360 view while passing (+-3 s), layer
+     "Frontage materials (experimental)". Not tied to GIS store names.
+
+21. VIEWER DESIGN VARIANTS  (viewer/engine.js; viewer/v1_atelier ... v5_mapfirst.html; start_viewer_1..5_*.bat)
+   - Shared engine: WebGL equirect rendering (same maths as before), data loading, per-frame entity list
+     blended between 5 fps analysis frames with the same confidence / 1 s filters, counts and walk totals by
+     unique track ID, camera position/heading on the map, ground motion arrows, drag/zoom/keys, hit testing.
+   - Design rules (UX critique 13 Oct): fixed zones that never reflow; settings separated from information;
+     a visual budget for overlays (quiet dots, focus lens, nearest-N, one mode at a time); one colour-blind-safe
+     palette (Okabe-Ito) with one hue per category; numbers and icons before text; light themes.
+   - The five pages were written in parallel by sub-agents from one brief each, with v1 as the reference;
+     each was checked in the browser (HTTP 200, console free of errors, busy scene at walk 1 0:49).
+
+22. SEGMENT SUMMARY BETWEEN TWO STORES  (viewer/index.html, full map: "Select segment")
+   - The user picks a start and an end store on the full map. Each store is projected onto every walk
+     (closest route point); the walk with the smallest worst-case distance (<= 30 m) is used, and the
+     segment = the analysis frames between the two closest points.
+   - Summary (same filters as the viewer: min confidence, hide tracks < 1 s): length (route metres),
+     video time; people = unique track IDs in the frames, per 100 m, most at once, age group, perceived
+     gender, movement (motion.py state); stores whose closest approach lies in the segment (<= 22 m),
+     by trade; food displays by item (menu/sign pictures counted apart); signs read (text); objects and
+     market items (unique tracks by class); pictured people on signs; frontage-material points in the
+     segment. Waste excluded (hidden layer).
+   - Export: JSON (full structure) and Excel (SheetJS xlsx 0.18.5, loaded on demand) with sheets
+     Summary, Stores, People, Food, Signs, Objects, Frontage. Checked: walk 1 Melech Haavatiach -> next
+     stall south, 97 m, 223 people, 41 stores, counts cross-checked against the overlay JSON in Python.
+
+23. CROWDS  (crowds.py; viewer full map + minimap)
+   - Heuristic (user idea): people whose boxes touch or overlap and have similar size (box height ratio
+     >= 0.7, so similar distance) are linked; a crowd = connected group of >= 3 people in a frame; crowds
+     are followed over time (share >= 1 person, best Jaccard, gaps <= 1 s), kept if they last >= 1 s.
+   - Inputs filtered first: viewer defaults (track max conf >= 0.6, >= 1 s); pictured people / operator from
+     depicted.py; NEW operator filter (median box height >= 58 deg anywhere, or >= 48 deg within +-60 deg of
+     the operator direction = circular mean yaw of the huge boxes) -> 37 tracks walk 1 / 13 walk 2 (the
+     known "~35 operator tracks" issue, here solved for crowds); people > 12 m dropped (box size no longer
+     means distance); duplicate boxes (IoU > 0.5) and part-body boxes (>= 75% inside another) count once.
+   - Per crowd: most people at once, median size, different people over its life (approximate: hidden people
+     missed, split tracks double-counted); map position = median of members' map positions (motion.py, else
+     camera + ground distance); spread; speed mean and std over members (per-member median speed from
+     motion.py: camera motion removed, geometry + optical flow); walking / standing; age group and perceived
+     gender (attributes.py); time, route position, view direction for "go to video".
+   - Visual check (contact sheets): v1 had operator-driven and far-tiny-box "crowds"; after the filters the
+     largest crowds are real dense groups at stalls and walkers in a cluster. Result: walk 1 37 crowds
+     (median 4 people at once, max 11), walk 2 3 crowds.
+   - 14 Oct (user): crowd = 4 people or more (was 3) -> walk 1: 9 crowds (4-11 people at once), walk 2: none
+     (most 3-person groups never held 4 people for 1 s).
+   - 14 Oct (user): the operator filter now applies EVERYWHERE: depicted.py marks those tracks as category
+     "operator" (vision-review labels take precedence), so people counts, age/gender statistics, motion,
+     crowds and segment summaries all exclude them. Walk 1: 655 -> 619 person tracks, viewer total
+     561 -> 528 people; walk 2: 248 -> 236 tracks, total 187.
+   - Crowd IDs (14 Oct): persistent "C<walk>-<nn>" numbered in time order (walk 1: C1-01 ... C1-09); shown in the
+     map popup and tooltip, and each crowd is exported as a Point feature (entity_type "crowd") to
+     observations_stab.geojson with its statistics and member person IDs.
+   - Revision 14 Oct (user: "C1-01..03 are the same crowd"; "could not count the people"):
+       * chaining fix: linked people must also stand within 2 m on the ground (distance + direction), so a
+         group can no longer chain to people across the street or passing the camera;
+       * merge: crowds that share people, or lie within 4 m and less than 5 s apart, become one crowd
+         (C1-01..03 -> one crowd of up to 10 people; old C1-05/06 -> one);
+       * max distance from the camera 12 -> 8 m (members of farther crowds are too small to count by eye);
+       * "go to video" jumps to the crowd's fullest moment and the 360 view outlines its members and the
+         group, labelled "C1-01 · n here now (max m)".
+     Result with defaults: walk 1: 5 crowds (4-10 people at once), walk 2: none.
+   - Thresholds adjustable in the viewer (full map, "👥 Crowd settings"): minimum people, max distance,
+     size similarity, box gap, ground distance, minimum duration, merge distance and time; crowds are
+     recomputed live in the browser (JS port of crowds.py, same defaults; checked: same crowds as Python).
+     IDs are renumbered when thresholds change. crowds.py still writes the defaults for the GIS export.
+
+24. FULL MAP: LAYERS, STORE FILTERS, COLOUR BY  (viewer/index.html "🗂 Layers & filters"; georef.py)
+   - shops.json now also carries the store table's Est_Year, Gen_Status (generation) and Informal_Vendor (the
+     rest - Shop_Type, Ownership, Patronage, Facade_Mat, Skeleton_Mat, Sub_Category - was already there);
+     the store popup shows all of them.
+   - Layers: stores, crowds (default ON - user, 14 Oct), walk routes, frontage materials, all people's paths
+     (motion.py tracks of both walks) (default OFF). "You are here", followed people and segment highlights
+     are always shown.
+   - Store filters: value chips with counts per field (trade, shop type, ownership, patronage, facade,
+     structure, informal vendor, generation, seen on a walk); clicking a chip hides/shows those stores; "all" /
+     "none" per field. Values are trimmed (the table has "Bakery" and "Bakery " as two values).
+   - Colour stores by trade / shop type / ownership / patronage / facade / structure (Okabe-Ito palette; trade
+     keeps its own colours); the legend shows only the visible layers and coloured values.
+   - Choices are remembered per browser (localStorage, best effort).
+   - The small round minimap follows the same layer, filter and colour choices (user, 14 Oct); with the
+     defaults it shows stores and crowds only (the route line appears when "Walk routes" is on).
+
+25. SPEED MAP (mean walking speed per area)  (viewer/index.html, layer "🌡 Speed map (mean)")
+   - Input: motion.py per-person map positions and speeds of both walks (speed magnitude only, camera
+     motion removed, geometry + optical flow); each person's path thinned to one sample per metre.
+   - Smooth surface (user, 14 Oct: no squares): every sample spreads a Gaussian weight (sigma = smoothing,
+     default 3 m; 2/3/5/8 m selectable) on a 0.5 m raster. Each person counts once per pixel (their
+     strongest/nearest sample there), so lingering people do not outweigh passers-by; pixel value =
+     people-weighted mean speed. Opacity fades in with the number of contributing people (fully shown at
+     >= N people, default 3), so thinly covered areas fade out instead of ending in hard edges. Rendered as
+     one image overlay (viridis, 0 -> 1.5 m/s) on both maps.
+   - Legends: own legend box on the full map (bottom left, not covered by the panels) with the colour bar,
+     people count and area mean; a slim colour bar above the minimap while the layer is on.
+   - Caveats: speed noise floor ~0.3 m/s (METHODS 16); positions inherit ~2-3 m route error.
+     Current data: 447 people, area mean 1.16 m/s.
+
+26. TIMELINE COMMENTS  (viewer/index.html "🚩 Comment"; pipeline/serve.py POST /api/comments)
+   - Free-text notes pinned to a moment of a walk: {id, walk, t, view yaw/pitch, text, colour, created,
+     updated}. Shown as coloured flags above the timeline (drawn flag icons, because emoji cannot be
+     recoloured); hover = text, click = jump to that moment and view direction + edit / delete.
+   - Colours: Okabe-Ito presets + any custom colour.
+   - Saved by the local server to data/processed/comments.json (validated: walk, numbers, colour #rrggbb,
+     text <= 2000 chars; atomic write; server listens on 127.0.0.1 only). If the server cannot be reached,
+     comments stay in the browser (localStorage) and the composer says so.
+   - data/ is gitignored, so comments are not committed; copy comments.json to share them.
+
+
+27. PROJECTS: ADD DATA OR START A NEW AREA  (viewer/projects.html; pipeline/projects_api.py, common.py, run_all.py)
+   - Project registry (common.py): SHUK_PROJECT selects the project (default shuk_hatikvah = the original data in
+     data/ and config/, unchanged). Other projects: projects/<id>/project.json + data/raw|interim|processed +
+     config/. Every stage reads its paths (RAW, INTERIM, PROCESSED, CONFIG, WALKS, STORE_TABLE) from there.
+   - Uploads (streamed, validated, user choice: browser upload): .insv video (MP4 header checked) -> new walkN;
+     .xlsx store table (needs Shop_Name, X, Y); .txt anchors for one walk -> anchors_import.py merges them into
+     config/anchors.json (same walk + frame + store replaces; unreadable entries are reported).
+   - Analysis (run_all.py --project): one job at a time, in the background. A conditional plan: video stages need
+     the walk's .insv; map stages (georef, waste, motion, crowds, stall/frontage) need the store table AND anchors
+     for that walk; Claude stages need an API key. Skipped steps show their reason. Progress -> processed/job.json
+     (per-step % parsed from "a/b" in each step's output, weighted by typical run time) + job.log; the projects
+     page polls it every 2 s. Cached steps skip themselves (compute once per project).
+   - georef for new areas: stores > 3 km from the median are dropped; OSM is downloaded for the store extent + 150 m.
+   - Claude API mode (vlm.py, only with a key; the original project keeps its saved reviews): model claude-opus-5-5,
+     effort medium, JSON forced by a schema, server-side fallback on a refusal. One request = one numbered sheet.
+       ocr_vlm.py api      : the same 16-crop sign sheets as before -> text / lang / legible / kind per sign.
+       depicted.py --api   : candidates (CLIP p >= 0.3) as context crops with the green person box, 12 per sheet ->
+                             real / depicted / operator / unclear; cached in depicted_<v>/api_review.json.
+                             Manual review wins over Claude; unreviewed fall back to CLIP p >= 0.9.
+       stall_materials.py --api : the store's 1-3 side views, 8 stores per sheet -> visible, facade, structure,
+                             materials -> the project's config/stall_review.json (source "Claude API").
+     Without a key: Tesseract signs, CLIP fallback for pictured people, stall materials skipped (CLIP alone was
+     below the majority baseline, METHODS 19).
+   - The key is stored outside the repo (%LOCALAPPDATA%/ShukTwin/anthropic_api_key), passed only to the analysis
+     process, never returned by the server; "Check" calls the API's model list with the key on curl's stdin.
+   - Short test clips: cut the .insv with ffmpeg stream copy (-t N) and append the original Insta360 trailer (its
+     size is the uint32 40 bytes before the end; the trailer holds the gyro log, which ffmpeg drops) -> the gyro
+     still parses and stabilisation works. The clip must start at 0 s (gyro time = video time).
+   - Tested 14 Oct: original project re-run fully cached (outputs identical); progress parsing (a/b and ffmpeg
+     time=); API paths against a local mock of the Messages API (requests, schemas, caching, no resend).
+     Not yet run against the real API (no key on this machine).
+     New project end to end (14 Oct): first 27 s of walk 1 (trailer re-attached) + store table + 2 anchors, no key,
+     started from the projects page: all steps done in 20 min (stall materials / frontage skipped: no key); viewer
+     shows the project (68 people, map from 2 anchors). Fix found: Tesseract sign boxes are every 2nd frame, so their
+     track length is now counted x2 (they were all hidden by the "< 1 s" filter).
+
+28. FILES ATTACHED TO PEOPLE  (viewer/index.html person card; pipeline/attach_api.py via serve.py)
+   - For the few people we know more about (name, interview, photos): the person card has "📎 Attach file";
+     attached files are listed in the card (click = open, ✕ twice = remove).
+   - Quick access: people with files get an orange 📎 disc at their box's top-right corner, and an orange 📎
+     marker on the timeline (at the moment the file was attached); clicking it jumps there, turns the view to
+     the person and opens the card. Most people have no files, so nothing else changes.
+   - A person = one track of one walk in one overlay variant (stabilised and original detections have different
+     track ids). The frame and view direction at attach time are stored too, so the person can be found again if
+     tracking is recomputed and the ids change (re-linking is manual for now).
+   - Storage per project: <processed>/attachments/<walk>_<variant>/T<track>/<file> + attachments.json (under
+     data/ = not in git: interviews are personal data). Allowed: documents, images, audio, video (no HTML/scripts,
+     served with nosniff); same name -> "name (2).ext"; empty files allowed; up to 2 GB per file; .txt/.md/.csv served as UTF-8.
+
+29. 🎩 ASK JEEVES: QUESTION-ANSWERING AND DATA-ANALYSIS AGENT PER PROJECT  (pipeline/jeeves.py, llm.py; viewer drawer)
+   - Model: Claude Sonnet 5.5 (user choice: Opus is more than needed), effort medium, adaptive thinking. Provider
+     (llm.py): Anthropic API key if saved, else the Amazon Bedrock API key (classic bedrock-runtime, region us-east-1,
+     inference profile global.anthropic.claude-sonnet-5-5; the hackathon key is not allowed on the newer Mantle
+     endpoint). Keys are saved on the projects page into %LOCALAPPDATA%/ShukTwin, never in the repo.
+   - Not blank: the system prompt carries the project's facts (walks, totals as counted in the viewer, perceived gender
+     / age / motion distributions), how each number was made and how reliable it is, and the SQL schema. It is frozen
+     per chat (Claude's earlier reasoning in a chat is only valid with the identical system prompt).
+   - Skills (tools): run_sql (read-only SQLite over people, people_frames, objects, signs, food, pictured_people,
+     crowds, stores, walks, comments, attachments, classification_<n>; SELECT only, query_only, step limit, 200 rows);
+     view_people (sheet of up to 30 person crops, each person's clearest view: confident, big but not a cut-off
+     close-up, 2-10 m preferred); view_scene (the 360 frame rendered as a normal view with people boxed and labelled);
+     classify_people (one visual question over many people: crops in sheets of 20, each sheet a separate structured
+     call, 4 in parallel, ~1 s/person; answers cached per question in <processed>/jeeves/classify/ and saved as a SQL
+     table to count and join).
+   - people.in_viewer_count = seen >= 1 s and confidence >= 0.6, the viewer's rule (walk 1: 528 of 619 tracks).
+   - Data first (user, 14 Oct): the agent starts from the analysed tables; many questions need no video. For visual
+     questions the data is the baseline: it defines and scopes who to look at, and the visual answer is joined back to
+     the data for numbers and breakdowns. Earlier classify_people runs are listed in table classifications (question,
+     labels, people) and reused instead of looking again (e.g. "blue shirts in walk 2, walking or standing?" answered
+     in 11 s from an earlier run + the motion data, no new images).
+   - Answers contain {{p:walk:track}} and {{t:walk:seconds[:yaw]}} tokens -> jump buttons in the viewer.
+   - Chats per project in <processed>/jeeves/chats/ (not in git). Person crops are made in memory, never stored.
+   - Structured outputs on Bedrock: a schema with one property per sheet id is "too large a grammar"; vlm.py sends a
+     LIST of {id, ...} items and converts back (also used by the review stages).
+   - Tested 14 Oct (Bedrock, Sonnet 5.5): "How many females are in the video?" -> 95 perceived women of 715 (74 + 21),
+     uncertain share and method stated, 8 s. "Count all the people wearing blue shirts" -> classify_people over 715
+     people in ~70 s -> 86 blue (68 + 18), 141 unclear; follow-up "how many of them are women" joins the table (5 s).
+     Visual check of 30 random "blue": ~26 right (misses: dark patterned tops, a blue neighbour in the crop); 30 random
+     "not blue": 30 right. Viewer: answers render with working jump buttons; follow-ups keep the chat.

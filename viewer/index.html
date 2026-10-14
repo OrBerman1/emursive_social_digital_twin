@@ -45,6 +45,54 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
 .tl { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
 .tl input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.tl { position: relative; }
+.tlwrap { flex: 1; min-width: 0; position: relative; display: flex; }
+.tlwrap input { width: 100%; }
+.flags { position: absolute; left: 8px; right: 8px; bottom: 100%; height: 26px; pointer-events: none; }
+.flag { position: absolute; bottom: -4px; transform: translateX(-2px); width: 22px; height: 26px; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; }
+.flag svg { display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+.flag:hover svg, .flag:focus-visible svg { transform: scale(1.2); transform-origin: 2px 24px; }
+.flag.clip { box-sizing: border-box; width: 20px; height: 20px; font-size: 12px; line-height: 20px; text-align: center; bottom: 0; transform: translateX(-10px); border-radius: 50%; background: #E69F00; border: 1.5px solid #121819; box-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.flag.clip:hover, .flag.clip:focus-visible { transform: translateX(-10px) scale(1.2); }
+.vcard .vatt { display: grid; gap: 3px; border-top: 1px solid var(--line); padding-top: 5px; }
+.vcard .vfile { display: flex; gap: 4px; align-items: center; }
+.vcard .vfile a { flex: 1; min-width: 0; color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vcard .vfile a:hover { text-decoration: underline; }
+.vcard .vatt .vattach { text-align: center; font: 600 12px var(--body); border: 1px dashed var(--line); color: var(--ink); padding: 4px 6px; }
+.hdr-r { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.jvopen { font: 600 12.5px var(--body); color: #121819; background: var(--accent); border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.jv { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 60; background: var(--surface); border-left: 1px solid var(--line);
+      box-shadow: -8px 0 24px rgba(0,0,0,.45); display: grid; grid-template-rows: auto 1fr auto; }
+.jv header { display: flex; gap: 6px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.jv header b { font: 700 1rem var(--display); flex: 1; }
+.jv header button, .jv select { font: 600 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; cursor: pointer; max-width: 150px; }
+.jvlog { overflow-y: auto; padding: 12px; display: grid; gap: 14px; align-content: start; }
+.jvq { justify-self: end; max-width: 85%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px 10px 2px 10px; padding: 7px 10px; white-space: pre-wrap; }
+.jva { line-height: 1.5; font-size: 13.5px; } .jva p { margin: 0 0 6px; } .jva ul { margin: 0 0 6px; padding-left: 18px; }
+.jva.err { color: var(--person); }
+.jvsteps { font-size: 12px; color: var(--muted); } .jvsteps summary { cursor: pointer; } .jvsteps ol { margin: 4px 0 0; padding-left: 18px; }
+.jvlive { font-size: 12px; color: var(--muted); display: grid; gap: 2px; } .jvlive b { color: var(--accent); }
+.jvgo { all: unset; cursor: pointer; display: inline-block; font: 600 11.5px var(--mono); color: #121819; background: var(--accent); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+.jvgo:hover { filter: brightness(1.15); }
+.jvex { display: grid; gap: 6px; color: var(--muted); font-size: 12.5px; } .jvex button { all: unset; cursor: pointer; color: var(--ink); border: 1px dashed var(--line); border-radius: 6px; padding: 6px 8px; }
+.jvask { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.jvask textarea { resize: vertical; font: 13px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+.jvask .primary { font: 600 13px var(--body); color: #121819; background: var(--accent); border: 0; border-radius: 6px; padding: 0 16px; cursor: pointer; }
+.jvask .primary[disabled] { opacity: .5; cursor: default; }
+.flagtip { position: absolute; bottom: 34px; transform: translateX(-50%); max-width: 280px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; white-space: pre-wrap; pointer-events: none; z-index: 30; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+.tl .addc { font: 600 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+.composer { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; z-index: 40; box-shadow: 0 10px 28px rgba(0,0,0,.5); font-size: 12.5px; }
+.composer header { display: flex; justify-content: space-between; align-items: center; } .composer header b { font: 700 .95rem var(--display); }
+.composer textarea { width: 100%; min-height: 72px; resize: vertical; font: 13px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; box-sizing: border-box; unicode-bidi: plaintext; }
+.composer .sw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.composer .sw button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.composer .sw button[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--bg) inset; }
+.composer .sw input[type=color] { flex: none; width: 30px; min-width: 30px; height: 24px; padding: 0; border: 1px solid var(--line); background: none; cursor: pointer; }
+.composer .row { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+.composer .row button { font: 600 12px var(--body); border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.composer .row button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.composer .row button.danger { margin-right: auto; color: #ff8a80; }
+.composer .status { font-size: 11.5px; color: var(--muted); }
 .tl .meta { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tl select { font: 12px var(--mono); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 4px; margin-left: 4px; }
 aside { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
@@ -73,6 +121,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .minimap .me svg { position: absolute; left: -40px; top: -40px; }
 .minimap .north { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 501; }
 .minimap .north span { position: absolute; left: -9px; top: -100px; font: 700 12px var(--mono); color: #fff; background: #c0392b; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; }
+.speedleg { position: absolute; left: 10px; bottom: 24px; z-index: 1002; width: 250px; background: rgba(27,35,36,.94); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; color: var(--ink); font-size: 12px; display: grid; gap: 4px; }
+.speedleg .ramp, .minispeed .ramp { height: 10px; border-radius: 3px; }
+.speedleg .ticks { display: flex; justify-content: space-between; font: 11px var(--mono); }
+.minispeed { position: absolute; right: 12px; bottom: 218px; width: 200px; z-index: 4; background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font: 10.5px var(--mono); color: var(--ink); pointer-events: none; display: grid; gap: 2px; }
+.minispeed .ticks { display: flex; justify-content: space-between; }
 .minimap .hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 10px var(--mono); color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; z-index: 502; }
 .mapfull { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; }
 .mapfull .box { position: relative; width: min(1200px, 100%); height: min(85vh, 900px); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
@@ -80,6 +133,56 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .mapfull .bar { position: absolute; left: 10px; top: 10px; z-index: 1001; display: flex; gap: 8px; align-items: center; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); }
 .mapfull .bar button { font: 600 12px var(--body); background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
 .mapfull .legend2 { position: absolute; right: 10px; bottom: 24px; z-index: 1001; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink); display: grid; gap: 3px; max-height: 50%; overflow-y: auto; }
+.crowd-icon { background: none; border: none; }
+.crowd-icon div { border-radius: 50%; background: rgba(255,111,60,.85); border: 2px solid #fff; color: #fff; font: 700 11px var(--body); display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+.cpop h4 { margin: 0 0 4px; font: 700 14px var(--display); }
+.cpop table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+.cpop td { padding: 1px 4px; } .cpop td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.cpop .bar2 { display: flex; height: 8px; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; background: #ddd; }
+.cpop .muted { color: #777; font-size: 11.5px; }
+.mapfull .layersbtn { position: absolute; right: 305px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .layersbtn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.mapfull .layerpanel { position: absolute; right: 10px; top: 50px; bottom: 24px; width: 360px; z-index: 1003; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); display: grid; grid-template-rows: auto 1fr; overflow: hidden; font-size: 12.5px; }
+.layerpanel header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.layerpanel header b { font: 700 .95rem var(--display); }
+.layerpanel header button, .layerpanel .mini { font: 600 11.5px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.layerpanel .body { overflow-y: auto; padding: 8px 12px 12px; display: grid; gap: 10px; align-content: start; }
+.layerpanel h5 { margin: 0; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.layerpanel .lyr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.layerpanel .lyr label { display: flex; gap: 7px; align-items: center; cursor: pointer; }
+.layerpanel .lyr input { accent-color: var(--accent); }
+.layerpanel select { font: 12.5px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; width: 100%; }
+.layerpanel .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.layerpanel .chips button { font: 500 11.5px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 2px 8px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.layerpanel .chips button[aria-pressed="false"] { opacity: .38; text-decoration: line-through; }
+.layerpanel .chips i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.layerpanel .chips small { color: var(--muted); font-family: var(--mono); }
+.mapfull .crowdbtn { position: absolute; right: 160px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .crowdbtn[aria-expanded="true"] { background: #ff6f3c; border-color: #ff6f3c; color: #fff; }
+.mapfull .crowdpanel { position: absolute; right: 10px; top: 50px; width: 330px; z-index: 1003; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--ink); display: grid; gap: 7px; font-size: 12.5px; }
+.crowdpanel b { font: 700 .95rem var(--display); }
+.crowdpanel label { display: grid; grid-template-columns: 1fr 56px; gap: 2px 8px; align-items: center; }
+.crowdpanel label input { grid-column: 1 / -1; accent-color: #ff6f3c; width: 100%; margin: 0; }
+.crowdpanel label span:last-of-type { text-align: right; font-family: var(--mono); }
+.crowdpanel .row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+.crowdpanel button { font: 600 12px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; cursor: pointer; }
+.mapfull .segbtn { position: absolute; right: 10px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.mapfull .seghint { position: absolute; right: 10px; top: 50px; z-index: 1002; background: rgba(27,35,36,.95); border: 1px solid var(--accent); border-radius: 6px; padding: 7px 12px; font-size: 12.5px; color: var(--ink); }
+.mapfull.selecting #fullmap { cursor: crosshair; }
+.mapfull .segpanel { position: absolute; right: 10px; top: 50px; bottom: 24px; width: 360px; z-index: 1002; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+.segpanel header { display: flex; gap: 6px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.segpanel header b { font: 700 .95rem var(--display); flex: 1 1 100%; }
+.segpanel header button { font: 600 12px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; cursor: pointer; }
+.segpanel header button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.segpanel .body { overflow-y: auto; padding: 4px 12px 12px; display: grid; gap: 10px; align-content: start; }
+.segpanel h5 { margin: 6px 0 2px; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.segpanel .kv { font-size: 12.5px; }
+.segpanel .tags { display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px; }
+.segpanel .tags span { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 1px 8px; }
+.segpanel ul { margin: 0; padding-left: 16px; font-size: 12.5px; max-height: 140px; overflow-y: auto; }
+.segpanel li[dir] { unicode-bidi: plaintext; }
+.seg-ab { font: 700 12px var(--body); color: #121819; background: #fff; border: 2px solid #121819; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
 .mapfull .legend2 i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 .leaflet-popup-content { font: 13px var(--body); }
 .leaflet-popup-content b { font-family: var(--display); }
@@ -123,12 +226,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <body>
 <div class="wrap">
   <header>
-    <h1>Shuk HaTikvah 360° <span>· real footage, levels 1–2 v0.1</span></h1>
-    <div class="walks" role="group" aria-label="Walk">
-      <button data-walk="walk1" aria-pressed="true">Walk 1 · Hatikvah St</button>
-      <button data-walk="walk2" aria-pressed="false">Walk 2 · Hamevasser St</button>
-    </div>
+    <h1><span id="projName">Shuk HaTikvah</span> 360° <span>· real footage · <a href="projects.html" id="projLink" style="color:var(--accent)">projects</a></span></h1>
+    <div class="hdr-r"><button class="jvopen" id="jvOpen" title="Ask questions about this project, or give it a data task">🎩 Ask Jeeves</button>
+      <div class="walks" role="group" aria-label="Walk" id="walkBtns"></div></div>
   </header>
+  <aside class="jv" id="jv" hidden aria-label="Ask Jeeves">
+    <header><b>🎩 Ask Jeeves</b><select id="jvChats" aria-label="Earlier chats"></select><button id="jvNew">New chat</button><button id="jvClose" aria-label="Close">✕</button></header>
+    <div class="jvlog" id="jvLog"></div>
+    <div class="jvask"><textarea id="jvQ" rows="2" dir="auto" placeholder="Ask about this project, or give it a task…"></textarea><button class="primary" id="jvSend">Ask</button></div>
+  </aside>
   <div class="main">
     <div style="display:grid;gap:10px;min-width:0">
       <div class="vp" id="vp" tabindex="0" aria-label="360 degree video. Drag or use arrow keys to look around.">
@@ -137,6 +243,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="hud" id="hud"></div>
         <div class="counters" id="ctr"></div>
         <div class="vcard" id="vcard" hidden></div>
+        <input type="file" id="atFile" multiple hidden>
+        <div class="minispeed" id="miniSpeed" hidden><span>🌡 mean walking speed (m/s)</span><div class="ramp" id="miniSpeedRamp"></div><div class="ticks"><span>0</span><span>0.75</span><span>≥ 1.5</span></div></div>
         <div class="minimap" id="minimap" title="Open the full map" hidden>
           <div class="rot" id="mmrot"><div class="mm" id="mm"></div></div>
           <div class="me"><svg width="80" height="80" viewBox="-40 -40 80 80"><path id="mmcone" d="" fill="rgba(79,179,187,.35)" stroke="rgba(79,179,187,.9)" stroke-width="1"/><circle r="6" fill="#4fb3bb" stroke="#fff" stroke-width="2"/></svg></div>
@@ -148,7 +256,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       </div>
       <div class="tl">
         <button id="play">Play</button>
-        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position">
+        <button class="addc" id="addComment" title="Add a comment at this moment">🚩 Comment</button>
+        <div class="tlwrap"><div class="flags" id="flags" aria-label="Comments on the timeline"></div><div class="flagtip" id="flagTip" hidden></div>
+          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"></div>
+        <div class="composer" id="composer" hidden role="dialog" aria-label="Comment">
+          <header><b id="cmTitle">🚩 New comment</b><span class="status" id="cmWhen"></span></header>
+          <textarea id="cmText" placeholder="Write a note about this moment…" dir="auto"></textarea>
+          <div class="sw" id="cmSwatches"></div>
+          <div class="row"><button class="danger" id="cmDelete" hidden>Delete</button><span class="status" id="cmStatus"></span><button id="cmCancel">Cancel</button><button class="primary" id="cmSave">Save</button></div>
+        </div>
         <div class="meta" id="tmeta">0:00 / 0:00</div>
         <label class="meta" for="speed">Speed <select id="speed" autocomplete="off"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="0.75">×0.75</option><option value="1" selected>×1</option><option value="1.25">×1.25</option><option value="1.5">×1.5</option><option value="1.75">×1.75</option><option value="2">×2</option></select></label>
       </div>
@@ -249,6 +365,40 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div id="fullmap"></div>
     <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
     <div class="legend2" id="maplegend"></div>
+    <div class="speedleg" id="speedLeg" hidden><b>🌡 Mean walking speed</b><div class="ramp" id="speedRamp"></div>
+      <div class="ticks"><span>0</span><span>0.5</span><span>1.0</span><span>≥ 1.5 m/s</span></div><span class="muted" id="speedInfo"></span></div>
+    <button class="layersbtn" id="layersBtn" aria-expanded="false" title="Choose what the map shows">🗂 Layers &amp; filters</button>
+    <div class="layerpanel" id="layerPanel" hidden>
+      <header><b>🗂 What the map shows</b><span><button id="lpReset">Reset</button></span></header>
+      <div class="body">
+        <div><h5>Layers</h5><div class="lyr" id="lpLayers"></div></div>
+        <div id="lpSpeedRow"><h5>Speed map</h5><div style="display:flex;gap:8px;align-items:center;margin-top:3px">
+          <span>smoothing</span><select id="spCell" style="width:auto"><option value="2">2 m</option><option value="3" selected>3 m</option><option value="5">5 m</option><option value="8">8 m</option></select>
+          <span>min people</span><select id="spMin" style="width:auto"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>8</option></select></div></div>
+        <div><h5>Colour stores by</h5><select id="lpColour" aria-label="Colour stores by"></select></div>
+        <div><h5>Filter stores <span id="lpShown"></span></h5><div id="lpFilters" style="display:grid;gap:9px"></div></div>
+      </div>
+    </div>
+    <button class="crowdbtn" id="crowdBtn" aria-expanded="false" title="Crowd detection thresholds">👥 Crowd settings</button>
+    <div class="crowdpanel" id="crowdPanel" hidden>
+      <div class="row"><b>👥 Crowd detection</b><span class="muted" id="crowdCount"></span></div>
+      <label><span>Minimum people</span><span id="cvMin"></span><input type="range" id="cpMin" min="2" max="10" step="1"></label>
+      <label><span>Max distance from camera</span><span id="cvDist"></span><input type="range" id="cpDist" min="3" max="15" step="0.5"></label>
+      <label><span>Similar size (smaller/larger box)</span><span id="cvSize"></span><input type="range" id="cpSize" min="0.4" max="0.95" step="0.05"></label>
+      <label><span>Box gap allowed (× width)</span><span id="cvGap"></span><input type="range" id="cpGap" min="0" max="1" step="0.05"></label>
+      <label><span>Max ground distance between people</span><span id="cvLink"></span><input type="range" id="cpLink" min="0.5" max="5" step="0.25"></label>
+      <label><span>Minimum duration</span><span id="cvDur"></span><input type="range" id="cpDur" min="0.2" max="5" step="0.2"></label>
+      <label><span>Merge crowds closer than</span><span id="cvMergeM"></span><input type="range" id="cpMergeM" min="0" max="10" step="0.5"></label>
+      <label><span>… and less apart in time than</span><span id="cvMergeT"></span><input type="range" id="cpMergeT" min="0" max="15" step="0.5"></label>
+      <div class="row"><span class="muted">Uses the people filters of the viewer (confidence, hide &lt; 1 s).</span><button id="cpReset">Reset</button></div>
+    </div>
+    <button class="segbtn" id="segBtn" aria-pressed="false" title="Select a stretch of the walk between two stores">🖱 Select segment</button>
+    <div class="seghint" id="segHint" hidden></div>
+    <div class="segpanel" id="segPanel" hidden>
+      <header><b id="segTitle">Segment</b>
+        <button class="primary" id="segJson">⬇ JSON</button><button class="primary" id="segXlsx">⬇ Excel</button><button id="segClose" aria-label="Close summary">✕ Close</button></header>
+      <div class="body" id="segBody"></div>
+    </div>
   </div>
 </div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -260,6 +410,28 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   const video = document.createElement("video");
   video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = true; video.preload = "auto";
   video.hidden = true; document.body.appendChild(video);   // detached videos may never start loading in Chrome
+  // ---------- project (projects.html / pipeline/projects_api.py): data paths, walks and their labels ----------
+  const PROJ = { id: new URLSearchParams(location.search).get("project") || "shuk_hatikvah", name: "Shuk HaTikvah",
+                 processed: "/data/processed", interim: "/data/interim",
+                 walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback = the original project
+  const WALK_COLS = ["#4fb3bb", "#e0a948", "#c08bff", "#8cff5a", "#ff9a3c", "#38c6ff"];
+  const walkNo = w => String(w).replace(/^walk/, "");
+  const walkShort = w => `walk ${walkNo(w)}`;
+  const walkLong = w => `Walk ${walkNo(w)} · ${(PROJ.walks[w] || {}).label || w}`;
+  const walkLabel = w => (PROJ.walks[w] || {}).label || w;
+  const walkCol = w => WALK_COLS[Math.max(0, Object.keys(PROJ.walks).indexOf(w)) % WALK_COLS.length];
+  async function initProject() {
+    try {
+      const r = await fetch("/api/projects"); const j = await r.json();
+      const pr = (j.projects || []).find(x => x.id === PROJ.id) || (j.projects || [])[0];
+      if (pr) Object.assign(PROJ, { id: pr.id, name: pr.name, processed: pr.urls.processed, interim: pr.urls.interim,
+        walks: Object.fromEntries(Object.entries(pr.walks).filter(([, v]) => v.analysed).map(([w, v]) => [w, { label: v.label }])) });
+    } catch (e) { /* old server without the projects API: original project */ }
+    document.title = `${PROJ.name} 360`; $("projName").textContent = PROJ.name;
+    $("projLink").href = `projects.html?project=${encodeURIComponent(PROJ.id)}`;
+    $("walkBtns").innerHTML = Object.keys(PROJ.walks).map((w, i) => `<button data-walk="${w}" aria-pressed="${i === 0}">${walkLong(w).replace(/[<>&]/g, "")}</button>`).join("");
+    document.querySelectorAll(".walks button").forEach(b => b.addEventListener("click", () => load(b.dataset.walk)));
+  }
   const S = { speed: 1, stab: null, yaw: 0, pitch: -5, fov: 90, walk: "walk1", data: null, hits: [], sel: null, seen: new Set(), conf: 0.6 };
   // Fallback when the video can't play (not loaded yet, background tab): show the cached analysis frame
   // for the current time. Overlays then align exactly with the frame they were computed on.
@@ -320,14 +492,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const keepT = curTime();
     try {
       const v = $("Lvar").checked ? "_stab" : "";
-      let r = await fetch(`../data/processed/${walk}/overlays${v}.json`);
-      if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
+      let r = await fetch(`${PROJ.processed}/${walk}/overlays${v}.json`);
+      if (!r.ok) { r = await fetch(`${PROJ.processed}/${walk}/overlays.json`); $("Lvar").checked = false; }
       S.data = await r.json();
       if (typeof setMiniRoute === "function") setMiniRoute();
       MO.data = null; MO.follow.clear(); MO.pathSig = ""; MO.lastKey = "";
-      try { const rm = await fetch(`../data/processed/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
+      try { const rm = await fetch(`${PROJ.processed}/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
       renderChips();
-      video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
+      if (typeof cmRender === "function") setTimeout(cmRender, 0);
+      video.src = `${PROJ.processed}/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
       const tr = S.data.tracks;
@@ -441,7 +614,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     else if (S.data) {
       if (playing) { vt += dt * S.speed; if (vt >= duration()) vt = 0; }
       const want = Math.min(S.data.n_frames - 1, Math.round(vt * S.data.fps));
-      if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `../data/interim/${S.walk}/${S.data.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
+      if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `${PROJ.interim}/${S.walk}/${S.data.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
       if (stillReady) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, still); stillReady = false; shownFi = stillFi; still.dataset.up = "1"; $("loading").hidden = true; }
     }
     const W = ov.width, H = ov.height, tx = Math.tan(S.fov * deg / 2);
@@ -481,7 +654,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const trLen = id => (d.tracks[id] || [])[2], objLen = id => (d.obj_len || {})[id];
     const k = ov.width / vp.clientWidth;
     // people
-    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [];
+    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [], clipAt = [];
     for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
       const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
       if (al >= 0.5) { pAll++; S.seen.add(id); presentIds.push(id); }
@@ -495,11 +668,37 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const fol = MO.follow.get(gidOf(id));
       if (fol) { const o = 3.5 * k; octx.strokeStyle = fol; octx.lineWidth = 2.5 * k; octx.setLineDash([7 * k, 4 * k]); octx.strokeRect(r[0] - o, r[1] - o, r[2] - r[0] + 2 * o, r[3] - r[1] + 2 * o); octx.setLineDash([]); }
       const bb = badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
+      if (atOf(S.walk, id)) clipAt.push([r[2], r[1], al]);                  // files attached: drawn after all people (on top)
       const mNow = moAt(id, fi);
       if (mNow && moShown(id, mNow)) drawMotionArrow(r, yw, pb, mNow, fi, fol || "#f4f4f4", al);
       octx.globalAlpha = 1;
       S.hits.push({ kind: "p", id, r, b: bb, info: p });
       if (sel) anchor = r;
+    }
+    for (const [cx, cy, al] of clipAt) {                                   // orange disc with a paperclip at the box's top-right corner
+      octx.globalAlpha = al; octx.beginPath(); octx.arc(cx, cy, 11 * k, 0, 2 * Math.PI); octx.fillStyle = "#E69F00"; octx.fill();
+      octx.lineWidth = 1.5 * k; octx.strokeStyle = "#121819"; octx.stroke();
+      octx.font = `${13 * k}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`; octx.textAlign = "center"; octx.textBaseline = "middle";
+      octx.fillText("📎", cx, cy + 1 * k); octx.textAlign = "start"; octx.textBaseline = "alphabetic"; octx.globalAlpha = 1;
+    }
+    // selected crowd: outline its members and draw one frame around the group, with its ID and count
+    if (SELCROWD && SELCROWD.walk === S.walk) {
+      const c = SELCROWD;
+      if (fi < c.frame_start - 25 || fi > c.frame_end + 25) SELCROWD = null;
+      else {
+        let ff = fi; while (ff > c.frame_start && !c.framesMap.has(ff)) ff--;
+        const mem = c.framesMap.get(ff) || c.framesMap.get(c.frame_start);
+        const rs = S.hits.filter(h => h.kind === "p" && mem.has(h.id)).map(h => h.r);
+        if (rs.length) {
+          octx.setLineDash([]); octx.strokeStyle = "#ff6f3c"; octx.lineWidth = 2.5 * k;
+          for (const r of rs) octx.strokeRect(r[0] - 2 * k, r[1] - 2 * k, r[2] - r[0] + 4 * k, r[3] - r[1] + 4 * k);
+          const x0 = Math.min(...rs.map(r => r[0])) - 8 * k, y0 = Math.min(...rs.map(r => r[1])) - 8 * k, x1 = Math.max(...rs.map(r => r[2])) + 8 * k, y1 = Math.max(...rs.map(r => r[3])) + 8 * k;
+          octx.setLineDash([10 * k, 6 * k]); octx.lineWidth = 2 * k; octx.strokeRect(x0, y0, x1 - x0, y1 - y0); octx.setLineDash([]);
+          const lab = `👥 ${c.crowd_id} · ${rs.length} here now (max ${c.people_max_at_once})`;
+          octx.font = `600 ${13 * k}px "IBM Plex Sans", sans-serif`; const tw = octx.measureText(lab).width + 12 * k;
+          octx.fillStyle = "#ff6f3c"; octx.fillRect(x0, y0 - 22 * k, tw, 20 * k); octx.fillStyle = "#fff"; octx.fillText(lab, x0 + 6 * k, y0 - 7 * k);
+        }
+      }
     }
     // level-1 objects (tracked + smoothed in the pipeline)
     const oc = {}, l2c = {};
@@ -687,6 +886,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                 row("Path on map", mt ? `${mt.len_m} m in ${mt.dur_s} s${mt.members.length > 1 ? ` · ${mt.members.length} pieces re-linked` : ""}` : "no reliable position (> 12 m)");
         foot = mt ? `<button class="vfollow" data-id="${S.sel.id}" style="--c:${fc || "var(--accent)"}">${fc ? "● Following · click to stop" : "📍 Follow: path on map + motion arrow"}</button>`
                   : `<button class="vfollow" disabled>Too far away for a map path</button>`;
+        foot += atCardHtml(S.sel.id, esc2);
         note = "Age, gender: CLIP estimates, not validated. Speed, path: from foot point + camera height, camera motion removed.";
       } else if (S.sel.kind === "o" || S.sel.kind === "l2") {
         const lvl = S.sel.kind === "o" ? "Level 1 (YOLO11, COCO)" : "Level 2 (YOLO-World, text prompt)";
@@ -697,7 +897,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       } else if (S.sel.kind === "fm") {
         const p = FRONT.find(x => x.id === S.sel.id) || {};
         title = `🧱 Frontage materials · M-${S.sel.id}`;
-        rows = `</dl><img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop"><dl class="kv">` +
+        rows = `</dl><img class="fm" src="${PROJ.processed}/${p.crop}" alt="Frontage crop"><dl class="kv">` +
                row("Facade", p.facade || "—") + row("Structure", p.structure || "—") +
                row("Materials", (p.materials || []).join(", ") || "—") + row("Where", `${p.chainage_m} m along the route, ${p.side} side`);
         note = "Experimental: what the camera saw at this spot (vision review of a frontage crop). Location-based, not tied to a store name.";
@@ -854,6 +1054,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
   const GEO = { shops: null, walks: {} };
   const WASTE = {};
+  const CROWDS = {};                                                    // crowds per walk, computed live (same algorithm as pipeline/crowds.py)
+  let CROWD_MINI = null, CROWD_FULL = null, SELCROWD = null;
   let FRONT = [];                                                       // frontage materials, location-based (pipeline/frontage.py)
   const SHOW_WASTE = false;   // waste results are kept (waste.py) but not shown until detection is good enough (team decision)
   const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
@@ -862,11 +1064,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   let mini = null, full = null, miniRoute = null, fullMe = null;
   async function loadGeo() {
     try {
-      GEO.shops = (await (await fetch("../data/processed/shops.json")).json()).shops;
-      for (const w of ["walk1", "walk2"]) {
-        try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
-        if (w === "walk1") try { const rf = await fetch("../data/processed/frontage_materials.json"); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
-        if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
+      GEO.shops = (await (await fetch(`${PROJ.processed}/shops.json`)).json()).shops;
+      for (const w of Object.keys(PROJ.walks)) {
+        try { GEO.walks[w] = await (await fetch(`${PROJ.processed}/${w}/georef.json`)).json(); } catch (e) {}
+        if (w === Object.keys(PROJ.walks)[0]) try { const rf = await fetch(`${PROJ.processed}/frontage_materials.json`); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
+        if (SHOW_WASTE) try { const rw = await fetch(`${PROJ.processed}/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
       }
     } catch (e) { return; }
     if (!window.L || !GEO.shops) return;
@@ -874,20 +1076,24 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     mini = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
                          boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
-    for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
+    MINI.layers.stores = L.layerGroup(); MINI.layers.frontage = L.layerGroup(); MINI.layers.paths = L.layerGroup(); MINI.layers.routes = L.layerGroup(); MINI.layers.speed = L.layerGroup();
+    for (const sh of GEO.shops) MINI.stores.push({ sh, m: L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }) });
     mini.createPane("people").style.zIndex = 650;
-    for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(mini);
+    CROWD_MINI = L.layerGroup(); MINI.layers.crowds = CROWD_MINI;
+    for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(MINI.layers.frontage);
     for (const wj of Object.values(WASTE)) for (const it of wj.items_list || [])
       L.circleMarker([it.lat, it.lon], { radius: 3, weight: 1, color: "#fff", fillColor: C.waste, fillOpacity: 1, interactive: false }).addTo(mini);
     MO.miniPaths = L.layerGroup().addTo(mini); MO.miniNow = L.layerGroup().addTo(mini); MO.pathSig = "";
+    mlApply();
     $("minimap").addEventListener("click", openFullMap);
+    crowdsRefresh();
     setMiniRoute();
   }
   function setMiniRoute() {
     if (!mini) return;
     if (miniRoute) { miniRoute.remove(); miniRoute = null; }
     const g = GEO.walks[S.walk]; if (!g) return;
-    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(mini);
+    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(MINI.layers.routes || mini);
   }
   let miniLast = -1;
   let meFi = 0, meBearing = 0;
@@ -922,37 +1128,47 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       full.createPane("people").style.zIndex = 650;                     // followed people above the "you are here" marker
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19,
         attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
-      const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
+
+      ML.layers.routes = L.layerGroup();
       for (const [w, g] of Object.entries(GEO.walks)) {
-        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(full)
-          .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
+        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: walkCol(w), weight: 5, opacity: .85 }).addTo(ML.layers.routes)
+          .bindTooltip(walkLong(w), { sticky: true });
       }
+      ML.layers.stores = L.layerGroup(); ML.layers.paths = L.layerGroup(); ML.layers.speed = L.layerGroup();
       const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
       for (const sh of GEO.shops) {
-        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 }).addTo(full);
-        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Facade", sh.Facade_Mat], ["Skeleton", sh.Skeleton_Mat]]
+        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 });
+        ML.stores.push({ sh, m });
+        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Shop type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Patronage", sh.Patronage],
+                      ["Facade", sh.Facade_Mat], ["Structure", sh.Skeleton_Mat], ["Established", sh.Est_Year ? Math.round(sh.Est_Year) : null],
+                      ["Generation", sh.Gen_Status ? Math.round(sh.Gen_Status) : null], ["Informal vendor", sh.Informal_Vendor]]
           .filter(x => x[1]).map(([a, b]) => `${a}: ${esc3(b)}`).join("<br>");
-        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
+        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${walkShort(sh.seen.walk)}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
                               : `<div class="muted">Not passed on the recorded walks.</div>`;
         m.bindPopup(`<b>${esc3(sh.name)}</b><br>${info}<br>${where}`);
+        m.off("click", m._openPopup, m);                                // we decide on click: popup, or segment anchor
+        m.on("click", () => { if (SEG.on) segPick(sh); else m.openPopup(); });
         m.bindTooltip(esc3(sh.name));
       }
       full.on("popupopen", e => {
         const b = e.popup.getElement().querySelector(".go"); if (!b) return;
+        if (b.dataset.crowd) { b.addEventListener("click", () => { const [w, id] = b.dataset.crowd.split(":"); const c = (CROWDS[w].crowds_list || []).find(x => String(x.id) === id); if (c) goToCrowd(c); }); return; }
         if (b.dataset.fm) { b.addEventListener("click", () => { const p = FRONT.find(x => String(x.id) === b.dataset.fm); if (p) goToFrontage(p); }); return; }
         b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
       });
       const used = Object.keys(TRADE_COL);
-      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span>🧱 frontage materials (experimental)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
       $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
-          .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
+          .bindTooltip(`${it.emoji} ${it.type} · ${walkShort(w)} · ${it.chainage_m} m`).addTo(full);
+      CROWD_FULL = L.layerGroup(); drawCrowdMarkers(); ML.layers.crowds = CROWD_FULL;
+      FM_LAYER = L.layerGroup(); ML.layers.frontage = FM_LAYER;
       for (const p of FRONT)
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
-          .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(full);
+          .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(FM_LAYER);
       MO.fullPaths = L.layerGroup().addTo(full); MO.fullNow = L.layerGroup().addTo(full); MO.pathSig = ""; MO.lastKey = "";
+      mlBuildPanel(); mlApply();
       // "you are here": current camera position + view cone, kept live by updateMini()
       fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
         html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
@@ -969,13 +1185,547 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     };
     centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
   }
+  // ---------------- segment summary: pick a start and an end store, summarise everything in between ----------------
+  // ---------- full map: layers, store filters and "colour by" (user, 14 Oct: default = stores + crowds only) ----------
+  const ML_LAYERS = [["stores", "🏪 Stores", true], ["crowds", "👥 Crowds", true], ["routes", "〰 Walk routes", false],
+                     ["frontage", "🧱 Frontage materials", false], ["paths", "🚶 All people's paths", false], ["speed", "🌡 Speed map (mean)", false]];
+  const ML_FIELDS = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"],
+                     ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"], ["Informal_Vendor", "Informal vendor"],
+                     ["Gen_Status", "Generation"], ["_seen", "Seen on a walk"]];
+  const ML_COLOUR = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"], ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"]];
+  const OKABE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#F0E442", "#7f7f7f"];
+  const MINI = { layers: {}, stores: [] };
+  const ML = { layers: {}, stores: [], on: Object.fromEntries(ML_LAYERS.map(([k, , d]) => [k, d])), colour: "Main_Trade", off: {} };
+  try { const sv = JSON.parse(localStorage.getItem("shukMapLayers") || "null"); if (sv) { Object.assign(ML.on, sv.on || {}); ML.colour = sv.colour || ML.colour; ML.off = sv.off || {}; } } catch (e) {}
+  const mlSave = () => { try { localStorage.setItem("shukMapLayers", JSON.stringify({ on: ML.on, colour: ML.colour, off: ML.off })); } catch (e) {} };
+  const mlVal = (sh, f) => { const v = f === "_seen" ? (sh.seen ? "yes" : "no") : sh[f]; return v == null || String(v).trim() === "" ? "unknown" : (typeof v === "number" ? String(Math.round(v)) : String(v).trim()); };
+  function mlColourMap() {
+    if (ML.colour === "Main_Trade") return v => TRADE_COL[v] || "#cfd8d6";
+    const vals = [...new Set(GEO.shops.map(sh => mlVal(sh, ML.colour)))].filter(v => v !== "unknown").sort((a, b) => GEO.shops.filter(x => mlVal(x, ML.colour) === b).length - GEO.shops.filter(x => mlVal(x, ML.colour) === a).length);
+    const m = Object.fromEntries(vals.map((v, i) => [v, OKABE[i % OKABE.length]]));
+    return v => m[v] || "#cfd8d6";
+  }
+  function mlBuildPanel() {
+    $("lpLayers").innerHTML = ML_LAYERS.map(([k, lab]) => `<label><input type="checkbox" data-layer="${k}" ${ML.on[k] ? "checked" : ""}>${lab}</label>`).join("");
+    $("lpColour").innerHTML = ML_COLOUR.map(([f, lab]) => `<option value="${f}" ${f === ML.colour ? "selected" : ""}>${lab}</option>`).join("");
+    const col = mlColourMap();
+    $("lpFilters").innerHTML = ML_FIELDS.map(([f, lab]) => {
+      const cnt = {}; for (const sh of GEO.shops) { const v = mlVal(sh, f); cnt[v] = (cnt[v] || 0) + 1; }
+      const vals = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+      const off = new Set(ML.off[f] || []);
+      const chip = ([v, n]) => `<button data-f="${f}" data-v="${v.replace(/"/g, "&quot;")}" aria-pressed="${!off.has(v)}">${f === ML.colour ? `<i style="background:${col(v)}"></i>` : ""}${v}<small>${n}</small></button>`;
+      const more = vals.length > 12 ? `<details><summary class="muted" style="cursor:pointer;margin-top:4px">${vals.length - 12} more</summary><div class="chips">${vals.slice(12).map(chip).join("")}</div></details>` : "";
+      return `<div><h5>${lab}<span><button class="mini" data-all="${f}">all</button> <button class="mini" data-none="${f}">none</button></span></h5><div class="chips">${vals.slice(0, 12).map(chip).join("")}</div>${more}</div>`;
+    }).join("");
+  }
+  function mlApply() {
+    const col = mlColourMap();
+    // the small map follows the same choices (user, 14 Oct)
+    if (mini) {
+      for (const [k] of ML_LAYERS) { const lay = MINI.layers[k]; if (!lay) continue; if (ML.on[k]) lay.addTo(mini); else lay.remove(); }
+      for (const { sh, m } of MINI.stores) {
+        const ok = ML_FIELDS.every(([f]) => !(ML.off[f] || []).includes(mlVal(sh, f)));
+        m.setStyle({ fillColor: col(mlVal(sh, ML.colour)) });
+        if (ok) m.addTo(MINI.layers.stores); else MINI.layers.stores.removeLayer(m);
+      }
+      if (ML.on.paths) mlPaths();
+      if (ML.on.speed) mlSpeed();
+      $("miniSpeed").hidden = !ML.on.speed;
+    }
+    if (!full) { mlSave(); return; }
+    for (const [k] of ML_LAYERS) { const lay = ML.layers[k]; if (!lay) continue; if (ML.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(full); else lay.remove(); }
+    let shown = 0;
+    for (const { sh, m } of ML.stores) {
+      const ok = ML_FIELDS.every(([f]) => !(ML.off[f] || []).includes(mlVal(sh, f)));
+      m.setStyle({ fillColor: col(mlVal(sh, ML.colour)) });
+      if (ok) { m.addTo(ML.layers.stores); shown++; } else ML.layers.stores.removeLayer(m);
+    }
+    $("lpShown").textContent = `${shown} / ${GEO.shops.length}`;
+    $("mapinfo").textContent = ML.on.stores ? `${shown} of ${GEO.shops.length} stores shown` : "stores hidden";
+    if (ML.on.paths) mlPaths();
+    if (ML.on.speed) mlSpeed();
+    mlLegend(col);
+    mlSave();
+  }
+  function mlLegend(col) {
+    const parts = [];
+    if (ML.on.stores) {
+      const vals = [...new Set(ML.stores.filter(x => ML.layers.stores.hasLayer(x.m)).map(x => mlVal(x.sh, ML.colour)))];
+      const lab = (ML_COLOUR.find(c => c[0] === ML.colour) || [, ""])[1];
+      const coloured = vals.filter(v => col(v) !== "#cfd8d6").sort((a, b) => ML.stores.filter(x => mlVal(x.sh, ML.colour) === b).length - ML.stores.filter(x => mlVal(x.sh, ML.colour) === a).length);
+      parts.push(`<span class="muted">Stores by ${lab.toLowerCase()} · bright = on a walk</span>`, ...coloured.map(v => `<span><i style="background:${col(v)}"></i>${v}</span>`));
+      if (coloured.length < vals.length) parts.push(`<span><i style="background:#cfd8d6"></i>other / unknown</span>`);
+    }
+    if (ML.on.crowds) parts.push(`<span><i style="background:#ff6f3c"></i>👥 crowd (number = most people at once)</span>`);
+    if (ML.on.routes) parts.push(`${Object.keys(GEO.walks).map(w => `<span><i style="background:${walkCol(w)}"></i>${walkLong(w)}</span>`).join("")}`);
+    if (ML.on.frontage) parts.push(`<span>🧱 frontage materials (experimental)</span>`);
+    if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
+    $("speedLeg").hidden = !ML.on.speed; $("miniSpeed").hidden = !ML.on.speed || !mini;
+    if (ML.on.speed) $("speedInfo").textContent = mlSpeedInfo;
+    $("maplegend").innerHTML = parts.join("") || `<span class="muted">Nothing selected — open 🗂 Layers &amp; filters</span>`;
+    $("maplegend").style.display = (!parts.length && ML.on.speed) ? "none" : "";   // the speed map has its own legend
+  }
+  // ---- speed map: mean walking speed (magnitude) per grid cell, people-weighted ----
+  const SPEED_RAMP = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];      // viridis: slow -> fast
+  const SP = { cell: 3, minPeople: 3, max: 1.5 };                       // cell = smoothing radius (Gaussian sigma, m)
+  let mlSpeedKey = "", mlSpeedInfo = "";
+  const rampCol = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
+    const a = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
+    return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`; };
+  // smooth surface: each person's speed is spread around their path (Gaussian, sigma = SP.cell m); per pixel the
+  // value is the people-weighted mean (each person counts once: their strongest weight there), and the
+  // opacity fades out where fewer than SP.minPeople people contribute.
+  async function mlSpeed() {
+    const key = `${SP.cell}|${SP.minPeople}`, lays = [ML.layers.speed, MINI.layers.speed].filter(Boolean);
+    if (key === mlSpeedKey && lays.every(l => l.getLayers().length)) return;
+    mlSpeedKey = key;
+    for (const r of ["speedRamp", "miniSpeedRamp"]) $(r).style.background = `linear-gradient(90deg,${SPEED_RAMP.join(",")})`;
+    const g0 = Object.values(GEO.walks)[0] || { lat: [32.0527], lon: [34.7903] };
+    const lat0 = g0.lat.find(x => x != null), lon0 = g0.lon.find(x => x != null), kx = 111320 * Math.cos(lat0 * deg), ky = 110574;
+    const people = [];                                                  // [[x, y, speed], ...] per person (thinned to 1 point / m)
+    for (const w of Object.keys(GEO.walks)) {
+      const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
+      for (const m of Object.values(mo.tracks)) {
+        const pts = []; let lx = 1e9, ly = 1e9;
+        m.lat.forEach((la, i) => { const v = m.spd[i]; if (la == null || v == null) return;
+          const x = (m.lon[i] - lon0) * kx, y = (la - lat0) * ky; if (Math.hypot(x - lx, y - ly) < 1) return; lx = x; ly = y; pts.push([x, y, v]); });
+        if (pts.length) people.push(pts);
+      }
+    }
+    for (const l of lays) l.clearLayers();
+    if (!people.length) { mlSpeedInfo = "no motion data"; return; }
+    const sig = SP.cell, R = Math.ceil(3 * sig), res = 0.5;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const pts of people) for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    x0 -= R; y0 -= R; x1 += R; y1 += R;
+    const W = Math.ceil((x1 - x0) / res), H = Math.ceil((y1 - y0) / res);
+    const num = new Float32Array(W * H), den = new Float32Array(W * H);
+    const pw = new Float32Array(W * H), pv = new Float32Array(W * H), touched = [];
+    const r = Math.ceil(R / res), k2 = -0.5 / (sig * sig);
+    for (const pts of people) {
+      touched.length = 0;
+      for (const [x, y, v] of pts) {
+        const cx = Math.floor((x - x0) / res), cy = Math.floor((y - y0) / res);
+        for (let j = Math.max(0, cy - r); j <= Math.min(H - 1, cy + r); j++) for (let i = Math.max(0, cx - r); i <= Math.min(W - 1, cx + r); i++) {
+          const dx = x0 + (i + .5) * res - x, dy = y0 + (j + .5) * res - y, w = Math.exp((dx * dx + dy * dy) * k2);
+          if (w < 0.01) continue;
+          const q = j * W + i;
+          if (pw[q] === 0) touched.push(q);
+          if (w > pw[q]) { pw[q] = w; pv[q] = v; }                       // this person's strongest (= nearest) sample here
+        }
+      }
+      for (const q of touched) { num[q] += pw[q] * pv[q]; den[q] += pw[q]; pw[q] = 0; }
+    }
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const cx2 = cv.getContext("2d"), img = cx2.createImageData(W, H);
+    const lo = Math.max(0.5, SP.minPeople - 1.5), hi = SP.minPeople;      // fade-in of the support (people-equivalents)
+    let painted = 0, sum = 0;
+    const rgb = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
+      const a1 = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b1 = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
+      return a1.map((v, k) => Math.round(v + (b1[k] - v) * f)); };
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const q = j * W + i, d = den[q]; if (d < lo) continue;
+      const v = num[q] / d, c = rgb(v / SP.max), al = Math.min(1, (d - lo) / Math.max(0.01, hi - lo));
+      const o = ((H - 1 - j) * W + i) * 4;                              // canvas y grows downward (north up)
+      img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = Math.round(200 * al);
+      if (al >= 1) { painted++; sum += v; }
+    }
+    cx2.putImageData(img, 0, 0);
+    const url = cv.toDataURL("image/png");
+    const bounds = [[lat0 + y0 / ky, lon0 + x0 / kx], [lat0 + (y0 + H * res) / ky, lon0 + (x0 + W * res) / kx]];
+    for (const l of lays) L.imageOverlay(url, bounds, { opacity: .85, interactive: false, className: "speed-img" }).addTo(l);
+    mlSpeedInfo = painted ? `${people.length} people · smoothing ${SP.cell} m · shown where ≥ ${SP.minPeople} people · area mean ${(sum / painted).toFixed(2)} m/s · below ~0.3 m/s = standing / noise`
+                          : "not enough people for this setting";
+    if (full) mlLegend(mlColourMap());
+  }
+  $("spCell").addEventListener("change", () => { SP.cell = +$("spCell").value; mlSpeedKey = ""; if (ML.on.speed) mlSpeed(); });
+  $("spMin").addEventListener("change", () => { SP.minPeople = +$("spMin").value; mlSpeedKey = ""; if (ML.on.speed) mlSpeed(); });
+  const mlPathsBuilt = new Set();                                         // each map's paths layer is filled once
+  async function mlPaths() {
+    const todo = [ML.layers.paths, MINI.layers.paths].filter(l => l && !mlPathsBuilt.has(l));
+    if (!todo.length) return; todo.forEach(l => mlPathsBuilt.add(l));
+    for (const w of Object.keys(GEO.walks)) {
+      const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
+      for (const m of Object.values(mo.tracks)) {
+        const pts = []; m.lat.forEach((la, i) => { if (la != null) pts.push([la, m.lon[i]]); });
+        if (pts.length > 1) for (const lay of todo) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(lay);
+      }
+    }
+  }
+  $("layersBtn").addEventListener("click", () => {
+    const open = $("layerPanel").hidden; $("layerPanel").hidden = !open; $("layersBtn").setAttribute("aria-expanded", String(open));
+    if (open) { $("crowdPanel").hidden = true; $("crowdBtn").setAttribute("aria-expanded", "false"); $("segPanel").hidden = true; $("segHint").hidden = true; }
+  });
+  $("layerPanel").addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.layer) { ML.on[t.dataset.layer] = t.checked; mlApply(); }
+    if (t.id === "lpColour") { ML.colour = t.value; mlBuildPanel(); mlApply(); }
+  });
+  $("layerPanel").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.f) { const f = b.dataset.f, v = b.dataset.v, off = new Set(ML.off[f] || []); off.has(v) ? off.delete(v) : off.add(v); ML.off[f] = [...off]; b.setAttribute("aria-pressed", String(!off.has(v))); mlApply(); }
+    else if (b.dataset.all) { ML.off[b.dataset.all] = []; mlBuildPanel(); mlApply(); }
+    else if (b.dataset.none) { const f = b.dataset.none; ML.off[f] = [...new Set(GEO.shops.map(sh => mlVal(sh, f)))]; mlBuildPanel(); mlApply(); }
+    else if (b.id === "lpReset") { ML.on = Object.fromEntries(ML_LAYERS.map(([k, , d]) => [k, d])); ML.colour = "Main_Trade"; ML.off = {}; mlBuildPanel(); mlApply(); }
+  });
+  let FM_LAYER = null;                                                  // frontage markers (hidden while picking stores)
+  const SEG = { on: false, a: null, b: null, layer: null, cache: {}, result: null };
+  const segEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  function segSetMode(on) {
+    SEG.on = on; SEG.a = SEG.b = null;
+    $("segBtn").setAttribute("aria-pressed", String(on));
+    $("mapfull").classList.toggle("selecting", on);
+    if (FM_LAYER && full) { if (on) FM_LAYER.remove(); else if (ML.on.frontage) FM_LAYER.addTo(full); }
+    if (on) { $("segPanel").hidden = true; $("maplegend").hidden = true; segClearLayer(); full && full.closePopup(); $("layerPanel").hidden = true; $("layersBtn").setAttribute("aria-expanded", "false"); }
+    else if ($("segPanel").hidden) $("maplegend").hidden = false;
+    segHint();
+  }
+  function segHint() {
+    const h = $("segHint");
+    if (!SEG.on) { h.hidden = true; return; }
+    h.hidden = false;
+    h.innerHTML = SEG.a ? `② Click the <b>end</b> store &nbsp;·&nbsp; start: ${segEsc(SEG.a.name)} &nbsp;·&nbsp; Esc to cancel`
+                        : `① Click the <b>start</b> store on the map &nbsp;·&nbsp; Esc to cancel`;
+  }
+  function segClearLayer() { if (SEG.layer) { SEG.layer.remove(); SEG.layer = null; } }
+  // closest point of a walk to a store
+  function segNearest(walk, sh) {
+    const g = GEO.walks[walk]; if (!g) return null;
+    const kx = 111320 * Math.cos(sh.lat * deg), ky = 110574;
+    let best = null;
+    for (let i = 0; i < g.lat.length; i++) {
+      if (g.lat[i] == null) continue;
+      const d = Math.hypot((g.lon[i] - sh.lon) * kx, (g.lat[i] - sh.lat) * ky);
+      if (!best || d < best.d) best = { f: i, d };
+    }
+    return best;
+  }
+  async function segData(walk) {
+    if (walk === S.walk && S.data) return { d: S.data, mo: MO.data };
+    if (!SEG.cache[walk]) {
+      const v = $("Lvar").checked ? "_stab" : "";
+      const d = await (await fetch(`${PROJ.processed}/${walk}/overlays${v}.json`)).json();
+      let mo = null; try { const r = await fetch(`${PROJ.processed}/${walk}/motion${v}.json`); if (r.ok) mo = await r.json(); } catch (e) {}
+      SEG.cache[walk] = { d, mo };
+    }
+    return SEG.cache[walk];
+  }
+  async function segPick(sh) {
+    if (!SEG.a) { SEG.a = sh; segHint(); return; }
+    if (sh.OBJECTID === SEG.a.OBJECTID) return;
+    SEG.b = sh;
+    // the walk that passes both stores (smallest worst distance, <= 30 m)
+    let pick = null;
+    for (const w of Object.keys(GEO.walks)) {
+      const na = segNearest(w, SEG.a), nb = segNearest(w, SEG.b); if (!na || !nb) continue;
+      const worst = Math.max(na.d, nb.d);
+      if (!pick || worst < pick.worst) pick = { walk: w, na, nb, worst };
+    }
+    if (!pick || pick.worst > 30) {
+      $("segHint").innerHTML = `No recorded walk passes both stores (nearest is ${pick ? Math.round(pick.worst) : "?"} m away). Pick another <b>end</b> store, or Esc.`;
+      SEG.b = null; return;
+    }
+    const { d, mo } = await segData(pick.walk);
+    const res = segSummary(pick, d, mo);
+    SEG.result = res;
+    const a = SEG.a, b = SEG.b;
+    segSetMode(false);
+    SEG.a = a; SEG.b = b;
+    segDraw(pick); segShow(res);
+  }
+  function segDraw(pick) {
+    segClearLayer();
+    const g = GEO.walks[pick.walk], f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f);
+    const pts = []; for (let i = f0; i <= f1; i++) if (g.lat[i] != null) pts.push([g.lat[i], g.lon[i]]);
+    SEG.layer = L.layerGroup().addTo(full);
+    L.polyline(pts, { color: "#fff", weight: 12, opacity: .9, interactive: false }).addTo(SEG.layer);
+    L.polyline(pts, { color: "#ff4f8b", weight: 6, opacity: 1, interactive: false }).addTo(SEG.layer);
+    const ab = (sh, t) => L.marker([sh.lat, sh.lon], { interactive: false, icon: L.divIcon({ className: "me-icon", html: `<div class="seg-ab">${t}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(SEG.layer);
+    ab(SEG.a, "A"); ab(SEG.b, "B");
+    full.fitBounds(L.latLngBounds(pts.concat([[SEG.a.lat, SEG.a.lon], [SEG.b.lat, SEG.b.lon]])).pad(0.3), { maxZoom: 20 });
+  }
+  function segSummary(pick, d, mo) {
+    const walk = pick.walk, g = GEO.walks[walk], fps = d.fps || 5;
+    const f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f);
+    const [startSh, endSh] = pick.na.f <= pick.nb.f ? [SEG.a, SEG.b] : [SEG.b, SEG.a];
+    let len = 0; for (let i = f0 + 1; i <= f1; i++) len += Math.hypot((g.lon[i] - g.lon[i - 1]) * 111320 * Math.cos(g.lat[i] * deg), (g.lat[i] - g.lat[i - 1]) * 110574);
+    const minLen = $("Lmin").checked ? 5 : 0, conf = S.conf, l2conf = Math.max(0.15, conf - 0.2);
+    const people = new Map(), food = new Map(), foodPics = new Set(), signs = new Map(), objs = new Map(), l2 = new Map(), pictured = new Set();
+    let peak = 0, peakF = f0;
+    for (let f = f0; f <= f1; f++) {
+      const F = d.frames[f]; if (!F) continue;
+      let n = 0;
+      for (const e of F.p) {
+        if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue;
+        n++;
+        if (!people.has(e[0])) people.set(e[0], { first: f, last: f }); else people.get(e[0]).last = f;
+      }
+      if (n > peak) { peak = n; peakF = f; }
+      for (const e of (F.fd || [])) {
+        if (((d.food_len || {})[e[7]] || 0) < minLen) continue;
+        if (e[0] === "Food picture (menu/sign)") foodPics.add(e[7]); else if (!food.has(e[7])) food.set(e[7], e[0]);
+      }
+      for (const e of (F.s || [])) { const info = (d.signs || {})[e[0]]; if (info && info[3] && !signs.has(e[0])) signs.set(e[0], { text: info[0], lang: info[1], frame: f }); }
+      for (const e of F.o) if (e[1] >= conf && ((d.obj_len || {})[e[7]] || 0) >= minLen && !objs.has(e[7])) objs.set(e[7], e[0]);
+      for (const e of F.l2) if (e[1] >= l2conf && ((d.obj_len || {})[e[8]] || 0) >= minLen && !l2.has(e[8])) l2.set(e[8], e[0]);
+      for (const e of (F.dp || [])) pictured.add(e[0]);
+    }
+    const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); };
+    const plist = [...people].map(([id, r]) => {
+      const t = d.tracks[id] || [], gid = mo && mo.id2g ? (mo.id2g[id] ?? id) : id, m = mo && mo.tracks ? mo.tracks[gid] : null;
+      return { id: `P-${String(id).padStart(4, "0")}`, age_group: t[6] || "uncertain", perceived_gender: t[5] || "uncertain",
+               movement: m ? m.state : "unknown", median_speed_m_s: m ? m.med_spd : null, first_frame: r.first, last_frame: r.last };
+    });
+    // stores along the stretch: closest approach of this walk within the frame range, <= 22 m
+    const stores = [];
+    for (const sh of GEO.shops) {
+      const n = segNearest(walk, sh); if (!n || n.d > 22 || n.f < f0 || n.f > f1) continue;
+      stores.push({ name: sh.name, trade: sh.Main_Trade, sub_category: sh.Sub_Category, shop_type: sh.Shop_Type, ownership: sh.Ownership,
+                    facade: sh.Facade_Mat, skeleton: sh.Skeleton_Mat, distance_m: +n.d.toFixed(1), frame: n.f, global_id: sh.GlobalID });
+    }
+    stores.sort((a, b) => a.frame - b.frame);
+    const fronts = FRONT.filter(p => p.walk === walk && p.frame >= f0 && p.frame <= f1);
+    const mat = {}; for (const p of fronts) for (const m of p.materials) mat[m] = (mat[m] || 0) + 1;
+    return {
+      segment: { walk, street: walkLabel(walk), from_store: startSh.name, to_store: endSh.name,
+                 frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
+                 duration_s: +((f1 - f0) / fps).toFixed(1), length_m: +len.toFixed(1), min_confidence: conf, hide_tracks_shorter_than_1s: minLen > 0,
+                 exported: new Date().toISOString() },
+      stores: { count: stores.length, by_trade: tally(stores.map(x => x.trade || "unknown")), list: stores },
+      people: { unique: plist.length, per_100m: len > 0 ? +(plist.length / len * 100).toFixed(1) : null, peak_in_frame: peak, peak_frame: peakF,
+                age_group: tally(plist.map(x => x.age_group)), perceived_gender: tally(plist.map(x => x.perceived_gender)),
+                movement: tally(plist.map(x => x.movement)), list: plist },
+      food: { displays: food.size, by_item: tally([...food.values()]), food_pictures_menu_or_sign: foodPics.size },
+      signs: { read: signs.size, list: [...signs.values()] },
+      objects: { by_class: tally([...objs.values()]) },
+      market_items: { by_class: tally([...l2.values()]) },
+      pictured_people_on_signs: pictured.size,
+      frontage_materials: { points: fronts.length, materials: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])),
+                            list: fronts.map(p => ({ id: p.id, facade: p.facade, structure: p.structure, materials: p.materials.join("; "), chainage_m: p.chainage_m, side: p.side })) },
+      notes: ["People are unique tracked IDs (one person can still be split into two IDs).", "Age group and perceived gender are CLIP estimates, not validated.",
+              "Food = tracked displays/stacks, not single items. Frontage materials are location-based (experimental).", "Waste on the floor is not included (hidden: not reliable yet)."],
+    };
+  }
+  function segShow(r) {
+    const s = r.segment, kv = o => Object.entries(o).map(([a, b]) => `<dt>${segEsc(a)}</dt><dd>${b}</dd>`).join("") || `<dt class="muted">none</dt><dd></dd>`;
+    $("segTitle").textContent = `${s.from_store} → ${s.to_store}`;
+    $("segBody").innerHTML = `
+      <dl class="kv"><dt>Street</dt><dd>${s.street}</dd><dt>Length</dt><dd>${s.length_m} m</dd><dt>Video</dt><dd>${fmt(s.t_start_s)}–${fmt(s.t_end_s)} (${s.duration_s} s)</dd></dl>
+      <div><h5>People</h5><dl class="kv"><dt>Unique people</dt><dd>${r.people.unique}</dd><dt>Per 100 m</dt><dd>${r.people.per_100m ?? "—"}</dd><dt>Most at once</dt><dd>${r.people.peak_in_frame}</dd></dl>
+        <h5>Age group</h5><dl class="kv">${kv(r.people.age_group)}</dl><h5>Perceived gender</h5><dl class="kv">${kv(r.people.perceived_gender)}</dl><h5>Movement</h5><dl class="kv">${kv(r.people.movement)}</dl></div>
+      <div><h5>Stores (${r.stores.count})</h5><div class="tags">${Object.entries(r.stores.by_trade).map(([t, n]) => `<span>${segEsc(t)} · ${n}</span>`).join("") || '<span class="muted">none</span>'}</div>
+        <ul>${r.stores.list.map(x => `<li>${segEsc(x.name)} <span class="muted">· ${segEsc(x.trade || "")}</span></li>`).join("")}</ul></div>
+      <div><h5>Food on display (${r.food.displays})</h5><div class="tags">${Object.entries(r.food.by_item).map(([t, n]) => `<span>${emojiOf(t)} ${segEsc(t)} · ${n}</span>`).join("") || '<span class="muted">none</span>'}</div>
+        ${r.food.food_pictures_menu_or_sign ? `<div class="muted" style="font-size:12px;margin-top:4px">+ ${r.food.food_pictures_menu_or_sign} food pictures on menus/signs (not counted)</div>` : ""}</div>
+      <div><h5>Signs read (${r.signs.read})</h5><ul>${r.signs.list.slice(0, 40).map(x => `<li dir="auto">${segEsc(x.text)}</li>`).join("") || '<li class="muted">none</li>'}</ul></div>
+      <div><h5>Objects</h5><dl class="kv">${kv(r.objects.by_class)}</dl><h5>Market items</h5><dl class="kv">${kv(r.market_items.by_class)}</dl></div>
+      <div><h5>Frontage materials (${r.frontage_materials.points} points)</h5><dl class="kv">${kv(r.frontage_materials.materials)}</dl></div>
+      <dl class="kv"><dt>Pictured people on signs (not counted)</dt><dd>${r.pictured_people_on_signs}</dd></dl>
+      <div class="note">${r.notes.join(" ")}</div>`;
+    $("segPanel").hidden = false; $("maplegend").hidden = true;
+  }
+  const segName = () => { const s = SEG.result.segment; return `shuk_segment_${s.walk}_${s.frame_start}-${s.frame_end}`.replace(/[^\w.-]+/g, "_"); };
+  function segDownload(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve();
+    return new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"; sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc); });
+  }
+  $("segJson").addEventListener("click", () => { if (SEG.result) segDownload(new Blob([JSON.stringify(SEG.result, null, 2)], { type: "application/json" }), segName() + ".json"); });
+  $("segXlsx").addEventListener("click", async () => {
+    if (!SEG.result) return;
+    try { await loadXlsx(); } catch (e) { $("segXlsx").textContent = "Excel library unavailable (offline?)"; return; }
+    const r = SEG.result, wb = XLSX.utils.book_new(), add = (rows, name) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ "": "none" }]), name);
+    const flat = (o, pre = "") => Object.entries(o).flatMap(([k, v]) => v && typeof v === "object" && !Array.isArray(v) ? flat(v, `${pre}${k} · `) : Array.isArray(v) ? [] : [{ field: pre + k, value: v }]);
+    add([...flat(r.segment, "segment · "), ...flat({ stores: { count: r.stores.count, by_trade: r.stores.by_trade } }), ...flat({ people: { unique: r.people.unique, per_100m: r.people.per_100m, peak_in_frame: r.people.peak_in_frame, age_group: r.people.age_group, perceived_gender: r.people.perceived_gender, movement: r.people.movement } }),
+         ...flat({ food: { displays: r.food.displays, by_item: r.food.by_item, food_pictures_menu_or_sign: r.food.food_pictures_menu_or_sign } }), { field: "signs · read", value: r.signs.read },
+         ...flat({ objects: r.objects.by_class, market_items: r.market_items.by_class, frontage_materials: r.frontage_materials.materials }), { field: "pictured people on signs", value: r.pictured_people_on_signs },
+         ...r.notes.map(n => ({ field: "note", value: n }))], "Summary");
+    add(r.stores.list, "Stores"); add(r.people.list, "People");
+    add(Object.entries(r.food.by_item).map(([item, n]) => ({ item, displays: n })), "Food");
+    add(r.signs.list, "Signs");
+    add([...Object.entries(r.objects.by_class).map(([c, n]) => ({ level: "object", class: c, count: n })), ...Object.entries(r.market_items.by_class).map(([c, n]) => ({ level: "market item", class: c, count: n }))], "Objects");
+    add(r.frontage_materials.list, "Frontage");
+    XLSX.writeFile(wb, segName() + ".xlsx");
+  });
+  $("segBtn").addEventListener("click", () => segSetMode(!SEG.on));
+  $("segClose").addEventListener("click", () => { $("segPanel").hidden = true; $("maplegend").hidden = false; segClearLayer(); SEG.result = null; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && SEG.on) segSetMode(false); });
   $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
   $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
   const fmHtml = (p, withBtn) => `<b>🧱 Frontage materials</b> <span class="muted">· experimental</span><br>` +
-    `<img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop">` +
+    `<img class="fm" src="${PROJ.processed}/${p.crop}" alt="Frontage crop">` +
     `Facade: ${p.facade} · structure: ${p.structure}<br>Materials: ${p.materials.length ? p.materials.join(", ") : "—"}<br>` +
-    `<span class="muted">${p.walk === "walk1" ? "walk 1" : "walk 2"} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
+    `<span class="muted">${walkShort(p.walk)} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
     (withBtn ? `<br><button class="go" data-fm="${p.id}">▶ Go to video</button>` : "");
+  const AGE_ORDER = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"];
+  const AGE_HEX = { "child": "#e2f7dc", "young adult 18-35": "#9fe08f", "middle adult 36-60": "#4caf50", "older adult 61+": "#1b6e2a", "uncertain": "#9aa3a1" };
+  const SEX_HEX = { man: "#6a9cc0", woman: "#cf82a8", uncertain: "#9aa3a1" };
+  function crowdHtml(c) {
+    const n = Object.values(c.age_group).reduce((a, b) => a + b, 0) || 1;
+    const bar = (o, keys, hex) => `<div class="bar2">${keys.filter(k => o[k]).map(k => `<span style="width:${o[k] / n * 100}%;background:${hex[k]}" title="${k}: ${o[k]}"></span>`).join("")}</div>`;
+    const rows = (o, keys) => keys.filter(k => o[k]).map(k => `<tr><td>${AGE_EMOJI[k] || ""} ${k}</td><td>${o[k]}</td></tr>`).join("");
+    const sp = c.speed_mean_m_s == null ? "—" : `${c.speed_mean_m_s.toFixed(2)} ± ${c.speed_std_m_s.toFixed(2)} m/s`;
+    return `<div class="cpop"><h4>👥 Crowd ${c.crowd_id || ""} · ${walkShort(c.walk)} · ${fmt(c.t_start_s)}</h4><table>
+      <tr><td>People (approx.) · most at once</td><td><b>${c.people_max_at_once}</b></td></tr>
+      <tr><td>Typical size (median)</td><td>${c.people_median}</td></tr>
+      <tr><td>Different people over ${c.duration_s} s</td><td>${c.people_unique}</td></tr>
+      <tr><td>Speed mean ± std</td><td>${sp}</td></tr>
+      <tr><td>Walking / standing</td><td>${c.walking} / ${c.standing} <span class="muted">(of ${c.speed_n})</span></td></tr>
+      <tr><td>Spread</td><td>~${c.radius_m} m</td></tr></table>
+      <b style="font-size:12px">Age group</b>${bar(c.age_group, AGE_ORDER, AGE_HEX)}<table>${rows(c.age_group, AGE_ORDER)}</table>
+      <b style="font-size:12px">Perceived gender</b>${bar(c.perceived_gender, ["man", "woman", "uncertain"], SEX_HEX)}
+      <table>${["man", "woman", "uncertain"].filter(k => c.perceived_gender[k]).map(k => `<tr><td>${k}</td><td>${c.perceived_gender[k]}</td></tr>`).join("")}</table>
+      <div class="muted">Heuristic: overlapping person boxes of similar size. Counts approximate (hidden people missed); speed with camera motion removed; age/gender are estimates.</div>
+      <button class="go" data-crowd="${c.walk}:${c.id}">▶ Go to video</button></div>`;
+  }
+  // ---------- crowds, computed live in the browser (port of pipeline/crowds.py; thresholds adjustable) ----------
+  const CROWD_DEF = { minPeople: 4, maxDist: 8, sizeRatio: 0.7, gapFrac: 0.25, linkM: 2, minDur: 1, mergeM: 4, mergeT: 5 };
+  const CP = { ...CROWD_DEF };
+  function crowdsCompute(walk, d, mo) {
+    const g = GEO.walks[walk]; if (!g || !d) return [];
+    const fps = d.fps || 5, minLen = $("Lmin").checked ? 5 : 0, conf = S.conf, n = d.n_frames;
+    const kx = 111320 * Math.cos(g.lat[0] * deg), ky = 110574;
+    const mtr = id => { if (!mo || !mo.tracks) return null; const gid = mo.id2g ? (mo.id2g[id] ?? id) : id; return mo.tracks[gid] || null; };
+    const mAt = (id, f) => { const m = mtr(id); if (!m) return null; const i = f - m.f0; return (i >= 0 && i < m.lat.length && m.lat[i] != null) ? { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i] } : null; };
+    const pos = (e, f) => { const m = mAt(e[0], f); if (m) return [m.lat, m.lon];
+      if (e[7] == null || g.lat[f] == null) return null; const b = (g.yaw0_bearing_deg[f] + e[2]) * deg;
+      return [g.lat[f] + e[7] * Math.cos(b) / ky, g.lon[f] + e[7] * Math.sin(b) / kx]; };
+    const area = e => Math.max(1e-6, (e[4] - e[3]) * (e[5] - e[6]));
+    let active = [], done = [];
+    for (let f = 0; f < n; f++) {
+      const F = d.frames[f]; if (!F) continue;
+      let rows = F.p.filter(e => { const t = d.tracks[e[0]] || []; return (t[3] || 0) >= conf && (t[2] || 0) >= minLen && e[7] != null && e[7] <= CP.maxDist; });
+      rows.sort((a, b) => b[1] - a[1]);
+      const keep = [];
+      for (const e of rows) {                                           // duplicate / part-body boxes count once
+        let dup = false;
+        for (const k of keep) {
+          const dx = Math.min(e[4], k[4]) - Math.max(e[3], k[3]), dy = Math.min(e[5], k[5]) - Math.max(e[6], k[6]);
+          if (dx > 0 && dy > 0) { const it = dx * dy, a1 = area(e), a2 = area(k); if (it / (a1 + a2 - it) > 0.5 || it / Math.min(a1, a2) > 0.75) { dup = true; break; } }
+        }
+        if (!dup) keep.push(e);
+      }
+      const m = keep.length; if (m < CP.minPeople) { continue; }
+      const par = [...Array(m).keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+      const w = keep.map(e => ((e[4] - e[3]) % 360 + 360) % 360), yc = keep.map((e, i) => e[3] + w[i] / 2), h = keep.map(e => e[5] - e[6]);
+      const gx = keep.map((e, i) => e[7] * Math.sin(yc[i] * deg)), gy = keep.map((e, i) => e[7] * Math.cos(yc[i] * deg));
+      for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
+        if (Math.min(h[i], h[j]) / Math.max(h[i], h[j], 1e-6) < CP.sizeRatio) continue;
+        const dc = Math.abs(((yc[i] - yc[j] + 540) % 360) - 180), gap = dc - (w[i] + w[j]) / 2;
+        if (gap > CP.gapFrac * (w[i] + w[j]) / 2) continue;
+        if (Math.min(keep[i][5], keep[j][5]) < Math.max(keep[i][6], keep[j][6])) continue;
+        if (Math.hypot(gx[i] - gx[j], gy[i] - gy[j]) > CP.linkM) continue;
+        par[find(i)] = find(j);
+      }
+      const comp = new Map(); keep.forEach((e, i) => { const r = find(i); if (!comp.has(r)) comp.set(r, []); comp.get(r).push(e); });
+      const used = new Set();
+      for (const grp of comp.values()) {
+        if (grp.length < CP.minPeople) continue;
+        const ids = new Set(grp.map(e => e[0]));
+        let best = null, bj = 0;
+        for (const c of active) {
+          if (used.has(c) || f - c.last > 5) continue;
+          let inter = 0; for (const x of ids) if (c.memLast.has(x)) inter++;
+          if (inter) { const j = inter / (ids.size + c.memLast.size - inter); if (j > bj) { best = c; bj = j; } }
+        }
+        if (!best) { best = { frames: [], memLast: new Set(), last: f }; active.push(best); }
+        best.frames.push([f, grp]); best.memLast = ids; best.last = f; used.add(best);
+      }
+      const still = []; for (const c of active) (f - c.last <= 5 ? still : done).push(c); active = still;
+    }
+    done = done.concat(active);
+    // merge crowds that share people, or lie within mergeM and less than mergeT apart
+    for (const c of done) {
+      c.mem = new Set(c.frames.flatMap(([, g2]) => g2.map(e => e[0]))); c.f0 = c.frames[0][0]; c.f1 = c.frames[c.frames.length - 1][0];
+      const ps = c.frames.flatMap(([f, g2]) => g2.map(e => pos(e, f))).filter(Boolean);
+      c.ctr = ps.length ? [median(ps.map(q => q[0])), median(ps.map(q => q[1]))] : null;
+    }
+    const par = [...done.keys()], find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+    for (let i = 0; i < done.length; i++) for (let j = i + 1; j < done.length; j++) {
+      const a = done[i], b = done[j], gapF = Math.max(a.f0, b.f0) - Math.min(a.f1, b.f1);
+      if (gapF > CP.mergeT * fps) continue;
+      let share = false; for (const x of a.mem) if (b.mem.has(x)) { share = true; break; }
+      const near = a.ctr && b.ctr && Math.hypot((a.ctr[1] - b.ctr[1]) * kx, (a.ctr[0] - b.ctr[0]) * ky) <= CP.mergeM;
+      if (share || near) par[find(i)] = find(j);
+    }
+    const grpd = new Map(); done.forEach((c, i) => { const r = find(i); if (!grpd.has(r)) grpd.set(r, []); grpd.get(r).push(c); });
+    let cum = [0]; for (let i = 1; i < g.lat.length; i++) cum.push(cum[i - 1] + Math.hypot((g.lon[i] - g.lon[i - 1]) * kx, (g.lat[i] - g.lat[i - 1]) * ky));
+    const out = [];
+    for (const cs of grpd.values()) {
+      const per = new Map();
+      for (const c of cs) for (const [f, g2] of c.frames) { if (!per.has(f)) per.set(f, new Map()); for (const e of g2) per.get(f).set(e[0], e); }
+      const frames = [...per.keys()].sort((a, b) => a - b).map(f => [f, [...per.get(f).values()]]);
+      const f0 = frames[0][0], f1 = frames[frames.length - 1][0];
+      if ((f1 - f0 + 1) / fps < CP.minDur) continue;
+      const sizes = frames.map(([, g2]) => g2.length), members = [...new Set(frames.flatMap(([, g2]) => g2.map(e => e[0])))].sort((a, b) => a - b);
+      const [fm, mm] = frames.reduce((a, b) => (b[1].length > a[1].length ? b : a));
+      const pts = frames.map(([f, g2]) => { const q = g2.map(e => pos(e, f)).filter(Boolean); return q.length ? [mean(q.map(x => x[0])), mean(q.map(x => x[1]))] : null; }).filter(Boolean);
+      if (!pts.length) continue;
+      const clat = median(pts.map(x => x[0])), clon = median(pts.map(x => x[1]));
+      const radius = Math.max(0, ...mm.map(e => pos(e, fm)).filter(Boolean).map(q => Math.hypot((q[1] - clon) * kx, (q[0] - clat) * ky)));
+      const spd = members.map(id => { const v = frames.filter(([, g2]) => g2.some(e => e[0] === id)).map(([f]) => (mAt(id, f) || {}).spd).filter(x => x != null); return v.length ? median(v) : null; }).filter(x => x != null);
+      const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return o; };
+      const ys = mm.map(e => e[2] * deg), vy = Math.atan2(mean(ys.map(Math.sin)), mean(ys.map(Math.cos))) / deg;
+      const sm = spd.length ? mean(spd) : null;
+      out.push({ walk, lat: clat, lon: clon, radius_m: +radius.toFixed(1), frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
+        duration_s: +((f1 - f0 + 1) / fps).toFixed(1), chainage_m: +cum[Math.min(fm, cum.length - 1)].toFixed(1),
+        people_median: Math.round(median(sizes)), people_max_at_once: Math.max(...sizes), people_unique: members.length,
+        speed_mean_m_s: sm, speed_std_m_s: sm == null ? null : Math.sqrt(mean(spd.map(v => (v - sm) ** 2))), speed_n: spd.length,
+        walking: spd.filter(v => v >= 0.5).length, standing: spd.filter(v => v <= 0.3).length,
+        age_group: tally(members.map(id => (d.tracks[id] || [])[6] || "uncertain")), perceived_gender: tally(members.map(id => (d.tracks[id] || [])[5] || "uncertain")),
+        members: members.map(id => `P-${String(id).padStart(4, "0")}`), view_frame: fm, view_yaw: +vy.toFixed(1), merged_from: cs.length,
+        framesMap: new Map(frames.map(([f, g2]) => [f, new Set(g2.map(e => e[0]))])) });
+    }
+    out.sort((a, b) => a.frame_start - b.frame_start);
+    const wn = walk.replace("walk", "");
+    out.forEach((c, i) => { c.id = i + 1; c.crowd_id = `C${wn}-${String(i + 1).padStart(2, "0")}`; });
+    return out;
+  }
+  const median = a => { const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  let crowdBusy = false;
+  async function crowdsRefresh() {
+    if (crowdBusy) return; crowdBusy = true;
+    try {
+      for (const w of Object.keys(GEO.walks)) {
+        const { d, mo } = await segData(w);
+        CROWDS[w] = { crowds_list: crowdsCompute(w, d, mo) };
+      }
+      drawCrowdMarkers();
+      $("crowdCount").textContent = Object.entries(CROWDS).map(([w, c]) => `${walkShort(w)}: ${c.crowds_list.length}`).join(" · ");
+    } finally { crowdBusy = false; }
+  }
+  function drawCrowdMarkers() {
+    if (CROWD_MINI) { CROWD_MINI.clearLayers();
+      for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list)
+        L.circleMarker([c.lat, c.lon], { radius: 3 + Math.min(5, c.people_max_at_once / 2), weight: 1.5, color: "#fff", fillColor: "#ff6f3c", fillOpacity: .9, interactive: false }).addTo(CROWD_MINI); }
+    if (CROWD_FULL) { CROWD_FULL.clearLayers();
+      for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list) {
+        const sz = Math.round(16 + Math.min(22, c.people_max_at_once * 2));
+        L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-icon", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+          html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
+          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 ${c.crowd_id} · ~${c.people_max_at_once} people`).addTo(CROWD_FULL);
+      } }
+  }
+  const CP_UI = [["cpMin", "cvMin", "minPeople", v => `${v}`], ["cpDist", "cvDist", "maxDist", v => `${v} m`], ["cpSize", "cvSize", "sizeRatio", v => (+v).toFixed(2)],
+                 ["cpGap", "cvGap", "gapFrac", v => (+v).toFixed(2)], ["cpLink", "cvLink", "linkM", v => `${v} m`], ["cpDur", "cvDur", "minDur", v => `${(+v).toFixed(1)} s`],
+                 ["cpMergeM", "cvMergeM", "mergeM", v => `${v} m`], ["cpMergeT", "cvMergeT", "mergeT", v => `${v} s`]];
+  function cpSync() { for (const [i, o, k, f] of CP_UI) { $(i).value = CP[k]; $(o).textContent = f(CP[k]); } }
+  let cpTimer = null;
+  for (const [i, o, k, f] of CP_UI) $(i).addEventListener("input", () => { CP[k] = +$(i).value; $(o).textContent = f(CP[k]); clearTimeout(cpTimer); cpTimer = setTimeout(crowdsRefresh, 150); });
+  $("cpReset").addEventListener("click", () => { Object.assign(CP, CROWD_DEF); cpSync(); crowdsRefresh(); });
+  $("crowdBtn").addEventListener("click", () => { const p = $("crowdPanel"), open = p.hidden; p.hidden = !open; $("crowdBtn").setAttribute("aria-expanded", String(open));
+    if (open) { $("segPanel").hidden = true; $("segHint").hidden = true; $("layerPanel").hidden = true; $("layersBtn").setAttribute("aria-expanded", "false"); } });
+  cpSync();
+  $("conf").addEventListener("change", () => crowdsRefresh());
+  $("Lmin").addEventListener("change", () => crowdsRefresh());
+  async function goToCrowd(c) {
+    $("mapfull").hidden = true;
+    if (c.walk !== S.walk) await load(c.walk);
+    vt = c.view_frame / (S.data ? S.data.fps : 5);
+    if (videoOk()) video.currentTime = vt;
+    S.yaw = c.view_yaw; S.pitch = -5; SELCROWD = c;                      // outline its members in the 360 view
+  }
   async function goToFrontage(p) {
     $("mapfull").hidden = true;
     if (p.walk !== S.walk) await load(p.walk);
@@ -992,7 +1742,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     S.yaw = t.yaw; S.pitch = -3;
   }
   requestAnimationFrame(frame);
-  loadGeo();
 
   // ---------- interaction ----------
   let drag = null, scrubbing = false;
@@ -1031,6 +1780,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // close on press (pointerdown), so a card refresh between press and release cannot swallow the click
   $("vcard").addEventListener("pointerdown", e => {
     const fb = e.target.closest(".vfollow"); if (fb) { if (!fb.disabled) toggleFollow(+fb.dataset.id); e.preventDefault(); e.stopPropagation(); return; }
+    const ab = e.target.closest(".vattach"); if (ab) { if (!AT.busy) { AT.track = +ab.dataset.id; $("atFile").click(); } e.preventDefault(); e.stopPropagation(); return; }
+    const rb = e.target.closest(".vrm"); if (rb) { atRemove(+rb.dataset.id, rb.dataset.name); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.target.closest(".vfile a")) { e.stopPropagation(); return; }
     if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
   vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
   vp.addEventListener("keydown", e => {
@@ -1039,6 +1791,145 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     else if (e.key === " ") { togglePlay(); } else return;
     e.preventDefault();
   });
+  // ---------- timeline comments: flags on the timeline, saved to data/processed/comments.json via serve.py ----------
+  const FLAG_COLS = ["#E69F00", "#D55E00", "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#F0E442", "#ffffff"];
+  const CM = { list: [], edit: null, color: FLAG_COLS[0], server: true };
+  const flagSvg = (col, sz = 22) => `<svg viewBox="0 0 22 26" width="${sz}" height="${sz * 26 / 22}" aria-hidden="true"><rect x="1" y="1" width="2.4" height="24" rx="1" fill="#e5e9e5" stroke="#121819" stroke-width=".6"/>` +
+    `<path d="M3.4 2 C8 0, 12 5, 20.5 2.5 L20.5 13.5 C12 16, 8 11, 3.4 13 Z" fill="${col}" stroke="#121819" stroke-width=".9" stroke-linejoin="round"/></svg>`;
+  const cmEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  async function cmLoad() {
+    try { const r = await fetch(`${PROJ.processed}/comments.json`, { cache: "no-store" }); if (r.ok) CM.list = (await r.json()).comments || []; }
+    catch (e) {}
+    if (!CM.list.length) { try { CM.list = JSON.parse(localStorage.getItem(`shukComments:${PROJ.id}`) || "[]"); } catch (e) {} }
+    cmRender();
+  }
+  async function cmSave() {
+    try { localStorage.setItem(`shukComments:${PROJ.id}`, JSON.stringify(CM.list)); } catch (e) {}
+    try {
+      const r = await fetch(`/api/comments?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comments: CM.list }) });
+      if (!r.ok) throw new Error(r.status);
+      CM.server = true; return true;
+    } catch (e) { CM.server = false; return false; }
+  }
+  function cmRender() {
+    const dur = duration(), box = $("flags");
+    const mine = CM.list.filter(c => c.walk === S.walk).sort((a, b) => a.t - b.t);
+    box.innerHTML = dur ? mine.map(c => `<button class="flag" data-id="${cmEsc(c.id)}" style="left:${(c.t / dur * 100).toFixed(3)}%" aria-label="Comment at ${fmt(c.t)}: ${cmEsc(c.text.slice(0, 60))}">${flagSvg(c.color)}</button>`).join("") +
+      atHere().map(a => `<button class="flag clip" data-track="${a.track}" style="left:${(atTime(a) / dur * 100).toFixed(3)}%" aria-label="Person P-${String(a.track).padStart(4, "0")}: ${a.files.length} attached file(s)">📎</button>`).join("") : "";
+  }
+  function cmSwatches() {
+    $("cmSwatches").innerHTML = `<span class="status">Flag colour</span>` + FLAG_COLS.map(c => `<button data-col="${c}" style="background:${c}" aria-label="Colour ${c}" aria-pressed="${c.toLowerCase() === CM.color.toLowerCase()}"></button>`).join("") +
+      `<input type="color" id="cmCustom" value="${CM.color}" aria-label="Custom colour"> <span id="cmPreview">${flagSvg(CM.color, 18)}</span>`;
+  }
+  function cmOpen(c) {
+    CM.edit = c || null;
+    const t = c ? c.t : curTime();
+    CM.color = c ? c.color : (CM.color || FLAG_COLS[0]);
+    $("cmTitle").textContent = c ? "🚩 Edit comment" : "🚩 New comment";
+    $("cmWhen").textContent = `${walkShort(S.walk)} · ${fmt(t)}`;
+    $("cmText").value = c ? c.text : ""; $("cmDelete").hidden = !c; $("cmStatus").textContent = "";
+    cmSwatches(); $("composer").hidden = false; $("cmText").focus();
+  }
+  $("addComment").addEventListener("click", () => { if (playing) togglePlay(); cmOpen(null); });
+  $("cmCancel").addEventListener("click", () => { $("composer").hidden = true; });
+  $("cmSwatches").addEventListener("click", e => { const b = e.target.closest("button[data-col]"); if (!b) return; CM.color = b.dataset.col; cmSwatches(); });
+  $("cmSwatches").addEventListener("input", e => { if (e.target.id === "cmCustom") { CM.color = e.target.value; $("cmPreview").innerHTML = flagSvg(CM.color, 18);
+    $("cmSwatches").querySelectorAll("button[data-col]").forEach(b => b.setAttribute("aria-pressed", "false")); } });
+  $("cmSave").addEventListener("click", async () => {
+    const text = $("cmText").value.trim(); if (!text) { $("cmStatus").textContent = "Write something first"; return; }
+    const now = new Date().toISOString();
+    if (CM.edit) Object.assign(CM.edit, { text, color: CM.color, updated: now });
+    else CM.list.push({ id: `c${Date.now().toString(36)}`, walk: S.walk, t: +curTime().toFixed(2), yaw: +S.yaw.toFixed(1), pitch: +S.pitch.toFixed(1), text, color: CM.color, created: now, updated: now });
+    const ok = await cmSave(); cmRender();
+    if (ok) $("composer").hidden = true; else $("cmStatus").textContent = "Saved in this browser only (server not reachable)";
+  });
+  $("cmDelete").addEventListener("click", async () => {
+    if (!CM.edit) return;
+    if ($("cmDelete").dataset.confirm !== "1") { $("cmDelete").dataset.confirm = "1"; $("cmDelete").textContent = "Click again to delete"; return; }
+    CM.list = CM.list.filter(c => c !== CM.edit); $("cmDelete").dataset.confirm = ""; $("cmDelete").textContent = "Delete";
+    await cmSave(); cmRender(); $("composer").hidden = true;
+  });
+  $("flags").addEventListener("click", e => {
+    const b = e.target.closest(".flag"); if (!b) return;
+    const c = CM.list.find(x => x.id === b.dataset.id); if (!c) return;
+    if (playing) togglePlay();
+    vt = c.t; if (videoOk()) video.currentTime = c.t;
+    S.yaw = c.yaw; S.pitch = c.pitch; $("flagTip").hidden = true;
+    cmOpen(c);
+  });
+  $("flags").addEventListener("mouseover", e => {
+    const b = e.target.closest(".flag"); if (!b) return;
+    const c = CM.list.find(x => x.id === b.dataset.id); if (!c) return;
+    const tip = $("flagTip"); tip.textContent = `${fmt(c.t)} · ${c.text}`; tip.style.left = b.style.left; tip.hidden = false;
+  });
+  $("flags").addEventListener("mouseout", e => { if (e.target.closest(".flag")) $("flagTip").hidden = true; });
+  // ---------- files attached to specific people (interviews, notes, photos): pipeline/attach_api.py via serve.py ----------
+  const AT = { list: [], busy: "", track: null, confirm: "" };
+  const atVar = () => ($("Lvar").checked ? "stab" : "");                 // track ids differ between the two overlay variants
+  const atOf = (walk, id) => AT.list.find(a => a.walk === walk && a.variant === atVar() && a.track === id);
+  const atHere = () => AT.list.filter(a => a.walk === S.walk && a.variant === atVar());
+  const atTime = a => (a.frame != null ? a.frame : ((S.data && S.data.tracks[a.track]) || [0])[0]) / ((S.data && S.data.fps) || 5);
+  async function atLoad() {
+    try { const r = await fetch(`/api/attachments?project=${encodeURIComponent(PROJ.id)}`, { cache: "no-store" }); if (r.ok) AT.list = (await r.json()).people || []; }
+    catch (e) {}
+    cmRender(); $("vcard").dataset.html = "";
+  }
+  function atCardHtml(id, esc2) {
+    const a = atOf(S.walk, id), files = a ? a.files : [];
+    return `<div class="vatt">` + files.map(f => `<div class="vfile"><a href="${a.dir}/${encodeURIComponent(f.name)}" target="_blank" rel="noopener" title="${esc2(f.name)} · ${f.added}">📄 ${esc2(f.name)}</a>` +
+      `<button class="vrm" data-id="${id}" data-name="${esc2(f.name)}" aria-label="Remove ${esc2(f.name)}">${AT.confirm === f.name ? "remove?" : "✕"}</button></div>`).join("") +
+      `<button class="vattach" data-id="${id}">${AT.busy ? esc2(AT.busy) : "📎 Attach file"}</button></div>`;
+  }
+  async function atRemove(id, name) {
+    if (AT.confirm !== name) { AT.confirm = name; return; }               // second click removes
+    AT.confirm = "";
+    try {
+      const r = await fetch(`/api/attach/delete?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walk: S.walk, variant: atVar(), track: id, name }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+    } catch (e) { AT.busy = `Could not remove: ${e.message}`; setTimeout(() => { AT.busy = ""; }, 4000); }
+    await atLoad();
+  }
+  function atUpload(file, id, where) {
+    return new Promise((ok, bad) => {
+      const q = new URLSearchParams({ project: PROJ.id, walk: S.walk, variant: atVar(), track: id, filename: file.name, ...where });
+      const x = new XMLHttpRequest(); x.open("PUT", `/api/attach?${q}`);
+      x.upload.onprogress = e => { if (e.lengthComputable) AT.busy = `Uploading ${file.name} · ${Math.round(100 * e.loaded / e.total)}%`; };
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {}
+        if (x.status === 200) ok(j);
+        else bad(new Error(x.status === 404 ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : (j.error || x.status))); };
+      x.onerror = () => bad(new Error("server not reachable"));
+      x.send(file);
+    });
+  }
+  $("atFile").addEventListener("change", async () => {
+    const files = [...$("atFile").files], id = AT.track ?? (S.sel && S.sel.kind === "p" ? S.sel.id : null); $("atFile").value = "";
+    if (!files.length || id == null) return;
+    const h = S.hits.find(x => x.kind === "p" && x.id === id), p = h && h.info;     // where the person is now (to find them again)
+    const where = { frame: String(Math.round(curTime() * ((S.data && S.data.fps) || 5))) };
+    if (p) Object.assign(where, { yaw: p[2].toFixed(2), pitch: ((p[5] + p[6]) / 2).toFixed(2) });
+    let err = "";
+    for (const f of files) { try { await atUpload(f, id, where); } catch (e) { err = `${f.name}: ${e.message}`; } }
+    AT.busy = err ? `Not attached: ${err}` : ""; await atLoad();
+    if (err) setTimeout(() => { AT.busy = ""; $("vcard").dataset.html = ""; }, 15000);
+  });
+  $("flags").addEventListener("click", e => {
+    const b = e.target.closest(".clip"); if (!b) return;
+    const a = atHere().find(x => x.track === +b.dataset.track); if (!a) return;
+    if (playing) togglePlay();
+    vt = atTime(a); if (videoOk()) video.currentTime = vt;
+    if (a.yaw != null) S.yaw = a.yaw;
+    if (a.pitch != null) S.pitch = a.pitch;
+    S.sel = { kind: "p", id: a.track }; $("flagTip").hidden = true;
+  });
+  $("flags").addEventListener("mouseover", e => {
+    const b = e.target.closest(".clip"); if (!b) return;
+    const a = atHere().find(x => x.track === +b.dataset.track); if (!a) return;
+    const tip = $("flagTip"); tip.textContent = `📎 P-${String(a.track).padStart(4, "0")} · ${fmt(atTime(a))}\n${a.files.map(f => f.name).join("\n")}`;
+    tip.style.left = b.style.left; tip.hidden = false;
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("composer").hidden) $("composer").hidden = true; });
+  video.addEventListener("loadedmetadata", cmRender);
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
   $("play").addEventListener("click", togglePlay);
   $("mMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; MO.mode = b.dataset.m;
@@ -1055,9 +1946,88 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   $("speed").addEventListener("change", () => setSpeed(+$("speed").value));
   video.addEventListener("loadedmetadata", () => { video.playbackRate = S.speed; });
   setSpeed(1);
-  document.querySelectorAll(".walks button").forEach(b => b.addEventListener("click", () => load(b.dataset.walk)));
   $("Lvar").addEventListener("change", () => load(S.walk));
-  load("walk1");
+  // ---------- 🎩 Ask Jeeves: the project's question-answering / data-analysis agent (pipeline/jeeves.py via serve.py) ----------
+  const JV = { chat: null, job: null, timer: null };
+  const jvApi = async (url, opt) => { const r = await fetch(url, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j; };
+  const jvEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  function jvMd(t) {                                          // small, safe markdown: paragraphs, lists, **bold**, jump tokens
+    const inline = x => jvEsc(x).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/\{\{p:(walk\d+):(\d+)\}\}/g, (m, w, id) => `<button class="jvgo" data-w="${w}" data-p="${id}" title="Go to this person">${walkShort(w)} · P-${id.padStart(4, "0")} ▶</button>`)
+      .replace(/\{\{t:(walk\d+):([\d.]+)(?::(-?[\d.]+))?\}\}/g, (m, w, t, y) => `<button class="jvgo" data-w="${w}" data-t="${t}"${y ? ` data-y="${y}"` : ""} title="Go to this moment">${walkShort(w)} · ${fmt(+t)} ▶</button>`);
+    let html = "", list = false;
+    for (const line of String(t || "").split("\n")) {
+      const m = line.match(/^\s*[-*•]\s+(.*)/);
+      if (m) { if (!list) { html += "<ul>"; list = true; } html += `<li>${inline(m[1])}</li>`; continue; }
+      if (list) { html += "</ul>"; list = false; }
+      if (line.trim()) html += `<p dir="auto">${inline(line)}</p>`;
+    }
+    return html + (list ? "</ul>" : "");
+  }
+  const jvSteps = steps => steps && steps.length ? `<details class="jvsteps"><summary>What I did (${steps.length})</summary><ol>${steps.map(x => `<li>${jvEsc(x)}</li>`).join("")}</ol></details>` : "";
+  function jvRender(display, live) {
+    const log = $("jvLog");
+    let html = (display || []).map(d => `<div class="jvq" dir="auto">${jvEsc(d.q)}</div>` +
+      (d.a ? `<div class="jva">${jvMd(d.a)}${jvSteps(d.steps)}</div>` : `<div class="jva err">Something went wrong: ${jvEsc(d.error || "no answer")}${jvSteps(d.steps)}</div>`)).join("");
+    if (live) html += `<div class="jvq" dir="auto">${jvEsc(live.q)}</div><div class="jvlive"><b>Working… ${live.elapsed_s || 0} s</b>${(live.steps || []).slice(-6).map(x => `<span>· ${jvEsc(x)}</span>`).join("")}</div>`;
+    if (!html) html = `<div class="jvex">I know this project's analysed data and can look at the video. Try:
+      <button data-q="How many women are in the video?">How many women are in the video?</button>
+      <button data-q="Count all the people wearing blue shirts">Count all the people wearing blue shirts</button>
+      <button data-q="Where and when is it most crowded?">Where and when is it most crowded?</button>
+      <button data-q="Which shop signs mention fish or meat?">Which shop signs mention fish or meat?</button></div>`;
+    log.innerHTML = html; log.scrollTop = log.scrollHeight;
+  }
+  async function jvChats(select) {
+    const r = await jvApi(`/api/jeeves/chats?project=${encodeURIComponent(PROJ.id)}`).catch(() => ({ chats: [] }));
+    $("jvChats").innerHTML = `<option value="">Earlier chats (${r.chats.length})</option>` + r.chats.map(c => `<option value="${c.id}"${c.id === select ? " selected" : ""}>${jvEsc(c.title)}</option>`).join("");
+  }
+  async function jvOpenChat(id) {
+    JV.chat = id || null;
+    if (!id) { jvRender([]); return; }
+    const c = await jvApi(`/api/jeeves/chat?project=${encodeURIComponent(PROJ.id)}&id=${id}`).catch(() => null);
+    jvRender(c ? c.display : []);
+  }
+  async function jvSend(q) {
+    q = (q || $("jvQ").value).trim(); if (!q || JV.job) return;
+    $("jvQ").value = ""; $("jvSend").disabled = true;
+    let prev = [];
+    if (JV.chat) { const c = await jvApi(`/api/jeeves/chat?project=${encodeURIComponent(PROJ.id)}&id=${JV.chat}`).catch(() => null); prev = c ? c.display : []; }
+    jvRender(prev, { q, steps: [] });
+    try {
+      const r = await jvApi(`/api/jeeves/ask?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q, chat: JV.chat }) });
+      JV.chat = r.chat; JV.job = r.job;
+      JV.timer = setInterval(async () => {
+        const j = await jvApi(`/api/jeeves/job?id=${JV.job}`).catch(() => null);
+        if (!j) return;
+        if (j.status === "running") { jvRender(prev, { q, steps: j.steps, elapsed_s: j.elapsed_s }); return; }
+        clearInterval(JV.timer); JV.job = null; $("jvSend").disabled = false;
+        await jvOpenChat(JV.chat); jvChats(JV.chat);
+      }, 1000);
+    } catch (e) {
+      $("jvSend").disabled = false;
+      jvRender(prev.concat([{ q, a: null, error: /404|not found/i.test(e.message) ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : e.message }]));
+    }
+  }
+  $("jvOpen").addEventListener("click", () => { const v = $("jv"); v.hidden = !v.hidden; if (!v.hidden) { jvChats(JV.chat); if (!JV.job) jvOpenChat(JV.chat); $("jvQ").focus(); } });
+  $("jvClose").addEventListener("click", () => { $("jv").hidden = true; });
+  $("jvNew").addEventListener("click", () => { if (!JV.job) { $("jvChats").value = ""; jvOpenChat(null); } });
+  $("jvChats").addEventListener("change", e => { if (!JV.job) jvOpenChat(e.target.value || null); });
+  $("jvSend").addEventListener("click", () => jvSend());
+  $("jvQ").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); jvSend(); } e.stopPropagation(); });
+  $("jvLog").addEventListener("click", async e => {
+    const ex = e.target.closest(".jvex button"); if (ex) { jvSend(ex.dataset.q); return; }
+    const b = e.target.closest(".jvgo"); if (!b) return;
+    const w = b.dataset.w; if (!PROJ.walks[w]) return;
+    if (playing) togglePlay();
+    if (S.walk !== w) await load(w);
+    if (b.dataset.p) goToPerson(+b.dataset.p);
+    else { vt = +b.dataset.t; if (videoOk()) video.currentTime = vt; if (b.dataset.y) S.yaw = +b.dataset.y; }
+  });
+  initProject().then(() => {
+    const first = Object.keys(PROJ.walks)[0];
+    if (!first) { $("loading").textContent = "This project has no analysed walk yet — open Projects to add a video and run the analysis."; return; }
+    loadGeo(); cmLoad(); atLoad(); load(first);
+  });
 })();
 </script>
 </body>

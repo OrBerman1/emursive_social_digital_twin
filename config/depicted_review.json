@@ -1,0 +1,13 @@
+{
+  "_note": "Vision review (Claude, 13 Oct 2026) of person tracks proposed by pipeline/depicted.py (CLIP p_depicted >= 0.3), from contact sheets of context crops. depicted = a picture of a person (rabbi portraits, posters, adverts, framed photos) -> category possible_rabi_sign; operator = the camera operator's body or T-shirt print (it shows a printed face); real = a real person. A recall check of 238 further tracks that sit on signs or have an implausible size found no other pictures. Tracks not listed fall back to CLIP p_depicted >= 0.9.",
+  "walk1": {
+    "depicted": [269, 342, 404, 880, 924, 943, 1454],
+    "operator": [117, 128],
+    "real": [318, 492, 495, 515, 850, 933, 1134, 1584]
+  },
+  "walk2": {
+    "depicted": [162, 303, 308, 327, 329, 360, 369, 386, 402, 408, 429, 508, 600, 603, 615],
+    "operator": [235, 266, 506, 573, 625],
+    "real": [11, 253, 284, 286, 296, 366, 428, 513, 571, 621, 626, 632, 645, 658, 659, 676]
+  }
+}

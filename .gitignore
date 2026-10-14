@@ -2,6 +2,9 @@
 # setup.bat creates the folder structure and downloads the model weights.
 data/
 models/
+# projects made on the projects page: their data and uploaded anchor files stay local; project.json is small
+projects/*/data/
+projects/*/config/anchor_files/
 *.insv
 *.zip
 *.pt

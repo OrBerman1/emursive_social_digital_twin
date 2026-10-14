@@ -1,27 +1,168 @@
 """Local static server with HTTP Range support (needed for seeking in the 360 video).
 
 usage:  python pipeline/serve.py [--port 8000]   then open http://localhost:8000/viewer/
+
+Also (local only, all validated):
+  POST /api/comments?project=<id>      timeline comments -> <project processed>/comments.json
+  GET  /api/projects                   projects with their walks, inputs and last analysis
+  POST /api/projects {name}            new project
+  PUT  /api/upload?project=&kind=video|store|anchors&filename=[&label=][&walk=]   streamed upload
+  POST /api/run?project=<id>           start the analysis (one at a time);  GET /api/job?project=<id> = progress
+  GET  /api/settings; POST /api/settings/apikey {key}; POST /api/settings/apikey/check
+  GET  /api/attachments?project=       files attached to people (attach_api.py)
+  PUT  /api/attach?project=&walk=&variant=&track=&frame=&yaw=&pitch=&filename=   attach a file to a person
+  POST /api/attach/delete?project= {walk, variant, track, name}
+  🎩 Ask Jeeves (jeeves.py): POST /api/jeeves/ask?project= {question, chat?} -> {job, chat}; GET /api/jeeves/job?id=;
+       GET /api/jeeves/chats?project=; GET /api/jeeves/chat?project=&id=; POST /api/jeeves/chat/delete?project= {id}
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
-from common import ROOT
+import attach_api as ATT
+import jeeves as JV
+import projects_api as API
+from common import DEFAULT_PROJECT, ROOT
+
+MAX_BODY = 1 << 20                   # 1 MB is plenty for text comments
+
+
+def clean_comments(data) -> list:
+    """Keep only well-formed comments: {id, walk, t, yaw, pitch, text, color, created, updated}."""
+    out = []
+    for c in (data or {}).get("comments", [])[:5000]:
+        if not isinstance(c, dict) or not re.fullmatch(r"walk\d{1,3}", str(c.get("walk", ""))):
+            continue
+        text = str(c.get("text", ""))[:2000]
+        color = str(c.get("color", "#E69F00"))
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+            color = "#E69F00"
+        try:
+            out.append({"id": str(c.get("id", ""))[:40], "walk": c["walk"], "t": round(float(c.get("t", 0)), 2),
+                        "yaw": round(float(c.get("yaw", 0)), 1), "pitch": round(float(c.get("pitch", 0)), 1),
+                        "text": text, "color": color, "created": str(c.get("created", ""))[:40], "updated": str(c.get("updated", ""))[:40]})
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 class RangeHandler(SimpleHTTPRequestHandler):
     # HTTP/1.1 keep-alive: on Windows, closing the socket right after a large write (HTTP/1.0)
     # intermittently truncates the response; with Content-Length + keep-alive the client reads it all.
     protocol_version = "HTTP/1.1"
+    # notes attached to people are often Hebrew text: say it is UTF-8
+    extensions_map = {**SimpleHTTPRequestHandler.extensions_map, ".txt": "text/plain; charset=utf-8",
+                      ".md": "text/plain; charset=utf-8", ".csv": "text/csv; charset=utf-8"}
 
     def end_headers(self):
         # the viewer and its data change often during development: always revalidate, never serve stale copies
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")         # attached files are shown as what they are
         super().end_headers()
+
+    def _json(self, obj, status: int = 200):
+        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _body_json(self) -> dict:
+        n = int(self.headers.get("Content-Length") or 0)
+        if n <= 0 or n > MAX_BODY:
+            raise API.ApiError(413, "body too large or empty")
+        try:
+            return json.loads(self.rfile.read(n).decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            raise API.ApiError(400, "bad JSON")
+
+    def _api(self, method: str) -> bool:
+        u = urlparse(self.path)
+        if not u.path.startswith("/api/"):
+            return False
+        q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        try:
+            if method == "GET" and u.path == "/api/projects":
+                return self._json({"projects": API.list_info()}) or True
+            if method == "GET" and u.path == "/api/job":
+                return self._json(API.job_state(q.get("project", DEFAULT_PROJECT))) or True
+            if method == "GET" and u.path == "/api/settings":
+                return self._json(API.settings()) or True
+            if method == "POST" and u.path == "/api/projects":
+                return self._json(API.create_project(self._body_json().get("name", ""))) or True
+            if method == "POST" and u.path == "/api/run":
+                return self._json(API.start_job(q.get("project", ""))) or True
+            if method == "POST" and u.path == "/api/settings/apikey":
+                return self._json(API.set_key(self._body_json().get("key", ""))) or True
+            if method == "POST" and u.path == "/api/settings/apikey/check":
+                return self._json(API.check_key()) or True
+            if method == "PUT" and u.path == "/api/upload":
+                n = int(self.headers.get("Content-Length") or 0)
+                return self._json(API.upload(q.get("project", ""), q.get("kind", ""), q, self.rfile, n)) or True
+            if method == "GET" and u.path == "/api/attachments":
+                return self._json(ATT.listing(q.get("project", DEFAULT_PROJECT))) or True
+            if method == "PUT" and u.path == "/api/attach":
+                n = int(self.headers.get("Content-Length") or 0)
+                return self._json(ATT.add(q.get("project", DEFAULT_PROJECT), q, self.rfile, n)) or True
+            if method == "POST" and u.path == "/api/attach/delete":
+                return self._json(ATT.remove(q.get("project", DEFAULT_PROJECT), self._body_json())) or True
+            if u.path.startswith("/api/jeeves/"):
+                pr = API.get_project(q.get("project", DEFAULT_PROJECT))
+                try:
+                    if method == "POST" and u.path == "/api/jeeves/ask":
+                        b = self._body_json()
+                        return self._json(JV.start(pr, b.get("question", ""), b.get("chat") or None)) or True
+                    if method == "GET" and u.path == "/api/jeeves/job":
+                        return self._json(JV.job(q.get("id", ""))) or True
+                    if method == "GET" and u.path == "/api/jeeves/chats":
+                        return self._json({"chats": JV.list_chats(pr)}) or True
+                    if method == "GET" and u.path == "/api/jeeves/chat":
+                        return self._json(JV.get_chat(pr, q.get("id", ""))) or True
+                    if method == "POST" and u.path == "/api/jeeves/chat/delete":
+                        return self._json(JV.delete_chat(pr, str(self._body_json().get("id", "")))) or True
+                except ValueError as e:
+                    raise API.ApiError(400, str(e))
+                except (KeyError, FileNotFoundError):
+                    raise API.ApiError(404, "not found")
+            if method == "POST" and u.path == "/api/comments":
+                proj = API.get_project(q.get("project", DEFAULT_PROJECT))
+                comments = clean_comments(self._body_json())
+                target = ROOT / proj["paths"]["processed"] / "comments.json"
+                target.parent.mkdir(parents=True, exist_ok=True)
+                tmp = target.with_suffix(".tmp")
+                tmp.write_text(json.dumps({"comments": comments}, ensure_ascii=False, indent=1), encoding="utf-8")
+                os.replace(tmp, target)                                # atomic: never a half-written file
+                return self._json({"saved": len(comments)}) or True
+            self._json({"error": "not found"}, 404)
+        except API.ApiError as e:
+            self.close_connection = method == "PUT"                    # an unread upload body must not poison keep-alive
+            self._json({"error": e.msg}, e.status)
+        except Exception as e:                                         # noqa: BLE001 - report instead of dropping the connection
+            self.close_connection = True
+            self._json({"error": f"server error: {e}"}, 500)
+        return True
+
+    def do_GET(self):
+        if not self._api("GET"):
+            super().do_GET()
+
+    def do_HEAD(self):
+        super().do_HEAD()
+
+    def do_POST(self):
+        if not self._api("POST"):
+            self.send_error(404)
+
+    def do_PUT(self):
+        if not self._api("PUT"):
+            self.send_error(404)
 
     def send_head(self):
         rng = self.headers.get("Range")
