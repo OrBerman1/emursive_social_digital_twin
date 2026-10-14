@@ -108,6 +108,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .files .f button:hover { background: rgba(255,255,255,.1); color: #fff; }
 .files .add { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; border: 1px dashed rgba(255,255,255,.25); border-radius: 10px; background: none; color: #fff; padding: 7px 10px; cursor: pointer; font-size: 13px; }
 .files .add:hover { border-color: var(--person); color: var(--person); }
+.card img.fm { width: 100%; max-height: 170px; object-fit: cover; border-radius: 10px; display: block; margin: 2px 0 8px; }
 .signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
 
 /* ---- round mini map (Lens look) ---- */
@@ -290,7 +291,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="person" checked><span>People</span></label>
     <label><input type="checkbox" data-show="object" checked><span>Objects &amp; market items</span></label>
     <label><input type="checkbox" data-show="decor"><span>Decor (lamps, flags)</span></label>
+    <label><input type="checkbox" data-show="food" checked><span>Food on display</span></label>
     <label><input type="checkbox" data-show="space" checked><span>Places: readable signs</span></label>
+    <label><input type="checkbox" data-show="frontage" checked><span>Frontage materials <small style="color:var(--soft)">experimental</small></span></label>
+    <label><input type="checkbox" data-show="pictured"><span>Pictured people on signs</span></label>
     <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
         <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
   </div>
@@ -337,7 +341,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const COL = { person: css("--person"), object: css("--object"), space: css("--space") };
   const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
   const stage = $("stage"), D2R = Math.PI / 180;
-  const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true };
+  const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true, food: true, frontage: true, pictured: false };
   const DECOR = new Set(["hanging lamp", "flag", "awning"]);
   const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
   const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
@@ -345,7 +349,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const wrap = a => ((a + 540) % 360) - 180;
 
   const groupOf = e => e.kind === "person" ? "person" : (e.kind === "object" || e.kind === "level2") ? (DECOR.has(e.cls) ? (show.decor ? "object" : null) : "object")
-    : (e.kind === "sign" && e.readable) ? "space" : null;
+    : e.kind === "food" ? (show.food && e.cls !== "Food picture (menu/sign)" ? "object" : null)
+    : (e.kind === "sign" && e.readable) ? "space" : e.kind === "frontage" ? (show.frontage ? "space" : null) : e.kind === "pictured" ? (show.pictured ? "space" : null) : null;
   const keyOf = e => `${e.kind}:${e.id}`;
   const cap = s => String(s || "").replace(/^./, c => c.toUpperCase());
   const esc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
@@ -412,7 +417,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
 
   // ---- pointer anchor: upper torso for people, centre for objects and signs ----
-  const anchor = e => { const r = e.rect; return e.kind === "person" ? [(r[0] + r[2]) / 2, r[1] + (r[3] - r[1]) * 0.22] : [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
+  const anchor = e => { const r = e.rect; return (e.kind === "person" || e.kind === "pictured") ? [(r[0] + r[2]) / 2, r[1] + (r[3] - r[1]) * 0.22] : [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
 
   // ---- perceived description of a person ----
   const AGE = { "child": ["Child", "under 18"], "young adult 18-35": ["Young adult", "~18–35 years"], "middle adult 36-60": ["Adult", "~36–60 years"],
@@ -437,7 +442,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
 
   // ---- photo crop of an entity straight from the equirect video frame ----
-  function rawOf(e, st) { const F = st.data.frames[st.fi]; if (!F) return null; const ii = { p: 0, o: 7, l2: 8, s: 0 }[e.key]; return (F[e.key] || []).find(x => x[ii] === e.id) || null; }
+  function rawOf(e, st) { const F = st.data.frames[st.fi]; if (!F) return null; const ii = { p: 0, o: 7, l2: 8, s: 0, fd: 7, dp: 0 }[e.key]; return (F[e.key] || []).find(x => x[ii] === e.id) || null; }
   function crop(cv, e, st) {
     const v = E.video, raw = rawOf(e, st); if (!raw || v.readyState < 2 || !v.videoWidth) return false;
     const W = v.videoWidth, H = v.videoHeight, u = y => (y / 360 + 0.5) * W, w = p => (0.5 - p / 180) * H;
@@ -471,7 +476,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const KIND_TXT = { object: "Object", level2: "Market item" };
   const visibleS = (e, st) => { const t = st.data.tracks[e.id]; return t ? Math.max(0, (st.fi - t[0]) / st.data.fps) : null; };
   const objVisibleS = (e, st) => ((st.data.obj_len || {})[e.id] || 0) / st.data.fps;
-  const badgeOf = (e, g) => g === "person" ? `P${e.id}` : g === "space" ? `S${e.id}` : `O${e.id % 100000}`;
+  const badgeOf = (e, g) => g === "person" ? `P${e.id}` : e.kind === "food" ? `F${e.id}` : e.kind === "frontage" ? `M${e.id}` : e.kind === "pictured" ? `P${e.id}` : g === "space" ? `S${e.id}` : `O${e.id % 100000}`;
+  const foodVisibleS = (e, st) => ((st.data.food_len || {})[e.id] || 0) / st.data.fps;
 
   function compactHtml(e, g, st) {
     if (g === "person") {
@@ -481,6 +487,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
         R(IC.walk, vis != null ? `${vis.toFixed(1)} s (visible)` : "—", true) + R(IC.eye, m ? m.dir : "Direction unknown") +
         (nf ? R(IC.clip, `${nf} attached file${nf > 1 ? "s" : ""}`) : "");
     }
+    if (e.kind === "food") return R(`<span class="badge">${badgeOf(e, g)}</span>`, `${ShukEngine.emojiOf(e.cls)} ${esc(e.cls)}`) + R(IC.tag, `Food on display · ${esc((st.data.food_group || {})[e.cls] || "")}`, true) +
+      R(IC.clock, `${foodVisibleS(e, st).toFixed(1)} s (visible)`, true);
+    if (e.kind === "frontage") { const p = e.info || {}; return R(`<span class="badge">${badgeOf(e, g)}</span>`, `🧱 ${esc(p.facade || "Frontage")} · ${esc(p.structure || "")}`) + R(IC.tag, esc((p.materials || []).join(", ") || "materials unclear"), true); }
+    if (e.kind === "pictured") return R(`<span class="badge">${badgeOf(e, g)}</span>`, "🖼️ Pictured person") + R(IC.tag, "On a sign or poster · not counted", true);
     if (g === "space") return R(`<span class="badge">${badgeOf(e, g)}</span>`, `<span dir="auto" style="unicode-bidi:plaintext">${esc(e.text)}</span>`) + R(IC.tag, "Readable sign", true);
     return R(`<span class="badge">${badgeOf(e, g)}</span>`, `${ShukEngine.emojiOf(e.cls)} ${esc(cap(e.cls))}`) + R(IC.clock, `${objVisibleS(e, st).toFixed(1)} s (visible)`, true) +
       R(IC.eye, `${Math.round(e.conf * 100)}% confidence`);
@@ -495,6 +505,23 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
         `${R2(IC.clock, "Visible", vis != null ? `${vis.toFixed(1)} s so far · ${Math.round((t[1] - t[0]) / d.fps)} s in total` : "—")}` +
         `${R2(IC.ruler, "Distance", e.dist ? `${e.dist.toFixed(1)} m from camera` : "—")}${R2(IC.bag, "Carrying", carry.length ? esc(carry.map(cap).join(", ")) : "Nothing detected")}` +
         `${R2(IC.group, "Social context", social)}</div>${atFilesHtml(e.id)}${confRow(t[3] ?? e.conf)}<div class="note">Estimates from video, not identity. Speeds assume the camera walks at ${d.pace_m_s || 0.9} m/s.</div>`;
+    }
+    if (e.kind === "food") {
+      return hd("Food on display") + `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>${ShukEngine.emojiOf(e.cls)} ${esc(e.cls)}</b><small>${esc((d.food_group || {})[e.cls] || "food")}</small></div></div>` +
+        `<div class="rows">${R2(IC.clock, "Visible", `${foodVisibleS(e, st).toFixed(0)} s on this walk`)}${R2(IC.tag, "Found by", "YOLOv8x Open Images + COCO; named by CLIP")}</div>${confRow(e.conf)}` +
+        `<div class="note">A display or stack of this food, followed over time; not a count of items.</div>`;
+    }
+    if (e.kind === "frontage") {
+      const p = e.info || {};
+      return hd("Frontage materials") + (p.crop ? `<img class="fm" src="${E.project.processed}/${esc(p.crop)}" alt="Shop front seen from the walk">` : "") +
+        `<div class="rows">${R2(IC.tag, "Facade", esc(p.facade || "—"))}${R2(IC.tag, "Structure", esc(p.structure || "—"))}${R2(IC.bag, "Materials", esc((p.materials || []).join(", ") || "—"))}` +
+        `${R2(IC.ruler, "Where", `${p.chainage_m ?? "—"} m along the route, ${esc(p.side || "")} side`)}</div><div class="note">Experimental: what the camera saw at this spot (vision review of a frontage photo). Location-based, not tied to a store name.</div>`;
+    }
+    if (e.kind === "pictured") {
+      const t = (d.dp_tracks || {})[e.id] || [];
+      return hd("Pictured person") + `<div class="who"><canvas width="128" height="128" data-photo></canvas><div><b>🖼️ Person on a sign</b><small>poster, portrait or advertisement</small></div></div>` +
+        `<div class="rows">${R2(IC.clock, "Seen", t.length ? `${((t[1] - t[0]) / d.fps).toFixed(0)} s on this walk` : "—")}${R2(IC.tag, "Decided by", esc(t[4] || "—"))}</div>` +
+        `<div class="note">Detected as a person, but it is a picture: not counted as a person and not in any statistics.</div>`;
     }
     if (g === "space") {
       const info = (d.signs || {})[e.id] || [];
@@ -566,7 +593,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     for (const e of st.entities) {
       const g = groupOf(e); if (!g) continue;
       if (e.alpha >= 0.5) { if (g === "person") nP++; else if (g === "object") nO++; else nS++; }
-      if (show[g]) shown.push([e, g]);
+      if (show[g] && (e.kind !== "pictured" || show.pictured)) shown.push([e, g]);
     }
     const now = performance.now(), vis = new Set(shown.map(([e]) => keyOf(e))), alive = auto.filter(k => vis.has(k)).length;
     // re-choose the auto info windows every 1.5 s to stay calm, sooner when the chosen ones have left the view
