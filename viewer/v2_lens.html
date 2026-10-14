@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuk HaTikvah · Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* V2 "Lens": focus + radar. The lens (centre) is the only place boxes appear; the radar strip shows everything around you;
+   the dock toggles categories (fixed order + widths); settings live in a gear popover, information in one pill + a click card. */
+:root {
+  --bg: #eef2f6; --surface: #ffffff; --surface-2: #f5f7fa; --ink: #0f172a; --soft: #475569; --mute: #64748b; --line: #dde3ea;
+  --focus: #0b5cad;
+  --person: #0072B2; --food: #009E73; --object: #E69F00; --level2: #CC79A7; --sign: #56B4E9; --pictured: #F0E442; --frontage: #D55E00;
+  --sans: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --shadow: 0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.08);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--sans); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.app { height: 100%; display: grid; grid-template-rows: 58px minmax(0, 1fr) 54px 82px; padding: 0 18px 10px; gap: 0; }
+
+/* top bar */
+header { display: flex; align-items: center; gap: 16px; }
+.brand { font-weight: 800; font-size: 17px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+.brand .ring { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--ink); position: relative; }
+.brand .ring::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--person); }
+.brand small { font-weight: 500; color: var(--mute); font-size: 13px; }
+.seg { display: inline-flex; background: #e2e8f0; border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; font-weight: 600; font-size: 13px; color: var(--soft); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.15); }
+.spacer { flex: 1; }
+.gear { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 18px; display: grid; place-items: center; color: var(--soft); }
+.gear[aria-expanded="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* stage */
+.stage { position: relative; border-radius: 20px; overflow: hidden; background: #cbd5e1; box-shadow: var(--shadow); cursor: grab; outline: none; min-height: 0; }
+.stage.dragging { cursor: grabbing; }
+.stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.glass { background: rgba(255,255,255,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+
+/* summary pill: 3 numbers, icons, nothing else */
+.pill { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 2px; border-radius: 999px; padding: 5px 8px; pointer-events: auto; }
+.pill .it { display: flex; align-items: baseline; gap: 6px; padding: 3px 10px; font-variant-numeric: tabular-nums; }
+.pill .it + .it { border-left: 1px solid var(--line); }
+.pill .em { font-size: 16px; align-self: center; }
+.pill b { font-size: 18px; font-weight: 800; min-width: 2ch; text-align: right; }
+.pill small { color: var(--mute); font-weight: 600; font-size: 12px; }
+
+/* minimap */
+.mini { position: absolute; right: 14px; top: 14px; width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 3px solid #fff; box-shadow: var(--shadow); background: #e5e9ee; z-index: 2; }
+.mini #map { position: absolute; inset: 0; background: #e5e9ee; }
+.soft-tiles { filter: grayscale(.8) brightness(1.05); }
+.mini .n { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); z-index: 500; font: 800 10px var(--sans); color: var(--soft); background: rgba(255,255,255,.9); border-radius: 999px; padding: 0 5px; pointer-events: none; }
+.you { width: 60px; height: 60px; }
+.you svg { width: 60px; height: 60px; display: block; }
+
+/* radar strip */
+.radar { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 44px; border-radius: 14px; overflow: hidden; cursor: pointer; z-index: 2; }
+.radar canvas { width: 100%; height: 100%; display: block; }
+
+/* hint */
+.hint { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; color: var(--soft); pointer-events: none; transition: opacity .8s; white-space: nowrap; }
+
+/* details card */
+.card { position: absolute; width: 270px; background: var(--surface); border-radius: 16px; box-shadow: 0 14px 36px rgba(15,23,42,.2); padding: 14px 16px 12px; font-size: 13px; z-index: 5; cursor: default; }
+.card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 800; display: flex; gap: 8px; align-items: center; }
+.card h3 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.card h3 button { margin-left: auto; border: 0; background: var(--surface-2); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--soft); }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.card dt { color: var(--soft); } .card dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.card img { width: 100%; border-radius: 10px; margin: 2px 0 8px; display: block; background: var(--surface-2); }
+.card .sign { font-size: 18px; font-weight: 700; unicode-bidi: plaintext; line-height: 1.35; }
+.card .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.card .chips span { background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 600; }
+.card .tag { display: block; font-size: 11.5px; color: var(--mute); margin-top: 8px; }
+
+/* transport */
+.transport { display: flex; align-items: center; gap: 14px; padding: 0 4px; }
+.play { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; font-size: 14px; cursor: pointer; flex: none; }
+.scrub { flex: 1; margin: 0; accent-color: var(--ink); height: 28px; cursor: pointer; }
+.time { font-variant-numeric: tabular-nums; color: var(--soft); font-weight: 600; min-width: 88px; text-align: right; }
+.speed button { padding: 5px 10px; font-size: 12.5px; }
+
+/* dock: fixed order, fixed widths, counters never move the layout */
+.dockwrap { display: flex; justify-content: center; align-items: flex-start; }
+.dock { display: flex; gap: 6px; padding: 7px; border-radius: 20px; background: rgba(255,255,255,.92); box-shadow: var(--shadow); border: 1px solid var(--line); }
+.dk { position: relative; width: 96px; height: 58px; border: 1px solid transparent; border-radius: 14px; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 4px; transition: background .15s, transform .15s; }
+.dk:hover { background: var(--surface-2); transform: translateY(-2px); }
+.dk .ic { font-size: 21px; line-height: 1; }
+.dk .nm { font-size: 11.5px; font-weight: 700; color: var(--soft); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.dk .nm i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.dk .ct { position: absolute; top: 4px; right: 5px; width: 26px; height: 17px; border-radius: 999px; font-size: 10.5px; font-weight: 800; display: grid; place-items: center; font-variant-numeric: tabular-nums; background: #e2e8f0; color: var(--ink); }
+.dk[aria-pressed="true"] { background: var(--surface); border-color: var(--line); box-shadow: 0 1px 4px rgba(15,23,42,.1); }
+.dk[aria-pressed="true"] .nm { color: var(--ink); }
+.dk[aria-pressed="false"] .ic { filter: grayscale(1); opacity: .45; }
+.dk[aria-pressed="false"] .nm i { background: transparent !important; box-shadow: inset 0 0 0 1.5px #94a3b8; }
+.dk[aria-pressed="false"] .ct { background: transparent; color: var(--mute); }
+.dk::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--ink); opacity: 0; }
+.dk[aria-pressed="true"]::after { opacity: .55; }
+
+/* gear popover */
+.pop { position: fixed; right: 18px; top: 58px; width: 290px; background: var(--surface); border-radius: 16px; box-shadow: 0 16px 40px rgba(15,23,42,.18); padding: 16px 18px; z-index: 1000; border: 1px solid var(--line); }
+.pop h4 { margin: 0 0 12px; font-size: 14px; font-weight: 800; }
+.pop .row { margin-bottom: 14px; }
+.pop .row:last-child { margin-bottom: 0; }
+.pop label, .pop .lb { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--soft); font-weight: 600; margin-bottom: 4px; }
+.pop label b, .pop .lb b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.pop input[type=range] { width: 100%; accent-color: var(--ink); }
+.switch { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: transparent; padding: 0; cursor: pointer; font-size: 12.5px; color: var(--soft); font-weight: 600; }
+.switch .tr { width: 34px; height: 20px; border-radius: 999px; background: #cbd5e1; position: relative; transition: background .15s; }
+.switch .tr::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.switch[aria-pressed="true"] .tr { background: var(--ink); }
+.switch[aria-pressed="true"] .tr::after { left: 16px; }
+.pop .note { font-size: 11.5px; color: var(--mute); margin-top: 4px; }
+[hidden] { display: none !important; }
+@media (max-width: 900px) {
+  .app { grid-template-rows: 58px minmax(0, 1fr) 54px auto; padding: 0 10px 10px; }
+  .dock { flex-wrap: wrap; justify-content: center; }
+  .dk { width: 84px; }
+  .brand small { display: none; }
+  .mini { width: 110px; height: 110px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><span class="ring" aria-hidden="true"></span>Shuk HaTikvah <small>360° walk</small></div>
+    <div class="seg" id="walks" role="group" aria-label="Walk">
+      <button data-walk="walk1" aria-pressed="true">Hatikvah St</button>
+      <button data-walk="walk2" aria-pressed="false">Hamevasser St</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="gear" id="gearBtn" aria-label="Settings" aria-expanded="false" aria-controls="pop">⚙</button>
+  </header>
+
+  <div class="stage" id="stage" aria-label="360 degree view. Drag or use arrow keys to look around, scroll to zoom, space to play.">
+    <canvas id="gl"></canvas><canvas id="ov"></canvas>
+    <div class="pill glass" id="pill" data-no-drag role="status" aria-live="off">
+      <div class="it" title="People in view / unique people on this walk"><span class="em" aria-hidden="true">👥</span><b id="sPeople">0</b><small id="sPeopleTot">/0</small></div>
+      <div class="it" title="Food displays in view"><span class="em" aria-hidden="true">🍎</span><b id="sFood">0</b></div>
+      <div class="it" title="Signs read in view"><span class="em" aria-hidden="true">🪧</span><b id="sSigns">0</b></div>
+    </div>
+    <div class="mini" data-no-drag aria-label="Map: your position on the walk"><div id="map"></div><span class="n">N</span></div>
+    <div class="hint glass" id="hint">Drag to look · details appear inside the lens · click the strip to turn</div>
+    <div class="radar glass" id="radarWrap" data-no-drag><canvas id="radar" tabindex="0" role="slider" aria-label="Radar of everything around you. Click to turn the view." aria-valuemin="-180" aria-valuemax="180" aria-valuenow="0"></canvas></div>
+    <div class="card" id="card" hidden data-no-drag role="dialog" aria-label="Details"></div>
+  </div>
+
+  <div class="transport">
+    <button class="play" id="play" aria-label="Play">▶</button>
+    <input class="scrub" type="range" id="scrub" min="0" max="1000" value="0" aria-label="Position in the walk">
+    <div class="time" id="time">0:00 / 0:00</div>
+    <div class="seg speed" id="speed" role="group" aria-label="Playback speed">
+      <button data-s="0.5" aria-pressed="false">½×</button><button data-s="1" aria-pressed="true">1×</button><button data-s="2" aria-pressed="false">2×</button>
+    </div>
+  </div>
+
+  <div class="dockwrap">
+    <nav class="dock" id="dock" aria-label="Categories to show"></nav>
+  </div>
+</div>
+
+<div class="pop" id="pop" hidden role="dialog" aria-label="Settings">
+  <h4>Settings</h4>
+  <div class="row"><label for="conf">Detection confidence <b id="confLbl">0.60</b></label>
+    <input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6">
+    <div class="note">Higher = fewer, surer people and objects.</div></div>
+  <div class="row"><div class="lb">Lens size</div>
+    <div class="seg" id="lensSize" role="group" aria-label="Lens size" style="width:100%;display:flex">
+      <button data-l="0.3" aria-pressed="false" style="flex:1">Small</button><button data-l="0.4" aria-pressed="true" style="flex:1">Medium</button><button data-l="0.6" aria-pressed="false" style="flex:1">Large</button>
+    </div></div>
+  <div class="row"><button class="switch" id="arrowsBtn" aria-pressed="true"><span>Walking direction arrows</span><span class="tr" aria-hidden="true"></span></button></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="engine.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const KINDS = ["person", "food", "sign", "object", "level2", "pictured", "frontage"];
+  const COL = Object.fromEntries(KINDS.map(k => [k, css("--" + k)]));
+  const META = {
+    person: { name: "People", icon: "🧍" }, food: { name: "Food", icon: "🍎" }, sign: { name: "Signs", icon: "🪧" },
+    object: { name: "Objects", icon: "🚲" }, level2: { name: "Market items", icon: "📦" }, pictured: { name: "Pictured", icon: "🖼️" },
+    frontage: { name: "Frontage", icon: "🧱" },
+  };
+  const FULL = { person: "People", food: "Food on display", sign: "Signs", object: "Objects & vehicles", level2: "Market items (crates, trolleys, waste)", pictured: "Pictured people on signs", frontage: "Frontage materials" };
+  const show = { person: true, food: true, sign: true, object: false, level2: false, pictured: false, frontage: true };
+  const INK = "#0f172a", FOODPIC = "Food picture (menu/sign)";
+  const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
+  let lensFrac = 0.4, arrows = true, hover = null, sel = null;
+
+  const visible = e => show[e.kind] && !(e.kind === "food" && e.cls === FOODPIC && !show.pictured);
+  const same = (a, b) => a && b && a.kind === b.kind && a.id === b.id;
+  const emojiFor = e => e.kind === "person" ? (ShukEngine.AGE_EMOJI[e.age] || "🧍") : e.kind === "sign" ? "🪧" : e.kind === "pictured" ? "🖼️" : e.kind === "frontage" ? "🧱" : ShukEngine.emojiOf(e.cls);
+
+  // ---------------- dock ----------------
+  $("dock").innerHTML = KINDS.map(k => `<button class="dk" data-kind="${k}" aria-pressed="${show[k]}" title="${FULL[k]}" aria-label="${FULL[k]}">
+      <span class="ct" data-ct aria-hidden="true">0</span><span class="ic" aria-hidden="true">${META[k].icon}</span>
+      <span class="nm"><i style="background:${COL[k]};${k === "pictured" ? "box-shadow:0 0 0 1px " + INK : ""}"></i>${META[k].name}</span></button>`).join("");
+  $("dock").querySelectorAll(".dk").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.kind; show[k] = !show[k]; b.setAttribute("aria-pressed", String(show[k]));
+    if (sel && sel.kind === k && !show[k]) closeCard();
+  }));
+  let dockSig = "";
+  function updateDock(st) {
+    const c = st.counts.byKind, fp = show.pictured ? 0 : (st.counts.byClass["food:" + FOODPIC] || 0);
+    const sig = KINDS.map(k => k === "person" ? st.counts.people.view : k === "food" ? (c.food || 0) - fp : (c[k] || 0)).join(",");
+    if (sig === dockSig) return; dockSig = sig;
+    const v = sig.split(",");
+    $("dock").querySelectorAll(".dk").forEach((b, i) => { b.querySelector("[data-ct]").textContent = +v[i] > 99 ? "99+" : v[i]; });
+  }
+
+  // ---------------- overlay: lens + boxes only inside it ----------------
+  E.onFrame = (st, c) => {
+    const k = E.k, W = c.canvas.width, H = c.canvas.height, cx = W / 2, cy = H / 2, R = lensFrac * H / 2;
+    // light wash outside the lens + ring
+    const g = c.createRadialGradient(cx, cy, R, cx, cy, Math.hypot(W, H) / 2);
+    g.addColorStop(0, "rgba(241,245,249,0.10)"); g.addColorStop(1, "rgba(241,245,249,0.38)");
+    c.save(); c.beginPath(); c.rect(0, 0, W, H); c.arc(cx, cy, R, 0, Math.PI * 2, true); c.fillStyle = g; c.fill("evenodd"); c.restore();
+    c.lineWidth = 1 * k; c.strokeStyle = "rgba(15,23,42,.28)"; c.beginPath(); c.arc(cx, cy, R + 1.5 * k, 0, 7); c.stroke();
+    c.lineWidth = 2 * k; c.strokeStyle = "rgba(255,255,255,.95)"; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+    for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2; c.beginPath(); c.moveTo(cx + Math.cos(a) * (R - 6 * k), cy + Math.sin(a) * (R - 6 * k)); c.lineTo(cx + Math.cos(a) * (R + 6 * k), cy + Math.sin(a) * (R + 6 * k)); c.stroke(); }
+
+    const list = [];
+    for (const e of st.entities) {
+      if (!visible(e)) continue;
+      const r = e.rect, bx = (r[0] + r[2]) / 2, by = e.point ? r[1] : Math.min(r[3], H - 4 * k);
+      const d = Math.hypot(bx - cx, by - cy), isSel = same(sel, e);
+      let a = Math.max(0, Math.min(1, (R - d) / (0.12 * R))) * e.alpha;
+      if (isSel) a = Math.max(a, e.alpha);
+      if (a <= 0.02) continue;
+      list.push({ e, a, bx, by, isSel, isHov: same(hover, e), d });
+    }
+    list.sort((p, q) => (p.isSel - q.isSel) || (q.d - p.d)); // farthest from the centre first, selection last
+    for (const it of list) drawEntity(c, it, st, k);
+    drawRadar(st);
+    updatePill(st); updateDock(st); placeCard(st);
+  };
+
+  function drawEntity(c, { e, a, bx, by, isSel, isHov }, st, k) {
+    const col = COL[e.kind], r = e.rect, dark = e.kind === "pictured" || e.kind === "sign";
+    c.globalAlpha = a;
+    let hit;
+    if (!e.point) {
+      const w = r[2] - r[0], h = r[3] - r[1], rad = Math.min(10 * k, w / 3, h / 3);
+      E.draw.roundRect(c, r[0], r[1], w, h, rad);
+      c.fillStyle = col + (isSel ? "2e" : "14"); c.fill();
+      c.lineWidth = (isSel || isHov ? 5 : 4) * k; c.strokeStyle = dark ? "rgba(15,23,42,.75)" : "rgba(255,255,255,.85)"; c.stroke();
+      c.lineWidth = (isSel || isHov ? 3 : 2) * k; c.strokeStyle = col; c.stroke();
+      hit = [r[0], r[1], r[2], r[3]];
+    }
+    // emoji badge (top-left corner of the box, or a pin for frontage points)
+    const s = 22 * k, px = e.point ? bx : Math.max(r[0] + s / 2, r[0] + 4 * k + s / 2), py = e.point ? by - 16 * k - s / 2 : r[1] - s / 2 - 4 * k;
+    if (e.point) { c.strokeStyle = col; c.lineWidth = 2 * k; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx, py + s / 2 + 3 * k); c.stroke(); c.fillStyle = col; c.beginPath(); c.arc(bx, by, 3.5 * k, 0, 7); c.fill(); }
+    c.shadowColor = "rgba(15,23,42,.22)"; c.shadowBlur = 6 * k; c.fillStyle = "#fff";
+    E.draw.roundRect(c, px - s / 2 - 3 * k, py - s / 2 - 3 * k, s + 6 * k, s + 6 * k, 8 * k); c.fill(); c.shadowBlur = 0;
+    if (e.kind === "pictured") { c.lineWidth = 4.5 * k; c.strokeStyle = INK; c.stroke(); }
+    c.lineWidth = 2.5 * k; c.strokeStyle = col; c.stroke();
+    E.draw.emoji(c, emojiFor(e), px, py + 1 * k, s * 0.8);
+    const bh = [px - s / 2 - 4 * k, py - s / 2 - 4 * k, px + s / 2 + 4 * k, py + s / 2 + 4 * k];
+    hit = hit ? [Math.min(hit[0], bh[0]), Math.min(hit[1], bh[1]), Math.max(hit[2], bh[2]), Math.max(hit[3], bh[3])] : [bh[0], bh[1], bh[2], by + 6 * k];
+    if (e.kind === "person" && (arrows || isSel)) { const ar = E.groundArrow(e, st.fi); if (ar) E.draw.arrow(c, bx, by, ar.dx, ar.dy, col, k); }
+    c.globalAlpha = 1;
+    E.addHit(...hit, e);
+  }
+  E.onHover = h => { hover = h; $("stage").style.cursor = h ? "pointer" : ""; };
+  E.onClick = h => { sel = h ? { kind: h.kind, id: h.id } : null; $("card").dataset.key = ""; if (!h) $("card").hidden = true; };
+
+  // ---------------- radar strip: everything around you, yaw relative to the camera's forward ----------------
+  const rc = $("radar"), rx = rc.getContext("2d");
+  const lenFns = d => ({
+    p: id => (d.tracks[id] || [])[2] || 0, o: id => (d.obj_len || {})[id] || 0, l2: id => (d.obj_len || {})[id] || 0,
+    s: id => (d.sign_len || {})[id] ?? 99, dp: id => ((d.dp_tracks || {})[id] || [])[2] || 99, fd: id => (d.food_len || {})[id] || 0,
+  });
+  const ID_IDX = { p: 0, o: 7, l2: 8, s: 0, dp: 0, fd: 7 };
+  function aroundYou(st) {
+    const d = st.data, F = d.frames[st.fi], out = []; if (!F) return out;
+    const len = lenFns(d);
+    for (const key of ["p", "o", "l2", "s", "dp", "fd"]) {
+      const kind = E.KIND[key]; if (!show[kind]) continue;
+      for (const e of (F[key] || [])) {
+        const id = e[ID_IDX[key]]; if (len[key](id) < E.minLen) continue;
+        const thr = key === "l2" ? Math.max(0.15, E.conf - 0.2) : (key === "p" || key === "o") ? E.conf : 0;
+        if (key !== "s" && e[1] < thr) continue;
+        if (key === "s" && !(d.signs || {})[id]) continue;
+        if (key === "fd" && e[0] === FOODPIC && !show.pictured) continue;
+        out.push({ kind, id, yaw: e[2], dist: key === "p" ? e[7] : key === "l2" ? e[7] : null });
+      }
+    }
+    const g = E.geo.walks[E.walk];
+    if (show.frontage && g && g.lat[st.fi] != null) {
+      for (const p of E.geo.frontage) {
+        if (p.walk !== E.walk || Math.abs(p.frame - st.fi) > 15) continue;
+        const dx = (p.lon - g.lon[st.fi]) * 111320 * Math.cos(g.lat[st.fi] * E.deg), dy = (p.lat - g.lat[st.fi]) * 110574;
+        out.push({ kind: "frontage", id: p.id, yaw: ((Math.atan2(dx, dy) / E.deg - g.yaw0_bearing_deg[st.fi]) + 540) % 360 - 180, dist: Math.hypot(dx, dy) });
+      }
+    }
+    return out;
+  }
+  function drawRadar(st) {
+    const dpr = Math.min(2, devicePixelRatio || 1), Wc = Math.round(rc.clientWidth * dpr), Hc = Math.round(rc.clientHeight * dpr);
+    if (rc.width !== Wc || rc.height !== Hc) { rc.width = Wc; rc.height = Hc; }
+    const W = rc.width, H = rc.height, k = dpr, X = y => ((((y + 180) % 360) + 360) % 360) / 360 * W;
+    rx.clearRect(0, 0, W, H);
+    // field of view window
+    const half = E.fov / 2, x0 = X(E.yaw - half), x1 = X(E.yaw + half);
+    const win = (a, b) => { rx.fillStyle = "rgba(15,23,42,.07)"; rx.fillRect(a, 0, b - a, H); rx.fillStyle = INK; rx.fillRect(a, 0, b - a, 2.5 * k); rx.fillRect(a, H - 2.5 * k, b - a, 2.5 * k); };
+    if (x0 < x1) win(x0, x1); else { win(x0, W); win(0, x1); }
+    // lens window (narrower band = what the lens covers horizontally)
+    const lh = Math.atan(Math.tan(E.fov * E.deg / 2) * lensFrac * (E.overlay.height / E.overlay.width)) / E.deg;
+    const l0 = X(E.yaw - lh), l1 = X(E.yaw + lh);
+    rx.fillStyle = "rgba(15,23,42,.06)"; if (l0 < l1) rx.fillRect(l0, 0, l1 - l0, H); else { rx.fillRect(l0, 0, W - l0, H); rx.fillRect(0, 0, l1, H); }
+    // grid + direction letters
+    rx.font = `700 ${9.5 * k}px Manrope, sans-serif`; rx.textAlign = "center"; rx.textBaseline = "middle";
+    for (const [yw, t] of [[-180, ""], [-90, "L"], [0, "F"], [90, "R"]]) {
+      const x = X(yw); rx.fillStyle = "rgba(15,23,42,.10)"; rx.fillRect(x - 0.5 * k, 0, 1 * k, H);
+      if (t) { rx.fillStyle = "#64748b"; rx.fillText(t, x + 8 * k, 9 * k); }
+    }
+    rx.fillStyle = "#64748b"; rx.fillText("B", 7 * k, 9 * k); rx.fillText("B", W - 7 * k, 9 * k);
+    if (st.cam) { const nx = X(-st.cam.yaw0); rx.fillStyle = "#94a3b8"; rx.beginPath(); rx.moveTo(nx, 2 * k); rx.lineTo(nx - 4 * k, 9 * k); rx.lineTo(nx + 4 * k, 9 * k); rx.closePath(); rx.fill(); rx.fillStyle = "#64748b"; rx.fillText("N", nx, 15 * k); }
+    // entities: people as dots (bigger = closer) in the upper lane, everything else as ticks below
+    const ents = aroundYou(st), laneP = H * 0.5, laneO = H * 0.78;
+    for (const e of ents) {
+      const x = X(e.yaw), col = COL[e.kind], isSel = sel && sel.kind === e.kind && sel.id === e.id;
+      if (e.kind === "person") {
+        const rr = (e.dist ? Math.max(2.2, Math.min(4.6, 6 - e.dist * 0.35)) : 3) * k;
+        rx.fillStyle = "#fff"; rx.beginPath(); rx.arc(x, laneP, rr + 1.2 * k, 0, 7); rx.fill();
+        rx.fillStyle = col; rx.beginPath(); rx.arc(x, laneP, rr, 0, 7); rx.fill();
+      } else {
+        if (e.kind === "pictured") { rx.fillStyle = INK; rx.fillRect(x - 2 * k, laneO - 5 * k, 4 * k, 10 * k); }
+        rx.fillStyle = col; rx.fillRect(x - 1.2 * k, laneO - 4 * k, 2.4 * k, 8 * k);
+      }
+      if (isSel) { rx.strokeStyle = INK; rx.lineWidth = 1.5 * k; rx.beginPath(); rx.arc(x, e.kind === "person" ? laneP : laneO, 7 * k, 0, 7); rx.stroke(); }
+    }
+    rc.setAttribute("aria-valuenow", String(Math.round(E.yaw)));
+  }
+  // click / drag on the strip turns the view
+  let rDrag = false;
+  const radarLook = ev => { const b = rc.getBoundingClientRect(); E.look((ev.clientX - b.left) / b.width * 360 - 180); };
+  rc.addEventListener("pointerdown", ev => { rDrag = true; rc.setPointerCapture(ev.pointerId); radarLook(ev); ev.stopPropagation(); });
+  rc.addEventListener("pointermove", ev => { if (rDrag) radarLook(ev); });
+  rc.addEventListener("pointerup", () => { rDrag = false; });
+
+  // ---------------- summary pill ----------------
+  let pillSig = "";
+  function updatePill(st) {
+    const food = (st.counts.byKind.food || 0) - (st.counts.byClass["food:" + FOODPIC] || 0);
+    const sig = `${st.counts.people.view}|${st.totals.people}|${food}|${st.counts.signsRead.length}`;
+    if (sig === pillSig) return; pillSig = sig;
+    $("sPeople").textContent = st.counts.people.view; $("sPeopleTot").textContent = "/" + st.totals.people;
+    $("sFood").textContent = food; $("sSigns").textContent = st.counts.signsRead.length;
+  }
+
+  // ---------------- details card ----------------
+  function closeCard() { sel = null; $("card").hidden = true; $("card").dataset.key = ""; }
+  function placeCard(st) {
+    const card = $("card");
+    if (!sel) { card.hidden = true; return; }
+    const e = st.entities.find(x => same(sel, x));
+    if (!e) { card.hidden = true; return; }
+    const m = e.kind === "person" ? E.motionAt(e.id, st.fi) : null;
+    const key = `${e.kind}:${e.id}:${m ? (m.spd >= 0.5 ? "w" : "s") : "-"}:${e.dist ? Math.round(e.dist) : ""}`;
+    if (card.dataset.key !== key) { card.dataset.key = key; card.innerHTML = cardHtml(e, st, m); }
+    card.hidden = false;
+    const k = E.k, host = $("stage"), w = 270, x = e.rect[2] / k + 16;
+    const left = x + w > host.clientWidth - 170 ? e.rect[0] / k - w - 16 : x;
+    card.style.left = `${Math.max(12, Math.min(host.clientWidth - w - 12, left))}px`;
+    card.style.top = `${Math.max(70, Math.min(host.clientHeight - card.offsetHeight - 66, e.rect[1] / k - 10))}px`;
+  }
+  const esc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const row = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
+  const cap = s => { s = String(s || ""); return s.charAt(0).toUpperCase() + s.slice(1); };
+  function head(e, title) {
+    const outline = e.kind === "pictured" ? `box-shadow:0 0 0 1.5px ${INK}` : "";
+    return `<h3><span aria-hidden="true">${emojiFor(e)}</span>${esc(title)}<span class="dot" style="background:${COL[e.kind]};${outline}" aria-hidden="true"></span><button aria-label="Close details" data-close>✕</button></h3>`;
+  }
+  function cardHtml(e, st, m) {
+    const d = st.data;
+    if (e.kind === "person") {
+      const t = d.tracks[e.id] || [];
+      const age = { "young adult 18-35": "18–35", "middle adult 36-60": "36–60", "older adult 61+": "61+", child: "Child" }[e.age] || "Uncertain";
+      return head(e, "Person") + `<dl>${row("Age group", age)}${row("Gender (perceived)", cap(e.sex))}${row("Distance", e.dist ? e.dist.toFixed(1) + " m" : "—")}${row("Moving", m ? (m.spd >= 0.5 ? `Walking · ${m.spd.toFixed(1)} m/s` : "Standing") : "—")}${row("Seen for", t[1] != null ? ((t[1] - t[0]) / d.fps).toFixed(0) + " s" : "—")}</dl><span class="tag">Model estimates · shown in aggregate · P-${e.id}</span>`;
+    }
+    if (e.kind === "frontage") {
+      const p = e.info;
+      return head(e, "Frontage") + `<img src="../data/processed/${esc(p.crop)}" alt="Shop front seen from the walk">${"<dl>" + row("Facade", esc(p.facade)) + row("Structure", esc(p.structure)) + "</dl>"}<div class="chips">${(p.materials || []).map(x => `<span>${esc(x)}</span>`).join("") || "<span>—</span>"}</div><span class="tag">Experimental · F${p.id}</span>`;
+    }
+    if (e.kind === "sign") return head(e, "Sign") + `<div class="sign" dir="auto">${esc(e.text || "—")}</div><span class="tag">Read from the video · T${e.id}</span>`;
+    if (e.kind === "food") return head(e, e.cls) + `<dl>${row("Item", esc(e.cls))}${row("Confidence", e.conf.toFixed(2))}</dl>`;
+    if (e.kind === "pictured") return head(e, "Pictured person") + `<dl>${row("Where", "On a sign or poster")}${row("Counted as people", "No")}</dl>`;
+    return head(e, cap(e.cls)) + `<dl>${row("Type", e.kind === "level2" ? "Market item" : "Object")}${row("Confidence", e.conf.toFixed(2))}</dl>`;
+  }
+  $("card").addEventListener("click", ev => { if (ev.target.closest("[data-close]")) closeCard(); });
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape") { closeCard(); togglePop(false); } });
+
+  // ---------------- round minimap ----------------
+  let map, me, route;
+  const youIcon = () => L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30],
+    html: `<svg viewBox="0 0 60 60" aria-hidden="true"><g id="cone"><path d="M30 30 L16 4 A30 30 0 0 1 44 4 Z" fill="rgba(0,114,178,.28)" stroke="rgba(0,114,178,.6)" stroke-width="1"/></g><circle cx="30" cy="30" r="6.5" fill="${INK}" stroke="#fff" stroke-width="3"/></svg>` });
+  E.ready.then(() => {
+    map = L.map("map", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false }).setView([32.0527, 34.7903], 18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, className: "soft-tiles" }).addTo(map);
+    me = L.marker([32.0527, 34.7903], { icon: youIcon(), interactive: false, keyboard: false }).addTo(map);
+    drawRoute();
+  });
+  function drawRoute() {
+    if (!map) return; if (route) route.remove();
+    const g = E.geo.walks[E.walk]; if (!g) return;
+    route = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(p => p[0] != null), { color: COL.person, weight: 4, opacity: .55, lineCap: "round" }).addTo(map);
+  }
+  setInterval(() => {
+    const st = E.state; if (!st) return;
+    $("time").textContent = `${E.fmtTime(st.t)} / ${E.fmtTime(st.duration)}`;
+    if (!scrubbing && st.duration) $("scrub").value = Math.round(st.t / st.duration * 1000);
+    if (!st.cam || !map) return;
+    me.setLatLng([st.cam.lat, st.cam.lon]); map.panTo([st.cam.lat, st.cam.lon], { animate: false });
+    const cone = me.getElement() && me.getElement().querySelector("#cone");
+    if (cone) cone.setAttribute("transform", `rotate(${st.cam.bearing.toFixed(1)} 30 30)`);
+  }, 150);
+
+  // ---------------- controls ----------------
+  let scrubbing = false;
+  $("scrub").addEventListener("input", () => { scrubbing = true; E.seek($("scrub").value / 1000 * E.duration()); });
+  $("scrub").addEventListener("change", () => { scrubbing = false; });
+  const setPlay = on => { $("play").textContent = on ? "❚❚" : "▶"; $("play").setAttribute("aria-label", on ? "Pause" : "Play"); };
+  $("play").addEventListener("click", () => setPlay(E.play()));
+  E.onPlay = setPlay;
+  const segGroup = (id, fn) => document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", String(x === b))); fn(b);
+  }));
+  segGroup("speed", b => E.setSpeed(+b.dataset.s));
+  segGroup("lensSize", b => { lensFrac = +b.dataset.l; });
+  segGroup("walks", async b => { closeCard(); dockSig = pillSig = ""; await E.load(b.dataset.walk); drawRoute(); });
+  const togglePop = on => { $("pop").hidden = !on; $("gearBtn").setAttribute("aria-expanded", String(on)); };
+  $("gearBtn").addEventListener("click", () => togglePop($("pop").hidden));
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest("#pop, #gearBtn")) togglePop(false); });
+  $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); });
+  $("arrowsBtn").addEventListener("click", () => { arrows = !arrows; $("arrowsBtn").setAttribute("aria-pressed", String(arrows)); });
+  setTimeout(() => { $("hint").style.opacity = "0"; }, 7000);
+  E.load("walk1").then(drawRoute);
+})();
+</script>
+</body>
+</html>

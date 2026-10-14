@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuk HaTikvah · Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* V1 "Atelier": calm, light, editorial. Fixed zones: top bar / stage / transport / insight rail. */
+:root {
+  --paper: #f6f3ee; --card: #ffffff; --ink: #1f2933; --soft: #6b7682; --line: #e4ddd2; --accent: #0072B2;
+  --person: #0072B2; --food: #009E73; --object: #E69F00; --level2: #CC79A7; --sign: #56B4E9; --pictured: #b8a600; --frontage: #D55E00;
+  --serif: "Fraunces", Georgia, serif; --sans: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.45 var(--sans); }
+.app { height: 100%; display: grid; grid-template-rows: 64px 1fr 72px; grid-template-columns: minmax(0, 1fr) 320px; gap: 0 18px; padding: 0 20px 14px; }
+header { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; }
+h1 { font: 600 22px var(--serif); margin: 0; letter-spacing: -.01em; }
+h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
+.seg { display: inline-flex; background: #ebe5db; border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; font: 500 13px var(--sans); color: var(--soft); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.spacer { flex: 1; }
+.iconbtn { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font: 500 13px var(--sans); color: var(--ink); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.iconbtn:hover { border-color: #cfc6b8; }
+.stage { position: relative; border-radius: 18px; overflow: hidden; background: #ddd5c8; box-shadow: 0 10px 30px rgba(60,45,20,.12); cursor: grab; outline: none; min-height: 0; }
+.stage.dragging { cursor: grabbing; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.compass { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(255,255,255,.85); backdrop-filter: blur(6px); border-radius: 999px; padding: 4px 12px; font: 600 12px var(--sans); color: var(--ink); pointer-events: none; }
+.hint { position: absolute; left: 16px; bottom: 14px; background: rgba(255,255,255,.85); backdrop-filter: blur(6px); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: var(--soft); pointer-events: none; }
+/* floating card */
+.card { position: absolute; width: 260px; background: var(--card); border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,.18); padding: 14px 16px; font-size: 13px; z-index: 5; }
+.card h3 { margin: 0 0 6px; font: 600 16px var(--serif); display: flex; gap: 8px; align-items: center; }
+.card h3 button { margin-left: auto; border: 0; background: #f1ece4; border-radius: 999px; width: 26px; height: 26px; cursor: pointer; color: var(--soft); }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
+.card dt { color: var(--soft); } .card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.card img { width: 100%; border-radius: 10px; margin: 4px 0 8px; display: block; }
+.card .tag { display: inline-block; font-size: 11px; color: var(--soft); margin-top: 8px; }
+/* transport */
+.transport { grid-column: 1; display: flex; align-items: center; gap: 14px; }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; font-size: 16px; cursor: pointer; flex: none; }
+.timeline { flex: 1; position: relative; height: 34px; }
+.timeline input { width: 100%; margin: 0; accent-color: var(--ink); height: 34px; }
+.time { font-variant-numeric: tabular-nums; color: var(--soft); min-width: 92px; text-align: right; }
+.speed { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 10px; font: 500 13px var(--sans); }
+/* insight rail: fixed card heights, values change, layout never does */
+.rail { grid-row: 2 / 4; grid-column: 2; display: grid; grid-template-rows: auto auto auto 1fr; gap: 12px; min-height: 0; padding-bottom: 2px; }
+.ins { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(60,45,20,.06); }
+.ins .lbl { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.ins .lbl i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.big { font: 600 40px/1.05 var(--serif); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.big small { font: 500 14px var(--sans); color: var(--soft); margin-left: 6px; }
+.agebar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #efe9df; margin: 10px 0 6px; }
+.agebar span { display: block; height: 100%; }
+.agelegend { display: grid; grid-template-columns: repeat(5, 1fr); font-size: 15px; text-align: center; }
+.agelegend b { display: block; font: 500 11px var(--sans); color: var(--soft); font-variant-numeric: tabular-nums; }
+.chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+.chip { background: #f5f1ea; border-radius: 12px; padding: 7px 4px; text-align: center; font-size: 20px; min-height: 58px; }
+.chip b { display: block; font: 600 12px var(--sans); color: var(--ink); }
+.chip small { display: block; font-size: 10.5px; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.signline { margin-top: 8px; font-size: 15px; min-height: 44px; unicode-bidi: plaintext; direction: auto; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mapcard { padding: 0; overflow: hidden; position: relative; min-height: 180px; }
+#map { position: absolute; inset: 0; }
+.soft-tiles { filter: grayscale(.85) brightness(1.06) contrast(.9); }
+.mapcard .lbl { position: absolute; left: 12px; top: 10px; z-index: 500; background: rgba(255,255,255,.9); padding: 3px 8px; border-radius: 999px; }
+/* layers popover */
+.pop { position: absolute; right: 360px; top: 58px; width: 300px; background: var(--card); border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.18); padding: 16px; z-index: 1000; }
+.pop h4 { margin: 0 0 10px; font: 600 15px var(--serif); }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f1ece4; cursor: pointer; user-select: none; }
+.toggle:last-of-type { border-bottom: 0; }
+.toggle i { width: 10px; height: 10px; border-radius: 50%; }
+.toggle span { flex: 1; }
+.toggle input { accent-color: var(--ink); width: 16px; height: 16px; }
+.pop .row { margin-top: 12px; font-size: 12.5px; color: var(--soft); }
+.pop input[type=range] { width: 100%; accent-color: var(--ink); }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+[hidden] { display: none !important; }
+@media (max-width: 1000px) { .app { grid-template-columns: 1fr; grid-template-rows: 64px 56vh 72px auto; } .rail { grid-row: auto; grid-column: 1; grid-template-rows: auto; } .pop { right: 20px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Shuk HaTikvah<small>a walk through the market</small></h1>
+    <div class="seg" id="walks" role="group" aria-label="Walk">
+      <button data-walk="walk1" aria-pressed="true">Hatikvah St</button>
+      <button data-walk="walk2" aria-pressed="false">Hamevasser St</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="layersBtn" aria-expanded="false">◐ Layers &amp; detail</button>
+  </header>
+
+  <div class="stage" id="stage" aria-label="360 degree view. Drag to look around, scroll to zoom.">
+    <canvas id="gl"></canvas><canvas id="ov"></canvas>
+    <div class="compass" id="compass">facing N</div>
+    <div class="hint" id="hint">Drag to look around · hover a dot · click for details</div>
+    <div class="card" id="card" hidden data-no-drag></div>
+  </div>
+
+  <aside class="rail">
+    <section class="ins">
+      <div class="lbl"><i style="background:var(--person)"></i>People in view</div>
+      <div class="big"><span id="pView">0</span><small>of <span id="pTot">0</span> on this walk</small></div>
+      <div class="agebar" id="ageBar"></div>
+      <div class="agelegend" id="ageLeg"></div>
+    </section>
+    <section class="ins">
+      <div class="lbl"><i style="background:var(--food)"></i>On the stalls here</div>
+      <div class="chips" id="foodChips"></div>
+    </section>
+    <section class="ins">
+      <div class="lbl"><i style="background:var(--sign)"></i>Signs in view</div>
+      <div class="signline" id="signLine" dir="auto">—</div>
+    </section>
+    <section class="ins mapcard">
+      <div class="lbl"><i style="background:var(--ink)"></i>Where you are</div>
+      <div id="map"></div>
+    </section>
+  </aside>
+
+  <div class="transport">
+    <button class="play" id="play" aria-label="Play">▶</button>
+    <div class="timeline"><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Position in the walk"></div>
+    <div class="time" id="time">0:00 / 0:00</div>
+    <select class="speed" id="speed" aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+  </div>
+</div>
+
+<div class="pop" id="pop" hidden>
+  <h4>What to show</h4>
+  <label class="toggle"><i style="background:var(--person)"></i><span>People</span><input type="checkbox" data-kind="person" checked></label>
+  <label class="toggle"><i style="background:var(--food)"></i><span>Food on display</span><input type="checkbox" data-kind="food" checked></label>
+  <label class="toggle"><i style="background:var(--sign)"></i><span>Signs</span><input type="checkbox" data-kind="sign"></label>
+  <label class="toggle"><i style="background:var(--object)"></i><span>Objects &amp; vehicles</span><input type="checkbox" data-kind="object"></label>
+  <label class="toggle"><i style="background:var(--level2)"></i><span>Market items (crates, trolleys)</span><input type="checkbox" data-kind="level2"></label>
+  <label class="toggle"><i style="background:var(--pictured)"></i><span>Pictured people on signs</span><input type="checkbox" data-kind="pictured"></label>
+  <label class="toggle"><i style="background:var(--frontage)"></i><span>Frontage materials</span><input type="checkbox" data-kind="frontage" checked></label>
+  <div class="row">Detail: <b id="detailLbl">quiet</b>
+    <input type="range" id="detail" min="0" max="2" step="1" value="0" aria-label="Detail level">
+    <span style="display:flex;justify-content:space-between"><span>quiet</span><span>focus</span><span>all boxes</span></span>
+  </div>
+  <div class="row">Confidence: <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6" aria-label="Minimum confidence"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="engine.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = { person: css("--person"), food: css("--food"), object: css("--object"), level2: css("--level2"), sign: css("--sign"), pictured: css("--pictured"), frontage: css("--frontage") };
+  const AGE_COL = { "child": "#9ad0f5", "young adult 18-35": "#56B4E9", "middle adult 36-60": "#0072B2", "older adult 61+": "#123a5c", "uncertain": "#cfc8bd" };
+  const E = ShukEngine.create({ gl: $("gl"), overlay: $("ov"), host: $("stage") });
+  const show = { person: true, food: true, sign: false, object: false, level2: false, pictured: false, frontage: true };
+  let detail = 0, hover = null, sel = null;
+
+  // ---- overlay: quiet dots, focus pins in the centre, full boxes only on hover/selection or "all boxes" ----
+  E.onFrame = (st, c) => {
+    const k = E.k, W = c.canvas.width, H = c.canvas.height, cx = W / 2;
+    for (const e of st.entities) {
+      if (!show[e.kind] || (e.kind === "food" && e.cls === "Food picture (menu/sign)" && !show.pictured)) continue;
+      const col = COL[e.kind], r = e.rect, x = (r[0] + r[2]) / 2, y = e.point ? r[1] : r[3];
+      const isSel = sel && sel.kind === e.kind && sel.id === e.id, isHov = hover && hover.kind === e.kind && hover.id === e.id;
+      const central = Math.abs(x - cx) < W * 0.18;
+      c.globalAlpha = e.alpha;
+      if (detail === 2 || isSel || isHov) {
+        c.strokeStyle = col; c.lineWidth = (isSel ? 3 : 2) * k; E.draw.roundRect(c, r[0], r[1], r[2] - r[0], r[3] - r[1], 6 * k); if (!e.point) c.stroke();
+      }
+      // base dot with a soft halo
+      const rad = (e.kind === "person" ? 5 : 4) * k;
+      c.fillStyle = "rgba(255,255,255,.85)"; c.beginPath(); c.arc(x, y, rad + 2.5 * k, 0, 7); c.fill();
+      c.fillStyle = col; c.beginPath(); c.arc(x, y, rad, 0, 7); c.fill();
+      let hit = [x - 10 * k, y - 10 * k, x + 10 * k, y + 10 * k];
+      if ((detail >= 1 && central) || isSel || isHov || e.kind === "frontage") {
+        const em = e.kind === "person" ? (ShukEngine.AGE_EMOJI[e.age] || "🧍") : e.kind === "frontage" ? "🧱" : ShukEngine.emojiOf(e.cls);
+        const s = 26 * k, px = x, py = y - (e.point ? 0 : 22 * k) - s / 2;
+        c.fillStyle = "#fff"; c.shadowColor = "rgba(0,0,0,.18)"; c.shadowBlur = 8 * k;
+        E.draw.roundRect(c, px - s / 2 - 3 * k, py - s / 2 - 3 * k, s + 6 * k, s + 6 * k, 9 * k); c.fill(); c.shadowBlur = 0;
+        c.strokeStyle = col; c.lineWidth = 2 * k; c.stroke();
+        E.draw.emoji(c, em, px, py + 1 * k, s * 0.78);
+        hit = [px - s / 2 - 4 * k, py - s / 2 - 4 * k, px + s / 2 + 4 * k, y + 10 * k];
+      }
+      if (e.kind === "person" && (isSel || detail >= 1)) { const a = E.groundArrow(e, st.fi); if (a) E.draw.arrow(c, x, y, a.dx, a.dy, col, k); }
+      c.globalAlpha = 1;
+      E.addHit(...hit, e);
+    }
+    updateRail(st);
+    placeCard(st);
+  };
+  E.onHover = h => { hover = h; $("stage").style.cursor = h ? "pointer" : ""; };
+  E.onClick = h => { sel = h ? { kind: h.kind, id: h.id } : null; $("card").dataset.key = ""; if (!h) $("card").hidden = true; };
+
+  // ---- insight rail (fixed slots; only values change) ----
+  const AGES = ShukEngine.AGES;
+  let railSig = "";
+  function updateRail(st) {
+    $("pView").textContent = st.counts.people.view; $("pTot").textContent = st.totals.people;
+    const n = Math.max(1, st.counts.people.view);
+    const foods = Object.entries(st.counts.byClass).filter(([k]) => k.startsWith("food:") && !k.endsWith("Food picture (menu/sign)") && !k.endsWith("Produce (unsure)"))
+      .map(([k, v]) => [k.slice(5), v]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const sig = JSON.stringify([st.counts.age, foods, st.counts.signsRead.map(s => s.id)]);
+    if (sig === railSig) return; railSig = sig;
+    $("ageBar").innerHTML = AGES.map(a => `<span style="width:${(st.counts.age[a] || 0) / n * 100}%;background:${AGE_COL[a]}"></span>`).join("");
+    $("ageLeg").innerHTML = AGES.map(a => `<div title="${a}">${ShukEngine.AGE_EMOJI[a]}<b>${st.counts.age[a] || 0}</b></div>`).join("");
+    const slots = [0, 1, 2].map(i => foods[i]);
+    $("foodChips").innerHTML = slots.map(f => f ? `<div class="chip">${ShukEngine.emojiOf(f[0])}<b>${f[1]}</b><small>${f[0]}</small></div>` : `<div class="chip" style="opacity:.35">·<b>&nbsp;</b><small>&nbsp;</small></div>`).join("");
+    const signs = st.counts.signsRead.map(s => s.text).filter(Boolean);
+    $("signLine").textContent = signs.length ? signs.slice(0, 2).join("  ·  ") : "—";
+  }
+
+  // ---- details card ----
+  function placeCard(st) {
+    const card = $("card");
+    if (!sel) { card.hidden = true; return; }
+    const e = st.entities.find(x => x.kind === sel.kind && x.id === sel.id);
+    if (!e) { card.hidden = true; return; }
+    const key = `${e.kind}:${e.id}:${e.kind === "person" ? Math.round((E.motionAt(e.id, st.fi) || {}).spd * 10) : ""}`;
+    if (card.dataset.key !== key) { card.dataset.key = key; card.innerHTML = cardHtml(e, st); }
+    card.hidden = false;
+    const k = E.k, x = e.rect[2] / k + 14, w = 260, host = $("stage");
+    const left = x + w > host.clientWidth - 10 ? e.rect[0] / k - w - 14 : x;
+    card.style.left = `${Math.max(10, left)}px`; card.style.top = `${Math.max(10, Math.min(host.clientHeight - card.offsetHeight - 10, e.rect[1] / k - 20))}px`;
+  }
+  const esc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const row = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
+  function cardHtml(e, st) {
+    const d = st.data, close = `<button aria-label="Close" data-close>✕</button>`;
+    if (e.kind === "person") {
+      const m = E.motionAt(e.id, st.fi), t = d.tracks[e.id] || [];
+      return `<h3>${ShukEngine.AGE_EMOJI[e.age] || "🧍"} Person ${close}</h3><dl>${row("Age group", esc(e.age))}${row("Gender", esc(e.sex))}${row("Distance", e.dist ? e.dist.toFixed(1) + " m" : "—")}${row("Moving", m ? (m.spd >= 0.5 ? `walking ${m.spd.toFixed(1)} m/s` : "standing") : "—")}${row("Seen for", ((t[1] - t[0]) / d.fps).toFixed(0) + " s")}</dl><span class="tag">Estimates · P-${e.id}</span>`;
+    }
+    if (e.kind === "frontage") {
+      const p = e.info;
+      return `<h3>🧱 Frontage ${close}</h3><img src="../data/processed/${p.crop}" alt=""><dl>${row("Facade", p.facade)}${row("Structure", p.structure)}</dl><div style="margin-top:6px">${p.materials.map(esc).join(" · ") || "—"}</div><span class="tag">Experimental · what the camera saw here</span>`;
+    }
+    if (e.kind === "sign") return `<h3>🪧 Sign ${close}</h3><div dir="auto" style="font-size:16px;unicode-bidi:plaintext">${esc(e.text || "—")}</div><span class="tag">Read by a vision model</span>`;
+    const name = e.kind === "pictured" ? "Pictured person" : e.cls;
+    const what = { food: "Food on display", object: "Object", level2: "Market item", pictured: "Picture on a sign, not counted" }[e.kind] || "";
+    return `<h3>${e.kind === "pictured" ? "🖼️" : ShukEngine.emojiOf(e.cls)} ${esc(name)} ${close}</h3><dl>${row("Type", what)}${row("Confidence", e.conf.toFixed(2))}</dl>`;
+  }
+  $("card").addEventListener("pointerdown", e => { if (e.target.closest("[data-close]")) { sel = null; $("card").hidden = true; e.stopPropagation(); } });
+
+  // ---- map: north-up, route + you, store dots ----
+  let map, me, route;
+  E.ready.then(() => {
+    map = L.map("map", { zoomControl: false, attributionControl: false, dragging: true, scrollWheelZoom: false }).setView([32.0527, 34.7903], 18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, className: "soft-tiles" }).addTo(map);
+    for (const s of E.geo.shops) L.circleMarker([s.lat, s.lon], { radius: 3, weight: 0, fillColor: "#9b8f80", fillOpacity: .8 }).addTo(map);
+    me = L.circleMarker([0, 0], { radius: 7, weight: 3, color: "#fff", fillColor: "#1f2933", fillOpacity: 1 }).addTo(map);
+    drawRoute();
+  });
+  function drawRoute() {
+    if (!map) return; if (route) route.remove();
+    const g = E.geo.walks[E.walk]; if (!g) return;
+    route = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]), { color: "#1f2933", weight: 3, opacity: .35 }).addTo(map);
+  }
+  setInterval(() => {
+    const st = E.state; if (!st || !st.cam || !map) return;
+    me.setLatLng([st.cam.lat, st.cam.lon]); map.panTo([st.cam.lat, st.cam.lon], { animate: false });
+    const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    $("compass").textContent = `facing ${dirs[Math.round(st.cam.bearing / 45) % 8]} · ${E.walkLabel(E.walk)}`;
+    $("time").textContent = `${E.fmtTime(st.t)} / ${E.fmtTime(st.duration)}`;
+    if (!scrubbing && st.duration) $("scrub").value = Math.round(st.t / st.duration * 1000);
+  }, 200);
+
+  // ---- controls ----
+  let scrubbing = false;
+  $("scrub").addEventListener("input", () => { scrubbing = true; E.seek($("scrub").value / 1000 * E.duration()); });
+  $("scrub").addEventListener("change", () => { scrubbing = false; });
+  const setPlay = on => { $("play").textContent = on ? "❚❚" : "▶"; $("play").setAttribute("aria-label", on ? "Pause" : "Play"); };
+  $("play").addEventListener("click", () => setPlay(E.play()));
+  E.onPlay = setPlay;
+  $("speed").addEventListener("change", () => E.setSpeed(+$("speed").value));
+  document.querySelectorAll("#walks button").forEach(b => b.addEventListener("click", async () => {
+    document.querySelectorAll("#walks button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    sel = null; await E.load(b.dataset.walk); drawRoute();
+  }));
+  $("layersBtn").addEventListener("click", () => { const p = $("pop"); p.hidden = !p.hidden; $("layersBtn").setAttribute("aria-expanded", String(!p.hidden)); });
+  document.addEventListener("pointerdown", e => { if (!e.target.closest("#pop, #layersBtn")) $("pop").hidden = true; });
+  document.querySelectorAll("#pop input[data-kind]").forEach(i => i.addEventListener("change", () => { show[i.dataset.kind] = i.checked; }));
+  $("detail").addEventListener("input", () => { detail = +$("detail").value; $("detailLbl").textContent = ["quiet", "focus", "all boxes"][detail]; });
+  $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); });
+  setTimeout(() => { $("hint").style.transition = "opacity .6s"; $("hint").style.opacity = "0"; }, 7000);
+  E.load("walk1").then(drawRoute);
+})();
+</script>
+</body>
+</html>
