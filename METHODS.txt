@@ -334,3 +334,21 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      Summary, Stores, People, Food, Signs, Objects, Frontage. Checked: walk 1 Melech Haavatiach -> next
      stall south, 97 m, 223 people, 41 stores, counts cross-checked against the overlay JSON in Python.
 
+23. CROWDS  (crowds.py; viewer full map + minimap)
+   - Heuristic (user idea): people whose boxes touch or overlap and have similar size (box height ratio
+     >= 0.7, so similar distance) are linked; a crowd = connected group of >= 3 people in a frame; crowds
+     are followed over time (share >= 1 person, best Jaccard, gaps <= 1 s), kept if they last >= 1 s.
+   - Inputs filtered first: viewer defaults (track max conf >= 0.6, >= 1 s); pictured people / operator from
+     depicted.py; NEW operator filter (median box height >= 58 deg anywhere, or >= 48 deg within +-60 deg of
+     the operator direction = circular mean yaw of the huge boxes) -> 37 tracks walk 1 / 13 walk 2 (the
+     known "~35 operator tracks" issue, here solved for crowds); people > 12 m dropped (box size no longer
+     means distance); duplicate boxes (IoU > 0.5) and part-body boxes (>= 75% inside another) count once.
+   - Per crowd: most people at once, median size, different people over its life (approximate: hidden people
+     missed, split tracks double-counted); map position = median of members' map positions (motion.py, else
+     camera + ground distance); spread; speed mean and std over members (per-member median speed from
+     motion.py: camera motion removed, geometry + optical flow); walking / standing; age group and perceived
+     gender (attributes.py); time, route position, view direction for "go to video".
+   - Visual check (contact sheets): v1 had operator-driven and far-tiny-box "crowds"; after the filters the
+     largest crowds are real dense groups at stalls and walkers in a cluster. Result: walk 1 37 crowds
+     (median 4 people at once, max 11), walk 2 3 crowds.
+

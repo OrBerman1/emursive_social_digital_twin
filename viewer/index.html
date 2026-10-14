@@ -80,6 +80,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .mapfull .bar { position: absolute; left: 10px; top: 10px; z-index: 1001; display: flex; gap: 8px; align-items: center; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); }
 .mapfull .bar button { font: 600 12px var(--body); background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
 .mapfull .legend2 { position: absolute; right: 10px; bottom: 24px; z-index: 1001; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink); display: grid; gap: 3px; max-height: 50%; overflow-y: auto; }
+.crowd-icon { background: none; border: none; }
+.crowd-icon div { border-radius: 50%; background: rgba(255,111,60,.85); border: 2px solid #fff; color: #fff; font: 700 11px var(--body); display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+.cpop h4 { margin: 0 0 4px; font: 700 14px var(--display); }
+.cpop table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+.cpop td { padding: 1px 4px; } .cpop td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.cpop .bar2 { display: flex; height: 8px; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; background: #ddd; }
+.cpop .muted { color: #777; font-size: 11.5px; }
 .mapfull .segbtn { position: absolute; right: 10px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
 .mapfull .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .mapfull .seghint { position: absolute; right: 10px; top: 50px; z-index: 1002; background: rgba(27,35,36,.95); border: 1px solid var(--accent); border-radius: 6px; padding: 7px 12px; font-size: 12.5px; color: var(--ink); }
@@ -878,6 +885,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
   const GEO = { shops: null, walks: {} };
   const WASTE = {};
+  const CROWDS = {};                                                    // crowds per walk (pipeline/crowds.py)
   let FRONT = [];                                                       // frontage materials, location-based (pipeline/frontage.py)
   const SHOW_WASTE = false;   // waste results are kept (waste.py) but not shown until detection is good enough (team decision)
   const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
@@ -890,6 +898,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       for (const w of ["walk1", "walk2"]) {
         try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
         if (w === "walk1") try { const rf = await fetch("../data/processed/frontage_materials.json"); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
+        try { const rc = await fetch(`../data/processed/${w}/crowds_stab.json`); if (rc.ok) CROWDS[w] = await rc.json(); } catch (e) {}
         if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
       }
     } catch (e) { return; }
@@ -900,6 +909,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
     for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
     mini.createPane("people").style.zIndex = 650;
+    for (const cj of Object.values(CROWDS)) for (const c of cj.crowds_list || [])
+      L.circleMarker([c.lat, c.lon], { radius: 3 + Math.min(5, c.people_max_at_once / 2), weight: 1.5, color: "#fff", fillColor: "#ff6f3c", fillOpacity: .9, interactive: false }).addTo(mini);
     for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(mini);
     for (const wj of Object.values(WASTE)) for (const it of wj.items_list || [])
       L.circleMarker([it.lat, it.lon], { radius: 3, weight: 1, color: "#fff", fillColor: C.waste, fillOpacity: 1, interactive: false }).addTo(mini);
@@ -965,16 +976,23 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       }
       full.on("popupopen", e => {
         const b = e.popup.getElement().querySelector(".go"); if (!b) return;
+        if (b.dataset.crowd) { b.addEventListener("click", () => { const [w, id] = b.dataset.crowd.split(":"); const c = (CROWDS[w].crowds_list || []).find(x => String(x.id) === id); if (c) goToCrowd(c); }); return; }
         if (b.dataset.fm) { b.addEventListener("click", () => { const p = FRONT.find(x => String(x.id) === b.dataset.fm); if (p) goToFrontage(p); }); return; }
         b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
       });
       const used = Object.keys(TRADE_COL);
-      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span>🧱 frontage materials (experimental)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
+      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span><i style="background:#ff6f3c"></i>👥 crowd (number = most people at once)</span><span>🧱 frontage materials (experimental)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
       $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
           .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
+      for (const [w, cj] of Object.entries(CROWDS)) for (const c of cj.crowds_list || []) {
+        const sz = Math.round(16 + Math.min(22, c.people_max_at_once * 2));
+        L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-icon", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+          html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
+          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 crowd · ~${c.people_max_at_once} people`).addTo(full);
+      }
       FM_LAYER = L.layerGroup().addTo(full);
       for (const p of FRONT)
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
@@ -1186,6 +1204,34 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     `Facade: ${p.facade} · structure: ${p.structure}<br>Materials: ${p.materials.length ? p.materials.join(", ") : "—"}<br>` +
     `<span class="muted">${p.walk === "walk1" ? "walk 1" : "walk 2"} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
     (withBtn ? `<br><button class="go" data-fm="${p.id}">▶ Go to video</button>` : "");
+  const AGE_ORDER = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"];
+  const AGE_HEX = { "child": "#e2f7dc", "young adult 18-35": "#9fe08f", "middle adult 36-60": "#4caf50", "older adult 61+": "#1b6e2a", "uncertain": "#9aa3a1" };
+  const SEX_HEX = { man: "#6a9cc0", woman: "#cf82a8", uncertain: "#9aa3a1" };
+  function crowdHtml(c) {
+    const n = Object.values(c.age_group).reduce((a, b) => a + b, 0) || 1;
+    const bar = (o, keys, hex) => `<div class="bar2">${keys.filter(k => o[k]).map(k => `<span style="width:${o[k] / n * 100}%;background:${hex[k]}" title="${k}: ${o[k]}"></span>`).join("")}</div>`;
+    const rows = (o, keys) => keys.filter(k => o[k]).map(k => `<tr><td>${AGE_EMOJI[k] || ""} ${k}</td><td>${o[k]}</td></tr>`).join("");
+    const sp = c.speed_mean_m_s == null ? "—" : `${c.speed_mean_m_s.toFixed(2)} ± ${c.speed_std_m_s.toFixed(2)} m/s`;
+    return `<div class="cpop"><h4>👥 Crowd · ${c.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(c.t_start_s)}</h4><table>
+      <tr><td>People (approx.) · most at once</td><td><b>${c.people_max_at_once}</b></td></tr>
+      <tr><td>Typical size (median)</td><td>${c.people_median}</td></tr>
+      <tr><td>Different people over ${c.duration_s} s</td><td>${c.people_unique}</td></tr>
+      <tr><td>Speed mean ± std</td><td>${sp}</td></tr>
+      <tr><td>Walking / standing</td><td>${c.walking} / ${c.standing} <span class="muted">(of ${c.speed_n})</span></td></tr>
+      <tr><td>Spread</td><td>~${c.radius_m} m</td></tr></table>
+      <b style="font-size:12px">Age group</b>${bar(c.age_group, AGE_ORDER, AGE_HEX)}<table>${rows(c.age_group, AGE_ORDER)}</table>
+      <b style="font-size:12px">Perceived gender</b>${bar(c.perceived_gender, ["man", "woman", "uncertain"], SEX_HEX)}
+      <table>${["man", "woman", "uncertain"].filter(k => c.perceived_gender[k]).map(k => `<tr><td>${k}</td><td>${c.perceived_gender[k]}</td></tr>`).join("")}</table>
+      <div class="muted">Heuristic: overlapping person boxes of similar size. Counts approximate (hidden people missed); speed with camera motion removed; age/gender are estimates.</div>
+      <button class="go" data-crowd="${c.walk}:${c.id}">▶ Go to video</button></div>`;
+  }
+  async function goToCrowd(c) {
+    $("mapfull").hidden = true;
+    if (c.walk !== S.walk) await load(c.walk);
+    vt = c.view_frame / (S.data ? S.data.fps : 5);
+    if (videoOk()) video.currentTime = vt;
+    S.yaw = c.view_yaw; S.pitch = -5;
+  }
   async function goToFrontage(p) {
     $("mapfull").hidden = true;
     if (p.walk !== S.walk) await load(p.walk);

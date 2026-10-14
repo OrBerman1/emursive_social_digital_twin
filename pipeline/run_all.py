@@ -51,6 +51,7 @@ def main() -> None:
     step(str(HERE / "export_overlays.py"), *walks, "--variant", "stab")
     step(str(HERE / "person_flow.py"), *walks, "--variant", "stab")                        # cached: optical flow, feet vs ground (~2 min/walk)
     step(str(HERE / "motion.py"), *walks, "--variant", "stab")                             # cheap: people on the map + motion
+    step(str(HERE / "crowds.py"), *walks, "--variant", "stab")                             # cheap: crowds from overlapping similar-size boxes
     step(str(HERE / "make_validation.py"))                                                 # hand-count sample
 
 

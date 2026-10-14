@@ -163,6 +163,10 @@ and under them is walkway floor (SegFormer, downloaded by `setup.bat` into `mode
 each item with CLIP, and writes items with map position and waste per 10 m of route
 (`data\processed\<walk>\waste_stab.json`). In the viewer: magenta boxes, a panel section, dots on both maps.
 
+**Crowds.** `pipeline\crowds.py` finds crowds from overlapping person boxes of similar size and puts them on
+the maps as orange markers (number = most people at once). Click one on the full map for its statistics
+(approximate size, speed mean ± std, walking/standing, age group, perceived gender) and **▶ Go to video**.
+
 **Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
 store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by
 trade, food, signs, objects, frontage materials), with **⬇ JSON** and **⬇ Excel** export. Esc cancels.
