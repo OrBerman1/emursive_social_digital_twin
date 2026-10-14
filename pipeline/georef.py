@@ -377,7 +377,8 @@ def main() -> None:
                 bearing = np.arctan2(sx[i] - px[f], sy[i] - py[f])
                 view_yaw = np.degrees(wrap(s * (bearing - alpha) - psi[f]))
                 best[i] = {"walk": walk, "frame": f, "yaw": round(float(view_yaw), 1), "dist_m": round(dm, 1)}
-    cols = ["OBJECTID", "name", "Main_Trade", "Sub_Category", "Shop_Type", "Ownership", "Patronage", "Facade_Mat", "Skeleton_Mat", "GlobalID"]
+    cols = ["OBJECTID", "name", "Main_Trade", "Sub_Category", "Shop_Type", "Ownership", "Patronage", "Facade_Mat", "Skeleton_Mat",
+            "Est_Year", "Gen_Status", "Informal_Vendor", "GlobalID"]
     items = []
     for i, r in shops.iterrows():
         rec = {c: (None if pd.isna(r[c]) else (r[c].item() if hasattr(r[c], "item") else r[c])) for c in cols}

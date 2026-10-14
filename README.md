@@ -168,6 +168,11 @@ the maps as orange markers (number = most people at once). Click one on the full
 (approximate size, speed mean ± std, walking/standing, age group, perceived gender) and **▶ Go to video**. The
 thresholds are adjustable live under **👥 Crowd settings** on the full map.
 
+**Map layers and filters.** In the full map, **🗂 Layers & filters** chooses what is shown (default: stores and
+crowds; optional: walk routes, frontage materials, everyone's paths), filters stores by any field of the store
+table (trade, shop type, ownership, patronage, facade, structure, informal vendor, generation, seen on a walk),
+and colours stores by one of them.
+
 **Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
 store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by
 trade, food, signs, objects, frontage materials), with **⬇ JSON** and **⬇ Excel** export. Esc cancels.

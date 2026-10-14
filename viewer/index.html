@@ -87,6 +87,23 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .cpop td { padding: 1px 4px; } .cpop td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .cpop .bar2 { display: flex; height: 8px; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; background: #ddd; }
 .cpop .muted { color: #777; font-size: 11.5px; }
+.mapfull .layersbtn { position: absolute; right: 305px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .layersbtn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.mapfull .layerpanel { position: absolute; right: 10px; top: 50px; bottom: 24px; width: 360px; z-index: 1003; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); display: grid; grid-template-rows: auto 1fr; overflow: hidden; font-size: 12.5px; }
+.layerpanel header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.layerpanel header b { font: 700 .95rem var(--display); }
+.layerpanel header button, .layerpanel .mini { font: 600 11.5px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.layerpanel .body { overflow-y: auto; padding: 8px 12px 12px; display: grid; gap: 10px; align-content: start; }
+.layerpanel h5 { margin: 0; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.layerpanel .lyr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.layerpanel .lyr label { display: flex; gap: 7px; align-items: center; cursor: pointer; }
+.layerpanel .lyr input { accent-color: var(--accent); }
+.layerpanel select { font: 12.5px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; width: 100%; }
+.layerpanel .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.layerpanel .chips button { font: 500 11.5px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 2px 8px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.layerpanel .chips button[aria-pressed="false"] { opacity: .38; text-decoration: line-through; }
+.layerpanel .chips i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.layerpanel .chips small { color: var(--muted); font-family: var(--mono); }
 .mapfull .crowdbtn { position: absolute; right: 160px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
 .mapfull .crowdbtn[aria-expanded="true"] { background: #ff6f3c; border-color: #ff6f3c; color: #fff; }
 .mapfull .crowdpanel { position: absolute; right: 10px; top: 50px; width: 330px; z-index: 1003; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--ink); display: grid; gap: 7px; font-size: 12.5px; }
@@ -282,6 +299,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div id="fullmap"></div>
     <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
     <div class="legend2" id="maplegend"></div>
+    <button class="layersbtn" id="layersBtn" aria-expanded="false" title="Choose what the map shows">🗂 Layers &amp; filters</button>
+    <div class="layerpanel" id="layerPanel" hidden>
+      <header><b>🗂 What the map shows</b><span><button id="lpReset">Reset</button></span></header>
+      <div class="body">
+        <div><h5>Layers</h5><div class="lyr" id="lpLayers"></div></div>
+        <div><h5>Colour stores by</h5><select id="lpColour" aria-label="Colour stores by"></select></div>
+        <div><h5>Filter stores <span id="lpShown"></span></h5><div id="lpFilters" style="display:grid;gap:9px"></div></div>
+      </div>
+    </div>
     <button class="crowdbtn" id="crowdBtn" aria-expanded="false" title="Crowd detection thresholds">👥 Crowd settings</button>
     <div class="crowdpanel" id="crowdPanel" hidden>
       <div class="row"><b>👥 Crowd detection</b><span class="muted" id="crowdCount"></span></div>
@@ -999,14 +1025,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19,
         attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
       const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
+      ML.layers.routes = L.layerGroup();
       for (const [w, g] of Object.entries(GEO.walks)) {
-        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(full)
+        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(ML.layers.routes)
           .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
       }
+      ML.layers.stores = L.layerGroup(); ML.layers.paths = L.layerGroup();
       const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
       for (const sh of GEO.shops) {
-        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 }).addTo(full);
-        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Facade", sh.Facade_Mat], ["Skeleton", sh.Skeleton_Mat]]
+        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 });
+        ML.stores.push({ sh, m });
+        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Shop type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Patronage", sh.Patronage],
+                      ["Facade", sh.Facade_Mat], ["Structure", sh.Skeleton_Mat], ["Established", sh.Est_Year ? Math.round(sh.Est_Year) : null],
+                      ["Generation", sh.Gen_Status ? Math.round(sh.Gen_Status) : null], ["Informal vendor", sh.Informal_Vendor]]
           .filter(x => x[1]).map(([a, b]) => `${a}: ${esc3(b)}`).join("<br>");
         const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
                               : `<div class="muted">Not passed on the recorded walks.</div>`;
@@ -1022,18 +1053,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
       });
       const used = Object.keys(TRADE_COL);
-      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span><i style="background:#ff6f3c"></i>👥 crowd (number = most people at once)</span><span>🧱 frontage materials (experimental)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
       $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
       const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
           .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
-      CROWD_FULL = L.layerGroup().addTo(full); drawCrowdMarkers();
-      FM_LAYER = L.layerGroup().addTo(full);
+      CROWD_FULL = L.layerGroup(); drawCrowdMarkers(); ML.layers.crowds = CROWD_FULL;
+      FM_LAYER = L.layerGroup(); ML.layers.frontage = FM_LAYER;
       for (const p of FRONT)
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
           .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(FM_LAYER);
       MO.fullPaths = L.layerGroup().addTo(full); MO.fullNow = L.layerGroup().addTo(full); MO.pathSig = ""; MO.lastKey = "";
+      mlBuildPanel(); mlApply();
       // "you are here": current camera position + view cone, kept live by updateMini()
       fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
         html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
@@ -1051,6 +1082,94 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
   }
   // ---------------- segment summary: pick a start and an end store, summarise everything in between ----------------
+  // ---------- full map: layers, store filters and "colour by" (user, 14 Oct: default = stores + crowds only) ----------
+  const ML_LAYERS = [["stores", "🏪 Stores", true], ["crowds", "👥 Crowds", true], ["routes", "〰 Walk routes", false],
+                     ["frontage", "🧱 Frontage materials", false], ["paths", "🚶 All people's paths", false]];
+  const ML_FIELDS = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"],
+                     ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"], ["Informal_Vendor", "Informal vendor"],
+                     ["Gen_Status", "Generation"], ["_seen", "Seen on a walk"]];
+  const ML_COLOUR = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"], ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"]];
+  const OKABE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#F0E442", "#7f7f7f"];
+  const ML = { layers: {}, stores: [], on: Object.fromEntries(ML_LAYERS.map(([k, , d]) => [k, d])), colour: "Main_Trade", off: {} };
+  try { const sv = JSON.parse(localStorage.getItem("shukMapLayers") || "null"); if (sv) { Object.assign(ML.on, sv.on || {}); ML.colour = sv.colour || ML.colour; ML.off = sv.off || {}; } } catch (e) {}
+  const mlSave = () => { try { localStorage.setItem("shukMapLayers", JSON.stringify({ on: ML.on, colour: ML.colour, off: ML.off })); } catch (e) {} };
+  const mlVal = (sh, f) => { const v = f === "_seen" ? (sh.seen ? "yes" : "no") : sh[f]; return v == null || String(v).trim() === "" ? "unknown" : (typeof v === "number" ? String(Math.round(v)) : String(v).trim()); };
+  function mlColourMap() {
+    if (ML.colour === "Main_Trade") return v => TRADE_COL[v] || "#cfd8d6";
+    const vals = [...new Set(GEO.shops.map(sh => mlVal(sh, ML.colour)))].filter(v => v !== "unknown").sort((a, b) => GEO.shops.filter(x => mlVal(x, ML.colour) === b).length - GEO.shops.filter(x => mlVal(x, ML.colour) === a).length);
+    const m = Object.fromEntries(vals.map((v, i) => [v, OKABE[i % OKABE.length]]));
+    return v => m[v] || "#cfd8d6";
+  }
+  function mlBuildPanel() {
+    $("lpLayers").innerHTML = ML_LAYERS.map(([k, lab]) => `<label><input type="checkbox" data-layer="${k}" ${ML.on[k] ? "checked" : ""}>${lab}</label>`).join("");
+    $("lpColour").innerHTML = ML_COLOUR.map(([f, lab]) => `<option value="${f}" ${f === ML.colour ? "selected" : ""}>${lab}</option>`).join("");
+    const col = mlColourMap();
+    $("lpFilters").innerHTML = ML_FIELDS.map(([f, lab]) => {
+      const cnt = {}; for (const sh of GEO.shops) { const v = mlVal(sh, f); cnt[v] = (cnt[v] || 0) + 1; }
+      const vals = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+      const off = new Set(ML.off[f] || []);
+      const chip = ([v, n]) => `<button data-f="${f}" data-v="${v.replace(/"/g, "&quot;")}" aria-pressed="${!off.has(v)}">${f === ML.colour ? `<i style="background:${col(v)}"></i>` : ""}${v}<small>${n}</small></button>`;
+      const more = vals.length > 12 ? `<details><summary class="muted" style="cursor:pointer;margin-top:4px">${vals.length - 12} more</summary><div class="chips">${vals.slice(12).map(chip).join("")}</div></details>` : "";
+      return `<div><h5>${lab}<span><button class="mini" data-all="${f}">all</button> <button class="mini" data-none="${f}">none</button></span></h5><div class="chips">${vals.slice(0, 12).map(chip).join("")}</div>${more}</div>`;
+    }).join("");
+  }
+  function mlApply() {
+    if (!full) return;
+    for (const [k] of ML_LAYERS) { const lay = ML.layers[k]; if (!lay) continue; if (ML.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(full); else lay.remove(); }
+    const col = mlColourMap(); let shown = 0;
+    for (const { sh, m } of ML.stores) {
+      const ok = ML_FIELDS.every(([f]) => !(ML.off[f] || []).includes(mlVal(sh, f)));
+      m.setStyle({ fillColor: col(mlVal(sh, ML.colour)) });
+      if (ok) { m.addTo(ML.layers.stores); shown++; } else ML.layers.stores.removeLayer(m);
+    }
+    $("lpShown").textContent = `${shown} / ${GEO.shops.length}`;
+    $("mapinfo").textContent = ML.on.stores ? `${shown} of ${GEO.shops.length} stores shown` : "stores hidden";
+    if (ML.on.paths) mlPaths();
+    mlLegend(col);
+    mlSave();
+  }
+  function mlLegend(col) {
+    const parts = [];
+    if (ML.on.stores) {
+      const vals = [...new Set(ML.stores.filter(x => ML.layers.stores.hasLayer(x.m)).map(x => mlVal(x.sh, ML.colour)))];
+      const lab = (ML_COLOUR.find(c => c[0] === ML.colour) || [, ""])[1];
+      const coloured = vals.filter(v => col(v) !== "#cfd8d6").sort((a, b) => ML.stores.filter(x => mlVal(x.sh, ML.colour) === b).length - ML.stores.filter(x => mlVal(x.sh, ML.colour) === a).length);
+      parts.push(`<span class="muted">Stores by ${lab.toLowerCase()} · bright = on a walk</span>`, ...coloured.map(v => `<span><i style="background:${col(v)}"></i>${v}</span>`));
+      if (coloured.length < vals.length) parts.push(`<span><i style="background:#cfd8d6"></i>other / unknown</span>`);
+    }
+    if (ML.on.crowds) parts.push(`<span><i style="background:#ff6f3c"></i>👥 crowd (number = most people at once)</span>`);
+    if (ML.on.routes) parts.push(`<span><i style="background:#4fb3bb"></i>walk 1 route</span><span><i style="background:#e0a948"></i>walk 2 route</span>`);
+    if (ML.on.frontage) parts.push(`<span>🧱 frontage materials (experimental)</span>`);
+    if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
+    $("maplegend").innerHTML = parts.join("") || `<span class="muted">Nothing selected — open 🗂 Layers &amp; filters</span>`;
+  }
+  let mlPathsDone = false;
+  async function mlPaths() {
+    if (mlPathsDone) return; mlPathsDone = true;
+    for (const w of Object.keys(GEO.walks)) {
+      const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
+      for (const m of Object.values(mo.tracks)) {
+        const pts = []; m.lat.forEach((la, i) => { if (la != null) pts.push([la, m.lon[i]]); });
+        if (pts.length > 1) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(ML.layers.paths);
+      }
+    }
+  }
+  $("layersBtn").addEventListener("click", () => {
+    const open = $("layerPanel").hidden; $("layerPanel").hidden = !open; $("layersBtn").setAttribute("aria-expanded", String(open));
+    if (open) { $("crowdPanel").hidden = true; $("crowdBtn").setAttribute("aria-expanded", "false"); $("segPanel").hidden = true; $("segHint").hidden = true; }
+  });
+  $("layerPanel").addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.layer) { ML.on[t.dataset.layer] = t.checked; mlApply(); }
+    if (t.id === "lpColour") { ML.colour = t.value; mlBuildPanel(); mlApply(); }
+  });
+  $("layerPanel").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.f) { const f = b.dataset.f, v = b.dataset.v, off = new Set(ML.off[f] || []); off.has(v) ? off.delete(v) : off.add(v); ML.off[f] = [...off]; b.setAttribute("aria-pressed", String(!off.has(v))); mlApply(); }
+    else if (b.dataset.all) { ML.off[b.dataset.all] = []; mlBuildPanel(); mlApply(); }
+    else if (b.dataset.none) { const f = b.dataset.none; ML.off[f] = [...new Set(GEO.shops.map(sh => mlVal(sh, f)))]; mlBuildPanel(); mlApply(); }
+    else if (b.id === "lpReset") { ML.on = Object.fromEntries(ML_LAYERS.map(([k, , d]) => [k, d])); ML.colour = "Main_Trade"; ML.off = {}; mlBuildPanel(); mlApply(); }
+  });
   let FM_LAYER = null;                                                  // frontage markers (hidden while picking stores)
   const SEG = { on: false, a: null, b: null, layer: null, cache: {}, result: null };
   const segEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
@@ -1058,8 +1177,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     SEG.on = on; SEG.a = SEG.b = null;
     $("segBtn").setAttribute("aria-pressed", String(on));
     $("mapfull").classList.toggle("selecting", on);
-    if (FM_LAYER && full) { if (on) FM_LAYER.remove(); else FM_LAYER.addTo(full); }
-    if (on) { $("segPanel").hidden = true; $("maplegend").hidden = true; segClearLayer(); full && full.closePopup(); }
+    if (FM_LAYER && full) { if (on) FM_LAYER.remove(); else if (ML.on.frontage) FM_LAYER.addTo(full); }
+    if (on) { $("segPanel").hidden = true; $("maplegend").hidden = true; segClearLayer(); full && full.closePopup(); $("layerPanel").hidden = true; $("layersBtn").setAttribute("aria-expanded", "false"); }
     else if ($("segPanel").hidden) $("maplegend").hidden = false;
     segHint();
   }
@@ -1398,7 +1517,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   for (const [i, o, k, f] of CP_UI) $(i).addEventListener("input", () => { CP[k] = +$(i).value; $(o).textContent = f(CP[k]); clearTimeout(cpTimer); cpTimer = setTimeout(crowdsRefresh, 150); });
   $("cpReset").addEventListener("click", () => { Object.assign(CP, CROWD_DEF); cpSync(); crowdsRefresh(); });
   $("crowdBtn").addEventListener("click", () => { const p = $("crowdPanel"), open = p.hidden; p.hidden = !open; $("crowdBtn").setAttribute("aria-expanded", String(open));
-    if (open) { $("segPanel").hidden = true; $("segHint").hidden = true; } });
+    if (open) { $("segPanel").hidden = true; $("segHint").hidden = true; $("layerPanel").hidden = true; $("layersBtn").setAttribute("aria-expanded", "false"); } });
   cpSync();
   $("conf").addEventListener("change", () => crowdsRefresh());
   $("Lmin").addEventListener("change", () => crowdsRefresh());

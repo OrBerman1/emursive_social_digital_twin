@@ -374,3 +374,17 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      recomputed live in the browser (JS port of crowds.py, same defaults; checked: same crowds as Python).
      IDs are renumbered when thresholds change. crowds.py still writes the defaults for the GIS export.
 
+24. FULL MAP: LAYERS, STORE FILTERS, COLOUR BY  (viewer/index.html "🗂 Layers & filters"; georef.py)
+   - shops.json now also carries the store table's Est_Year, Gen_Status (generation) and Informal_Vendor (the
+     rest - Shop_Type, Ownership, Patronage, Facade_Mat, Skeleton_Mat, Sub_Category - was already there);
+     the store popup shows all of them.
+   - Layers: stores, crowds (default ON - user, 14 Oct), walk routes, frontage materials, all people's paths
+     (motion.py tracks of both walks) (default OFF). "You are here", followed people and segment highlights
+     are always shown.
+   - Store filters: value chips with counts per field (trade, shop type, ownership, patronage, facade,
+     structure, informal vendor, generation, seen on a walk); clicking a chip hides/shows those stores; "all" /
+     "none" per field. Values are trimmed (the table has "Bakery" and "Bakery " as two values).
+   - Colour stores by trade / shop type / ownership / patronage / facade / structure (Okabe-Ito palette; trade
+     keeps its own colours); the legend shows only the visible layers and coloured values.
+   - Choices are remembered per browser (localStorage, best effort).
+
