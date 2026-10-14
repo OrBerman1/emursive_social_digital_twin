@@ -191,7 +191,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .dtip { position: fixed; background: var(--ink); color: #fff; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
 .uipop { position: absolute; right: 16px; top: 10px; width: 280px; border-radius: 16px; padding: 14px 16px 10px; z-index: 45; }
 .uipop label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
-.uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; }
+.uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; direction: rtl; }   /* flipped: solid (0%) on the right */
 .uipop .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 </style>
@@ -279,7 +279,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="uipop glass" id="uiPop" data-no-drag hidden>
     <label for="uiAlpha">Transparency of the overlays <b id="uiAlphaLbl">0%</b></label>
     <input type="range" id="uiAlpha" min="0" max="80" step="5" value="0" aria-label="Transparency of everything over the video">
-    <div class="ends"><span>solid</span><span>see-through</span></div>
+    <div class="ends"><span>see-through</span><span>solid</span></div>
   </div>
 </div>
 
