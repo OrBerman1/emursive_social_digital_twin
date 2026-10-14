@@ -304,6 +304,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       <header><b>🗂 What the map shows</b><span><button id="lpReset">Reset</button></span></header>
       <div class="body">
         <div><h5>Layers</h5><div class="lyr" id="lpLayers"></div></div>
+        <div id="lpSpeedRow"><h5>Speed map</h5><div style="display:flex;gap:8px;align-items:center;margin-top:3px">
+          <span>cell</span><select id="spCell" style="width:auto"><option value="2">2 m</option><option value="3">3 m</option><option value="5" selected>5 m</option><option value="8">8 m</option></select>
+          <span>min people</span><select id="spMin" style="width:auto"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>8</option></select></div></div>
         <div><h5>Colour stores by</h5><select id="lpColour" aria-label="Colour stores by"></select></div>
         <div><h5>Filter stores <span id="lpShown"></span></h5><div id="lpFilters" style="display:grid;gap:9px"></div></div>
       </div>
@@ -974,7 +977,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     mini = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
                          boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
-    MINI.layers.stores = L.layerGroup(); MINI.layers.frontage = L.layerGroup(); MINI.layers.paths = L.layerGroup(); MINI.layers.routes = L.layerGroup();
+    MINI.layers.stores = L.layerGroup(); MINI.layers.frontage = L.layerGroup(); MINI.layers.paths = L.layerGroup(); MINI.layers.routes = L.layerGroup(); MINI.layers.speed = L.layerGroup();
     for (const sh of GEO.shops) MINI.stores.push({ sh, m: L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }) });
     mini.createPane("people").style.zIndex = 650;
     CROWD_MINI = L.layerGroup(); MINI.layers.crowds = CROWD_MINI;
@@ -1032,7 +1035,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(ML.layers.routes)
           .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
       }
-      ML.layers.stores = L.layerGroup(); ML.layers.paths = L.layerGroup();
+      ML.layers.stores = L.layerGroup(); ML.layers.paths = L.layerGroup(); ML.layers.speed = L.layerGroup();
       const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
       for (const sh of GEO.shops) {
         const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 });
@@ -1086,7 +1089,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // ---------------- segment summary: pick a start and an end store, summarise everything in between ----------------
   // ---------- full map: layers, store filters and "colour by" (user, 14 Oct: default = stores + crowds only) ----------
   const ML_LAYERS = [["stores", "🏪 Stores", true], ["crowds", "👥 Crowds", true], ["routes", "〰 Walk routes", false],
-                     ["frontage", "🧱 Frontage materials", false], ["paths", "🚶 All people's paths", false]];
+                     ["frontage", "🧱 Frontage materials", false], ["paths", "🚶 All people's paths", false], ["speed", "🌡 Speed map (mean)", false]];
   const ML_FIELDS = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"],
                      ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"], ["Informal_Vendor", "Informal vendor"],
                      ["Gen_Status", "Generation"], ["_seen", "Seen on a walk"]];
@@ -1127,6 +1130,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         if (ok) m.addTo(MINI.layers.stores); else MINI.layers.stores.removeLayer(m);
       }
       if (ML.on.paths) mlPaths();
+      if (ML.on.speed) mlSpeed();
     }
     if (!full) { mlSave(); return; }
     for (const [k] of ML_LAYERS) { const lay = ML.layers[k]; if (!lay) continue; if (ML.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(full); else lay.remove(); }
@@ -1139,6 +1143,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     $("lpShown").textContent = `${shown} / ${GEO.shops.length}`;
     $("mapinfo").textContent = ML.on.stores ? `${shown} of ${GEO.shops.length} stores shown` : "stores hidden";
     if (ML.on.paths) mlPaths();
+    if (ML.on.speed) mlSpeed();
     mlLegend(col);
     mlSave();
   }
@@ -1155,8 +1160,56 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (ML.on.routes) parts.push(`<span><i style="background:#4fb3bb"></i>walk 1 route</span><span><i style="background:#e0a948"></i>walk 2 route</span>`);
     if (ML.on.frontage) parts.push(`<span>🧱 frontage materials (experimental)</span>`);
     if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
+    if (ML.on.speed) parts.push(`<span class="muted">🌡 mean walking speed (m/s) · cells ${SP.cell} m · ≥ ${SP.minPeople} people</span>`,
+      `<span style="display:block"><span style="display:block;height:10px;border-radius:3px;background:linear-gradient(90deg,${SPEED_RAMP.join(",")})"></span>` +
+      `<span style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px"><span>0</span><span>0.5</span><span>1.0</span><span>≥ ${SP.max}</span></span></span>`,
+      `<span class="muted">${mlSpeedInfo}</span>`);
     $("maplegend").innerHTML = parts.join("") || `<span class="muted">Nothing selected — open 🗂 Layers &amp; filters</span>`;
   }
+  // ---- speed map: mean walking speed (magnitude) per grid cell, people-weighted ----
+  const SPEED_RAMP = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];      // viridis: slow -> fast
+  const SP = { cell: 5, minPeople: 3, max: 1.5 };
+  let mlSpeedKey = "", mlSpeedInfo = "";
+  const rampCol = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
+    const a = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
+    return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`; };
+  async function mlSpeed() {
+    const key = `${SP.cell}|${SP.minPeople}`, lays = [ML.layers.speed, MINI.layers.speed].filter(Boolean);
+    if (key === mlSpeedKey && lays.every(l => l.getLayers().length)) return;
+    mlSpeedKey = key;
+    const lat0 = 32.0527, lon0 = 34.7903, kx = 111320 * Math.cos(lat0 * deg), ky = 110574, c = SP.cell;
+    const cells = new Map();                                            // "ix,iy" -> Map(person -> [speeds])
+    for (const w of Object.keys(GEO.walks)) {
+      const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
+      for (const [gid, m] of Object.entries(mo.tracks)) {
+        m.lat.forEach((la, i) => {
+          const v = m.spd[i]; if (la == null || v == null) return;
+          const k = `${Math.floor((m.lon[i] - lon0) * kx / c)},${Math.floor((la - lat0) * ky / c)}`;
+          if (!cells.has(k)) cells.set(k, new Map());
+          const per = cells.get(k), pid = `${w}:${gid}`; if (!per.has(pid)) per.set(pid, []); per.get(pid).push(v);
+        });
+      }
+    }
+    for (const l of lays) l.clearLayers();
+    let n = 0, all = [];
+    for (const [k, per] of cells) {
+      if (per.size < SP.minPeople) continue;
+      const vals = [...per.values()].map(median), meanV = mean(vals);
+      const [ix, iy] = k.split(",").map(Number);
+      const b = [[lat0 + iy * c / ky, lon0 + ix * c / kx], [lat0 + (iy + 1) * c / ky, lon0 + (ix + 1) * c / kx]];
+      const col = rampCol(meanV / SP.max);
+      for (const l of lays) {
+        const r = L.rectangle(b, { stroke: false, fillColor: col, fillOpacity: .62, interactive: l === ML.layers.speed });
+        if (l === ML.layers.speed) r.bindTooltip(`🌡 ${meanV.toFixed(2)} m/s mean · ${per.size} people`, { sticky: true });
+        r.addTo(l);
+      }
+      n++; all.push(meanV);
+    }
+    mlSpeedInfo = n ? `${n} cells · overall ${mean(all).toFixed(2)} m/s · noise floor ≈ 0.3 m/s` : "no cell has enough people";
+    if (full) mlLegend(mlColourMap());
+  }
+  $("spCell").addEventListener("change", () => { SP.cell = +$("spCell").value; mlSpeedKey = ""; if (ML.on.speed) mlSpeed(); });
+  $("spMin").addEventListener("change", () => { SP.minPeople = +$("spMin").value; mlSpeedKey = ""; if (ML.on.speed) mlSpeed(); });
   const mlPathsBuilt = new Set();                                         // each map's paths layer is filled once
   async function mlPaths() {
     const todo = [ML.layers.paths, MINI.layers.paths].filter(l => l && !mlPathsBuilt.has(l));

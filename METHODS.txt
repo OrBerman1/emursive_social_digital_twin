@@ -390,3 +390,16 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - The small round minimap follows the same layer, filter and colour choices (user, 14 Oct); with the
      defaults it shows stores and crowds only (the route line appears when "Walk routes" is on).
 
+25. SPEED MAP (mean walking speed per area)  (viewer/index.html, layer "🌡 Speed map (mean)")
+   - Input: motion.py per-person map positions and speeds of both walks (speed magnitude only, camera
+     motion removed, geometry + optical flow).
+   - Grid: square cells (default 5 m; 2/3/5/8 m selectable) in a local metric frame. Per cell, each person
+     contributes ONE value (the median of their speed samples in that cell), so people who linger do not
+     outweigh passers-by; cell value = mean over people. Cells with fewer than N people (default 3) are
+     not painted.
+   - Colour: viridis ramp 0 -> 1.5 m/s (clamped), legend with the bar, number of cells and overall mean;
+     tooltip per cell: mean speed and number of people. Shown on both maps when the layer is on.
+   - Caveats: noise floor of the speed estimate ~0.3 m/s (METHODS 16), so values below ~0.3 m/s mean
+     "standing / unclear"; positions inherit the ~2-3 m route error, so cells near the street edge can sit
+     slightly inside buildings. With 5 m cells: 150 cells, overall people-weighted mean 1.10 m/s.
+
