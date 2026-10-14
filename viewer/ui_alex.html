@@ -1256,7 +1256,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
   sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
   applyTheme(theme);
   // see-through toggle (header): everything drawn over the video becomes largely transparent; remembered between visits
-  const OVERLAYS = ".rail, .chips, .transport, .pop, #cards, .mini, .mini-cap", SEE = 0.35;   // opacity while on
+  const OVERLAYS = ".rail, .chips, .plegend, .transport, .pop, #cards, .mini, .mini-cap", SEE = 0.35;   // opacity while on
   const setSee = on => {
     $("seeBtn").setAttribute("aria-pressed", String(on));
     document.querySelectorAll(OVERLAYS).forEach(el => { el.style.opacity = on ? String(SEE) : ""; });
