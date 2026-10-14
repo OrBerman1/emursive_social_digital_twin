@@ -555,3 +555,8 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      before_person_linking_20261014 back, renames persons_linked_stab to .undone).
    - The real fix for double counting is upstream: cut ID switches inside tracks (tracks.py), then link; that changes
      track ids and was out of scope.
+   - Restitched project (15 Oct): its track ids differ, so it has its own vision review
+     (projects/shuk_hatikvah_v2/config/person_links_review.json): walk 1 1 of 15 candidates "same" (7 different incl. the
+     operator's arm, 6 unclear) -> 638 persons from 639 tracks; walk 2 2 of 3 "same" -> 234 persons from 236 tracks.
+   - ui_alex counts persons, not tracks (engine.js E.personOf): walk totals, "unique so far", statistics cumulative,
+     segment summary and Analysis zones.

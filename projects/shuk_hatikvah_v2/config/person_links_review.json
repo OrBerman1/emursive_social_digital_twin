@@ -1,0 +1,13 @@
+{
+  "_note": "Vision review (Claude, 15 Oct 2026) of the candidate person links link_persons.py proposed for the restitched project (track ids differ from the original project), from --review-sheet contact sheets (4 crops at the end of track A, 4 at the start of track B; sheets in the scratch folder only). same = the person at the end of A is the person at the start of B; different = another person or the camera operator; unclear = cannot tell. Only 'same' is linked.",
+  "walk1": {
+    "same": [[1321, 1327]],
+    "different": [[55, 204], [665, 722], [744, 927], [1044, 1063], [1038, 1158], [1211, 1271], [1174, 1369]],
+    "unclear": [[594, 608], [1004, 1044], [1074, 1113], [1267, 1320], [328, 365], [58, 104]]
+  },
+  "walk2": {
+    "same": [[189, 236], [342, 366]],
+    "different": [[16, 85]],
+    "unclear": []
+  }
+}

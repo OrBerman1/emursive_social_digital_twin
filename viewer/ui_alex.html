@@ -1077,7 +1077,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
     // "in view" = inside the default view (90 deg, looking along the walking direction), so it matches the donut centre
     d.frames.forEach((F, f) => {
       const ahead = yw => Math.abs(wrap(yw - fwdAt(f))) < 45;
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(e[0]); }
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(E.personOf(d, e[0])); }
       for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
       for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { if (ahead(e[2])) T.space.view[f]++; seenS.add(e[0]); }
@@ -1714,7 +1714,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
     const people = new Map(), food = new Map(), foodPics = new Set(), signs = new Map(), objs = new Map(), l2 = new Map(), pictured = new Set(); let peak = 0, peakF = f0;
     for (let f = f0; f <= f1; f++) {
       const F = d.frames[f]; if (!F) continue; let n = 0;
-      for (const e of F.p) { if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue; n++; if (!people.has(e[0])) people.set(e[0], { first: f, last: f }); else people.get(e[0]).last = f; }
+      for (const e of F.p) { if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue; n++; const pk = E.personOf(d, e[0]); if (!people.has(pk)) people.set(pk, { first: f, last: f, tr: e[0] }); else people.get(pk).last = f; }
       if (n > peak) { peak = n; peakF = f; }
       for (const e of (F.fd || [])) { if (((d.food_len || {})[e[7]] || 0) < minLen) continue; if (e[0] === "Food picture (menu/sign)") foodPics.add(e[7]); else if (!food.has(e[7])) food.set(e[7], e[0]); }
       for (const e of (F.s || [])) { const info = (d.signs || {})[e[0]]; if (info && info[3] && !signs.has(e[0])) signs.set(e[0], { text: info[0], lang: info[1], frame: f }); }
@@ -1723,8 +1723,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
       for (const e of (F.dp || [])) pictured.add(e[0]);
     }
     const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); };
-    const plist = [...people].map(([id, r]) => { const t = d.tracks[id] || [], gid = mo && mo.id2g ? (mo.id2g[id] ?? id) : id, m = mo && mo.tracks ? mo.tracks[gid] : null;
-      return { id: `P-${String(id).padStart(4, "0")}`, age_group: t[6] || "uncertain", perceived_gender: t[5] || "uncertain", movement: m ? m.state : "unknown", median_speed_m_s: m ? m.med_spd : null, first_frame: r.first, last_frame: r.last }; });
+    const plist = [...people].map(([pk, r]) => { const id = r.tr, t = d.tracks[id] || [], gid = mo && mo.id2g ? (mo.id2g[id] ?? id) : id, m = mo && mo.tracks ? mo.tracks[gid] : null;
+      return { id: `P-${String(pk).padStart(4, "0")}`, age_group: t[6] || "uncertain", perceived_gender: t[5] || "uncertain", movement: m ? m.state : "unknown", median_speed_m_s: m ? m.med_spd : null, first_frame: r.first, last_frame: r.last }; });
     const stores = [];
     for (const sh of shops()) { const nn = nearestF(walk, sh); if (!nn || nn.d > 22 || nn.f < f0 || nn.f > f1) continue;
       stores.push({ name: sh.name, trade: sh.Main_Trade, sub_category: sh.Sub_Category, shop_type: sh.Shop_Type, ownership: sh.Ownership, facade: sh.Facade_Mat, skeleton: sh.Skeleton_Mat, distance_m: +nn.d.toFixed(1), frame: nn.f, global_id: sh.GlobalID }); }
@@ -2004,7 +2004,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
         prev = f; const z = Math.floor(dist / ZONE_M);
         if (!zones[z]) zones[z] = { z, f0: f, f1: f, people: new Set(), objects: new Set(), signs: new Set() };
         const Z = zones[z]; Z.f1 = f; const F = d.frames[f];
-        for (const e of F.p) if (okP(e)) Z.people.add(e[0]);
+        for (const e of F.p) if (okP(e)) Z.people.add(E.personOf(d, e[0]));
         for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) Z.objects.add(e[7]);
         for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) Z.objects.add(e[8]);
         for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) Z.signs.add(e[0]);
