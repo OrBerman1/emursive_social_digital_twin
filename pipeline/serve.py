@@ -12,6 +12,8 @@ Also (local only, all validated):
   GET  /api/attachments?project=       files attached to people (attach_api.py)
   PUT  /api/attach?project=&walk=&variant=&track=&frame=&yaw=&pitch=&filename=   attach a file to a person
   POST /api/attach/delete?project= {walk, variant, track, name}
+  🎩 Ask Jeeves (jeeves.py): POST /api/jeeves/ask?project= {question, chat?} -> {job, chat}; GET /api/jeeves/job?id=;
+       GET /api/jeeves/chats?project=; GET /api/jeeves/chat?project=&id=; POST /api/jeeves/chat/delete?project= {id}
 """
 from __future__ import annotations
 
@@ -24,6 +26,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import attach_api as ATT
+import jeeves as JV
 import projects_api as API
 from common import DEFAULT_PROJECT, ROOT
 
@@ -110,6 +113,24 @@ class RangeHandler(SimpleHTTPRequestHandler):
                 return self._json(ATT.add(q.get("project", DEFAULT_PROJECT), q, self.rfile, n)) or True
             if method == "POST" and u.path == "/api/attach/delete":
                 return self._json(ATT.remove(q.get("project", DEFAULT_PROJECT), self._body_json())) or True
+            if u.path.startswith("/api/jeeves/"):
+                pr = API.get_project(q.get("project", DEFAULT_PROJECT))
+                try:
+                    if method == "POST" and u.path == "/api/jeeves/ask":
+                        b = self._body_json()
+                        return self._json(JV.start(pr, b.get("question", ""), b.get("chat") or None)) or True
+                    if method == "GET" and u.path == "/api/jeeves/job":
+                        return self._json(JV.job(q.get("id", ""))) or True
+                    if method == "GET" and u.path == "/api/jeeves/chats":
+                        return self._json({"chats": JV.list_chats(pr)}) or True
+                    if method == "GET" and u.path == "/api/jeeves/chat":
+                        return self._json(JV.get_chat(pr, q.get("id", ""))) or True
+                    if method == "POST" and u.path == "/api/jeeves/chat/delete":
+                        return self._json(JV.delete_chat(pr, str(self._body_json().get("id", "")))) or True
+                except ValueError as e:
+                    raise API.ApiError(400, str(e))
+                except (KeyError, FileNotFoundError):
+                    raise API.ApiError(404, "not found")
             if method == "POST" and u.path == "/api/comments":
                 proj = API.get_project(q.get("project", DEFAULT_PROJECT))
                 comments = clean_comments(self._body_json())

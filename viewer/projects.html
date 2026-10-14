@@ -69,10 +69,10 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
       <h3>Your projects</h3>
       <div class="plist" id="plist"></div>
       <div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px">
-        <h3>Claude API key</h3>
-        <div class="muted" style="font-size:12.5px">Used for reading signs, the pictured-people check and stall materials. Without a key these run automatically (weaker). The key is stored on this computer only, outside the project.</div>
+        <h3>Claude key</h3>
+        <div class="muted" style="font-size:12.5px">Anthropic API key (sk-ant-…) or Amazon Bedrock API key (ABSK…). Used by 🎩 Ask Jeeves and for reading signs, the pictured-people check and stall materials (without a key these run automatically, weaker). Stored on this computer only, outside the project.</div>
         <div class="row"><span class="chip" id="keyState">…</span></div>
-        <input type="password" id="keyIn" placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
+        <input type="password" id="keyIn" placeholder="sk-ant-… or ABSK…" autocomplete="off" aria-label="Claude key">
         <div class="row"><button id="keySave">Save key</button><button id="keyCheck">Check</button><button id="keyDel">Remove</button></div>
         <div class="msg" id="keyMsg"></div>
       </div>
@@ -227,7 +227,7 @@ label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
   $("nCancel").addEventListener("click", () => $("newDlg").close());
 
   // API key
-  async function keyState() { const s = await api("/api/settings").catch(() => ({})); $("keyState").textContent = s.api_key_set ? "key saved ✓" : "no key"; $("keyState").className = `chip ${s.api_key_set ? "ok" : "no"}`; }
+  async function keyState() { const s = await api("/api/settings").catch(() => ({})); $("keyState").textContent = s.api_key_set ? `${s.provider === "bedrock" ? "Bedrock" : "Anthropic"} key saved ✓` : "no key"; $("keyState").className = `chip ${s.api_key_set ? "ok" : "no"}`; }
   const keyMsg = (t, ok) => { $("keyMsg").className = `msg ${ok ? "ok" : "bad"}`; $("keyMsg").textContent = t; };
   $("keySave").addEventListener("click", async () => { try { await api("/api/settings/apikey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: $("keyIn").value }) }); $("keyIn").value = ""; keyMsg("Saved.", true); keyState(); } catch (e) { keyMsg(e.message); } });
   $("keyDel").addEventListener("click", async () => { await api("/api/settings/apikey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "" }) }); keyMsg("Removed.", true); keyState(); });

@@ -23,6 +23,9 @@
   `projects/<id>/`. Claude API mode (`vlm.py`, key from the projects page) only for new projects. METHODS 27.
 - **Files attached to people (14 Oct):** person card 📎 → `pipeline/attach_api.py` (per project, under `data/`,
   keyed by walk + variant + track, with frame/yaw for re-linking). METHODS 28.
+- **🎩 Ask Jeeves (14 Oct):** `pipeline/jeeves.py` agent per project (tools: run_sql, view_people, view_scene,
+  classify_people) + viewer drawer. Claude via `pipeline/llm.py`: Sonnet 5.5 (user: not Opus), Anthropic key or the
+  hackathon Bedrock key (classic runtime, us-east-1; key in %LOCALAPPDATA%/ShukTwin, never in the repo). METHODS 29.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.

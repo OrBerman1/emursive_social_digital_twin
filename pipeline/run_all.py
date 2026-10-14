@@ -3,7 +3,7 @@
 Only stages whose inputs exist run; the others are reported as skipped (with the reason):
   - a walk's video stages need its .insv
   - map stages (georef and everything on the map) need the store table AND anchor points for that walk
-  - sign text by Claude (OCR) and the Claude reviews need ANTHROPIC_API_KEY; without it the automatic fallbacks run
+  - sign text by Claude (OCR) and the Claude reviews need a Claude key (llm.py: Anthropic or Bedrock); without it the automatic fallbacks run
 Progress is written to <processed>/job.json (stage states, per-stage %, overall %) for the projects page.
 
 usage (from the project root, with the venv):
@@ -35,7 +35,8 @@ def plan(walks: list[str], C) -> list[dict]:
     anchors = json.loads((C.CONFIG / "anchors.json").read_text(encoding="utf-8")) if (C.CONFIG / "anchors.json").exists() else {}
     store = C.STORE_TABLE is not None and C.STORE_TABLE.exists()
     mapped = [w for w in have if store and anchors.get(w)]
-    api = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    import llm
+    api = llm.available()                                            # Anthropic or Bedrock key (llm.py)
     legacy = C.PROJECT_ID == C.DEFAULT_PROJECT
     no_map = ("no store table in the project" if not store else "no anchor points for these walks") if not mapped else None
     S = []
@@ -71,7 +72,7 @@ def plan(walks: list[str], C) -> list[dict]:
     add("food", "Name food displays", ["food.py", *have, *v], 4, novideo, cwd=MODELS)
     add("georef", "Place walks on the map", ["georef.py"], 1, no_map or novideo, walks_=mapped)
     add("waste", "Waste on the floor (hidden layer)", ["waste.py", *mapped, *v], 4, no_map or novideo, cwd=MODELS, walks_=mapped)
-    sm_skip = no_map or novideo or (None if (api or legacy) else "needs the Claude API key (stall materials are read by Claude)")
+    sm_skip = no_map or novideo or (None if (api or legacy) else "needs a Claude key (stall materials are read by Claude)")
     add("stalls", "Stall-front photos" + (" + Claude review" if api and not legacy else ""), ["stall_materials.py", *v] + (["--api"] if api and not legacy else []), 2, sm_skip, cwd=MODELS, walks_=mapped)
     add("frontage", "Frontage materials on the map", ["frontage.py", *v], 0.1, sm_skip, walks_=mapped)
     add("export", "Export overlays for the viewer", ["export_overlays.py", *have, *v], 0.3, novideo)

@@ -115,6 +115,10 @@ The viewer must be opened through this server; opening `viewer\index.html` direc
 - **📎 Attach file** in a person's card: attach an interview, note or photo to that person. People with files get an
   orange 📎 on their box and on the timeline; click the timeline 📎 to jump to them. Files stay on this computer
   (`data/processed/attachments/`, not in git).
+- **🎩 Ask Jeeves** (top right): ask about the project ("How many women are in the video?") or give it a task
+  ("Count all the people wearing blue shirts"). It answers from the analysed data and can look at the video; blue
+  buttons in the answer jump to that person or moment. Needs a Claude key (projects page: Anthropic `sk-ant-…` or
+  Amazon Bedrock `ABSK…`). Chats are kept per project.
 - **Layers:** people, IDs & distance, level-1 objects, level-2 objects, text on signs (OCR), hide tracks < 1 s,
   **Stabilised video (offline)** on/off (off = original video and detections).
 - **Min. confidence** slider (default 0.60).

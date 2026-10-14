@@ -24,6 +24,7 @@ from common import DEFAULT_PROJECT, LEGACY, PROJECTS_DIR, ROOT, list_projects, l
 
 HERE = Path(__file__).resolve().parent
 KEY_FILE = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ShukTwin" / "anthropic_api_key"
+BEDROCK_FILE = KEY_FILE.with_name("bedrock_api_key")                 # Amazon Bedrock API key (llm.py picks the provider)
 ID_RE = re.compile(r"^[a-z0-9_]{1,40}$")
 _job = {"proc": None, "project": None}
 _lock = threading.Lock()
@@ -218,7 +219,7 @@ def start_job(pid: str) -> dict:
         env = dict(os.environ, SHUK_PROJECT=pid, PYTHONIOENCODING="utf-8")
         key = read_key()
         if key:
-            env["ANTHROPIC_API_KEY"] = key
+            env["ANTHROPIC_API_KEY"] = key                             # (llm.py also reads the saved Bedrock key itself)
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         _job["proc"] = subprocess.Popen([sys.executable, str(HERE / "run_all.py"), "--project", pid], cwd=str(ROOT), env=env,
                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
@@ -245,19 +246,34 @@ def read_key() -> str:
 
 
 def set_key(key: str) -> dict:
+    """Anthropic key (sk-ant-...) or Amazon Bedrock API key (ABSK...); empty = remove both."""
     key = (key or "").strip()
-    if key and not re.fullmatch(r"sk-ant-[A-Za-z0-9_\-]{20,}", key):
-        raise ApiError(400, "this does not look like an Anthropic API key (sk-ant-...)")
     KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    if key:
+    if not key:
+        KEY_FILE.unlink(missing_ok=True); BEDROCK_FILE.unlink(missing_ok=True)
+    elif re.fullmatch(r"sk-ant-[A-Za-z0-9_\-]{20,}", key):
         KEY_FILE.write_text(key, encoding="utf-8")
+    elif re.fullmatch(r"ABSK[A-Za-z0-9+/=]{20,}", key):
+        BEDROCK_FILE.write_text(key, encoding="utf-8")
     else:
-        KEY_FILE.unlink(missing_ok=True)
-    return {"ok": True, "api_key_set": bool(key)}
+        raise ApiError(400, "not a Claude key: expected an Anthropic key (sk-ant-...) or an Amazon Bedrock API key (ABSK...)")
+    import llm
+    llm._client = None                                                 # pick up the new key
+    return settings()
 
 
 def check_key() -> dict:
-    key = read_key()
+    import llm
+    prov, key = llm.provider()
+    if prov == "bedrock":
+        try:
+            import httpx2
+            r = httpx2.get(f"https://bedrock.{llm.region()}.amazonaws.com/inference-profiles?maxResults=100",
+                           headers={"Authorization": f"Bearer {key}"}, timeout=30)
+            ok = r.status_code == 200 and "claude-sonnet-5-5" in r.text
+            return {"ok": ok, "message": f"Bedrock key works ({llm.region()}, {llm.model()})" if ok else f"Bedrock answered HTTP {r.status_code}"}
+        except Exception as e:                                         # noqa: BLE001
+            return {"ok": False, "message": f"could not reach Bedrock: {e}"}
     if not key:
         return {"ok": False, "message": "no API key saved"}
     # curl (Python's SSL is unreliable on this machine); the key is passed on stdin, not on the command line
@@ -269,4 +285,6 @@ def check_key() -> dict:
 
 
 def settings() -> dict:
-    return {"api_key_set": bool(read_key())}
+    import llm
+    prov = llm.provider()[0]
+    return {"api_key_set": bool(prov), "provider": prov, "model": llm.model() if prov else None}

@@ -1,35 +1,27 @@
-"""Claude vision calls for the review stages (used only when ANTHROPIC_API_KEY is set; run_all passes it from the
-projects page). One request = one numbered contact sheet + a question; the answer is JSON forced by a schema.
+"""Claude vision calls for the review stages (used only when a Claude key is saved: Anthropic API or Amazon
+Bedrock, see llm.py). One request = one numbered contact sheet + a question; the answer is JSON forced by a schema.
 
   sheet(images, labels)        -> one JPEG contact sheet, each cell labelled (sign id, track id, store id)
   ask(jpeg, prompt, schema)    -> dict parsed from Claude's JSON answer (structured outputs)
 
-Model claude-opus-5-5 (effort medium); server-side fallback on a refusal. Every answer is written to the stage's
+Model: llm.model() (Claude Sonnet 5.5), effort medium; server-side fallback on a refusal where available. Every answer is written to the stage's
 cache by the caller, so a sheet is sent once per project (compute once, cache everything).
 """
 from __future__ import annotations
 
 import base64
 import json
-import os
 
 import cv2
 import numpy as np
 
-MODEL = os.environ.get("SHUK_VLM_MODEL", "claude-opus-5-5")
-_client = None
+import llm
+
+MODEL = llm.model()
 
 
 def available() -> bool:
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
-
-
-def client():
-    global _client
-    if _client is None:
-        import anthropic
-        _client = anthropic.Anthropic(max_retries=4, timeout=180)
-    return _client
+    return llm.available()
 
 
 def sheet(images: list, labels: list[str], cols: int = 4, cell_w: int = 420, cell_h: int = 300) -> bytes:
@@ -48,9 +40,8 @@ def sheet(images: list, labels: list[str], cols: int = 4, cell_w: int = 420, cel
 
 def ask(jpeg: bytes, prompt: str, schema: dict) -> dict:
     """One sheet + one question -> JSON (validated by the API against `schema`)."""
-    r = client().beta.messages.create(
-        model=MODEL, max_tokens=16000,
-        betas=["server-side-fallback-2026-07-01"], fallbacks="default",
+    r = llm.create(
+        max_tokens=16000,
         output_config={"effort": "medium", "format": {"type": "json_schema", "schema": schema}},
         messages=[{"role": "user", "content": [
             {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.standard_b64encode(jpeg).decode()}},
@@ -59,9 +50,20 @@ def ask(jpeg: bytes, prompt: str, schema: dict) -> dict:
         raise RuntimeError("Claude declined this sheet")
     if r.stop_reason == "max_tokens":
         raise RuntimeError("answer cut off (max_tokens)")
-    return json.loads(next(b.text for b in r.content if b.type == "text"))
+    out = json.loads(next(b.text for b in r.content if b.type == "text"))
+    if schema.get("title") == "id_map":                                  # list of {id, ...} -> {id: answer}
+        wrap = "value" in schema["properties"]["items"]["items"]["properties"]
+        want = set(schema["properties"]["items"]["description"].split(": ", 1)[1].split(","))
+        out = {it["id"]: (it["value"] if wrap else {k: v for k, v in it.items() if k != "id"}) for it in out["items"] if it["id"] in want}
+    return out
 
 
 def id_map_schema(ids: list[str], item: dict) -> dict:
-    """Schema of {"<id>": item, ...} with exactly these ids."""
-    return {"type": "object", "properties": {i: item for i in ids}, "required": list(ids), "additionalProperties": False}
+    """Answer for each id on the sheet. Sent as a LIST of {id, ...} items (one small grammar, repeated: a schema with
+    one property per id is too large a grammar for Bedrock); ask() turns it back into {"<id>": item, ...}."""
+    if item.get("type") == "object":
+        it = {**item, "properties": {"id": {"type": "string"}, **item["properties"]}, "required": ["id", *item["required"]]}
+    else:
+        it = {"type": "object", "additionalProperties": False, "required": ["id", "value"], "properties": {"id": {"type": "string"}, "value": item}}
+    return {"title": "id_map", "type": "object", "additionalProperties": False, "required": ["items"],
+            "properties": {"items": {"type": "array", "items": it, "description": "one item for each of these ids: " + ",".join(ids)}}}

@@ -59,6 +59,26 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .vcard .vfile a { flex: 1; min-width: 0; color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcard .vfile a:hover { text-decoration: underline; }
 .vcard .vatt .vattach { text-align: center; font: 600 12px var(--body); border: 1px dashed var(--line); color: var(--ink); padding: 4px 6px; }
+.hdr-r { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.jvopen { font: 600 12.5px var(--body); color: #121819; background: var(--accent); border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.jv { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 60; background: var(--surface); border-left: 1px solid var(--line);
+      box-shadow: -8px 0 24px rgba(0,0,0,.45); display: grid; grid-template-rows: auto 1fr auto; }
+.jv header { display: flex; gap: 6px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.jv header b { font: 700 1rem var(--display); flex: 1; }
+.jv header button, .jv select { font: 600 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; cursor: pointer; max-width: 150px; }
+.jvlog { overflow-y: auto; padding: 12px; display: grid; gap: 14px; align-content: start; }
+.jvq { justify-self: end; max-width: 85%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px 10px 2px 10px; padding: 7px 10px; white-space: pre-wrap; }
+.jva { line-height: 1.5; font-size: 13.5px; } .jva p { margin: 0 0 6px; } .jva ul { margin: 0 0 6px; padding-left: 18px; }
+.jva.err { color: var(--person); }
+.jvsteps { font-size: 12px; color: var(--muted); } .jvsteps summary { cursor: pointer; } .jvsteps ol { margin: 4px 0 0; padding-left: 18px; }
+.jvlive { font-size: 12px; color: var(--muted); display: grid; gap: 2px; } .jvlive b { color: var(--accent); }
+.jvgo { all: unset; cursor: pointer; display: inline-block; font: 600 11.5px var(--mono); color: #121819; background: var(--accent); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+.jvgo:hover { filter: brightness(1.15); }
+.jvex { display: grid; gap: 6px; color: var(--muted); font-size: 12.5px; } .jvex button { all: unset; cursor: pointer; color: var(--ink); border: 1px dashed var(--line); border-radius: 6px; padding: 6px 8px; }
+.jvask { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.jvask textarea { resize: vertical; font: 13px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+.jvask .primary { font: 600 13px var(--body); color: #121819; background: var(--accent); border: 0; border-radius: 6px; padding: 0 16px; cursor: pointer; }
+.jvask .primary[disabled] { opacity: .5; cursor: default; }
 .flagtip { position: absolute; bottom: 34px; transform: translateX(-50%); max-width: 280px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; white-space: pre-wrap; pointer-events: none; z-index: 30; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 .tl .addc { font: 600 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
 .composer { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; z-index: 40; box-shadow: 0 10px 28px rgba(0,0,0,.5); font-size: 12.5px; }
@@ -207,8 +227,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <div class="wrap">
   <header>
     <h1><span id="projName">Shuk HaTikvah</span> 360° <span>· real footage · <a href="projects.html" id="projLink" style="color:var(--accent)">projects</a></span></h1>
-    <div class="walks" role="group" aria-label="Walk" id="walkBtns"></div>
+    <div class="hdr-r"><button class="jvopen" id="jvOpen" title="Ask questions about this project, or give it a data task">🎩 Ask Jeeves</button>
+      <div class="walks" role="group" aria-label="Walk" id="walkBtns"></div></div>
   </header>
+  <aside class="jv" id="jv" hidden aria-label="Ask Jeeves">
+    <header><b>🎩 Ask Jeeves</b><select id="jvChats" aria-label="Earlier chats"></select><button id="jvNew">New chat</button><button id="jvClose" aria-label="Close">✕</button></header>
+    <div class="jvlog" id="jvLog"></div>
+    <div class="jvask"><textarea id="jvQ" rows="2" dir="auto" placeholder="Ask about this project, or give it a task…"></textarea><button class="primary" id="jvSend">Ask</button></div>
+  </aside>
   <div class="main">
     <div style="display:grid;gap:10px;min-width:0">
       <div class="vp" id="vp" tabindex="0" aria-label="360 degree video. Drag or use arrow keys to look around.">
@@ -1921,6 +1947,82 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   video.addEventListener("loadedmetadata", () => { video.playbackRate = S.speed; });
   setSpeed(1);
   $("Lvar").addEventListener("change", () => load(S.walk));
+  // ---------- 🎩 Ask Jeeves: the project's question-answering / data-analysis agent (pipeline/jeeves.py via serve.py) ----------
+  const JV = { chat: null, job: null, timer: null };
+  const jvApi = async (url, opt) => { const r = await fetch(url, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j; };
+  const jvEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  function jvMd(t) {                                          // small, safe markdown: paragraphs, lists, **bold**, jump tokens
+    const inline = x => jvEsc(x).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/\{\{p:(walk\d+):(\d+)\}\}/g, (m, w, id) => `<button class="jvgo" data-w="${w}" data-p="${id}" title="Go to this person">${walkShort(w)} · P-${id.padStart(4, "0")} ▶</button>`)
+      .replace(/\{\{t:(walk\d+):([\d.]+)(?::(-?[\d.]+))?\}\}/g, (m, w, t, y) => `<button class="jvgo" data-w="${w}" data-t="${t}"${y ? ` data-y="${y}"` : ""} title="Go to this moment">${walkShort(w)} · ${fmt(+t)} ▶</button>`);
+    let html = "", list = false;
+    for (const line of String(t || "").split("\n")) {
+      const m = line.match(/^\s*[-*•]\s+(.*)/);
+      if (m) { if (!list) { html += "<ul>"; list = true; } html += `<li>${inline(m[1])}</li>`; continue; }
+      if (list) { html += "</ul>"; list = false; }
+      if (line.trim()) html += `<p dir="auto">${inline(line)}</p>`;
+    }
+    return html + (list ? "</ul>" : "");
+  }
+  const jvSteps = steps => steps && steps.length ? `<details class="jvsteps"><summary>What I did (${steps.length})</summary><ol>${steps.map(x => `<li>${jvEsc(x)}</li>`).join("")}</ol></details>` : "";
+  function jvRender(display, live) {
+    const log = $("jvLog");
+    let html = (display || []).map(d => `<div class="jvq" dir="auto">${jvEsc(d.q)}</div>` +
+      (d.a ? `<div class="jva">${jvMd(d.a)}${jvSteps(d.steps)}</div>` : `<div class="jva err">Something went wrong: ${jvEsc(d.error || "no answer")}${jvSteps(d.steps)}</div>`)).join("");
+    if (live) html += `<div class="jvq" dir="auto">${jvEsc(live.q)}</div><div class="jvlive"><b>Working… ${live.elapsed_s || 0} s</b>${(live.steps || []).slice(-6).map(x => `<span>· ${jvEsc(x)}</span>`).join("")}</div>`;
+    if (!html) html = `<div class="jvex">I know this project's analysed data and can look at the video. Try:
+      <button data-q="How many women are in the video?">How many women are in the video?</button>
+      <button data-q="Count all the people wearing blue shirts">Count all the people wearing blue shirts</button>
+      <button data-q="Where and when is it most crowded?">Where and when is it most crowded?</button>
+      <button data-q="Which shop signs mention fish or meat?">Which shop signs mention fish or meat?</button></div>`;
+    log.innerHTML = html; log.scrollTop = log.scrollHeight;
+  }
+  async function jvChats(select) {
+    const r = await jvApi(`/api/jeeves/chats?project=${encodeURIComponent(PROJ.id)}`).catch(() => ({ chats: [] }));
+    $("jvChats").innerHTML = `<option value="">Earlier chats (${r.chats.length})</option>` + r.chats.map(c => `<option value="${c.id}"${c.id === select ? " selected" : ""}>${jvEsc(c.title)}</option>`).join("");
+  }
+  async function jvOpenChat(id) {
+    JV.chat = id || null;
+    if (!id) { jvRender([]); return; }
+    const c = await jvApi(`/api/jeeves/chat?project=${encodeURIComponent(PROJ.id)}&id=${id}`).catch(() => null);
+    jvRender(c ? c.display : []);
+  }
+  async function jvSend(q) {
+    q = (q || $("jvQ").value).trim(); if (!q || JV.job) return;
+    $("jvQ").value = ""; $("jvSend").disabled = true;
+    let prev = [];
+    if (JV.chat) { const c = await jvApi(`/api/jeeves/chat?project=${encodeURIComponent(PROJ.id)}&id=${JV.chat}`).catch(() => null); prev = c ? c.display : []; }
+    jvRender(prev, { q, steps: [] });
+    try {
+      const r = await jvApi(`/api/jeeves/ask?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q, chat: JV.chat }) });
+      JV.chat = r.chat; JV.job = r.job;
+      JV.timer = setInterval(async () => {
+        const j = await jvApi(`/api/jeeves/job?id=${JV.job}`).catch(() => null);
+        if (!j) return;
+        if (j.status === "running") { jvRender(prev, { q, steps: j.steps, elapsed_s: j.elapsed_s }); return; }
+        clearInterval(JV.timer); JV.job = null; $("jvSend").disabled = false;
+        await jvOpenChat(JV.chat); jvChats(JV.chat);
+      }, 1000);
+    } catch (e) {
+      $("jvSend").disabled = false;
+      jvRender(prev.concat([{ q, a: null, error: /404/.test(e.message) ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : e.message }]));
+    }
+  }
+  $("jvOpen").addEventListener("click", () => { const v = $("jv"); v.hidden = !v.hidden; if (!v.hidden) { jvChats(JV.chat); if (!JV.job) jvOpenChat(JV.chat); $("jvQ").focus(); } });
+  $("jvClose").addEventListener("click", () => { $("jv").hidden = true; });
+  $("jvNew").addEventListener("click", () => { if (!JV.job) { $("jvChats").value = ""; jvOpenChat(null); } });
+  $("jvChats").addEventListener("change", e => { if (!JV.job) jvOpenChat(e.target.value || null); });
+  $("jvSend").addEventListener("click", () => jvSend());
+  $("jvQ").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); jvSend(); } e.stopPropagation(); });
+  $("jvLog").addEventListener("click", async e => {
+    const ex = e.target.closest(".jvex button"); if (ex) { jvSend(ex.dataset.q); return; }
+    const b = e.target.closest(".jvgo"); if (!b) return;
+    const w = b.dataset.w; if (!PROJ.walks[w]) return;
+    if (playing) togglePlay();
+    if (S.walk !== w) await load(w);
+    if (b.dataset.p) goToPerson(+b.dataset.p);
+    else { vt = +b.dataset.t; if (videoOk()) video.currentTime = vt; if (b.dataset.y) S.yaw = +b.dataset.y; }
+  });
   initProject().then(() => {
     const first = Object.keys(PROJ.walks)[0];
     if (!first) { $("loading").textContent = "This project has no analysed walk yet — open Projects to add a video and run the analysis."; return; }

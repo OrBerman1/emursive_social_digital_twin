@@ -463,3 +463,29 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Storage per project: <processed>/attachments/<walk>_<variant>/T<track>/<file> + attachments.json (under
      data/ = not in git: interviews are personal data). Allowed: documents, images, audio, video (no HTML/scripts,
      served with nosniff); same name -> "name (2).ext"; empty files allowed; up to 2 GB per file; .txt/.md/.csv served as UTF-8.
+
+29. 🎩 ASK JEEVES: QUESTION-ANSWERING AND DATA-ANALYSIS AGENT PER PROJECT  (pipeline/jeeves.py, llm.py; viewer drawer)
+   - Model: Claude Sonnet 5.5 (user choice: Opus is more than needed), effort medium, adaptive thinking. Provider
+     (llm.py): Anthropic API key if saved, else the Amazon Bedrock API key (classic bedrock-runtime, region us-east-1,
+     inference profile global.anthropic.claude-sonnet-5-5; the hackathon key is not allowed on the newer Mantle
+     endpoint). Keys are saved on the projects page into %LOCALAPPDATA%/ShukTwin, never in the repo.
+   - Not blank: the system prompt carries the project's facts (walks, totals as counted in the viewer, perceived gender
+     / age / motion distributions), how each number was made and how reliable it is, and the SQL schema. It is frozen
+     per chat (Claude's earlier reasoning in a chat is only valid with the identical system prompt).
+   - Skills (tools): run_sql (read-only SQLite over people, people_frames, objects, signs, food, pictured_people,
+     crowds, stores, walks, comments, attachments, classification_<n>; SELECT only, query_only, step limit, 200 rows);
+     view_people (sheet of up to 30 person crops, each person's clearest view: confident, big but not a cut-off
+     close-up, 2-10 m preferred); view_scene (the 360 frame rendered as a normal view with people boxed and labelled);
+     classify_people (one visual question over many people: crops in sheets of 20, each sheet a separate structured
+     call, 4 in parallel, ~1 s/person; answers cached per question in <processed>/jeeves/classify/ and saved as a SQL
+     table to count and join).
+   - people.in_viewer_count = seen >= 1 s and confidence >= 0.6, the viewer's rule (walk 1: 528 of 619 tracks).
+   - Answers contain {{p:walk:track}} and {{t:walk:seconds[:yaw]}} tokens -> jump buttons in the viewer.
+   - Chats per project in <processed>/jeeves/chats/ (not in git). Person crops are made in memory, never stored.
+   - Structured outputs on Bedrock: a schema with one property per sheet id is "too large a grammar"; vlm.py sends a
+     LIST of {id, ...} items and converts back (also used by the review stages).
+   - Tested 14 Oct (Bedrock, Sonnet 5.5): "How many females are in the video?" -> 95 perceived women of 715 (74 + 21),
+     uncertain share and method stated, 8 s. "Count all the people wearing blue shirts" -> classify_people over 715
+     people in ~70 s -> 86 blue (68 + 18), 141 unclear; follow-up "how many of them are women" joins the table (5 s).
+     Visual check of 30 random "blue": ~26 right (misses: dark patterned tops, a blue neighbour in the crop); 30 random
+     "not blue": 30 right. Viewer: answers render with working jump buttons; follow-ups keep the chat.
