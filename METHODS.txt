@@ -387,4 +387,6 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Colour stores by trade / shop type / ownership / patronage / facade / structure (Okabe-Ito palette; trade
      keeps its own colours); the legend shows only the visible layers and coloured values.
    - Choices are remembered per browser (localStorage, best effort).
+   - The small round minimap follows the same layer, filter and colour choices (user, 14 Oct); with the
+     defaults it shows stores and crowds only (the route line appears when "Walk routes" is on).
 

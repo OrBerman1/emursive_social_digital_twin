@@ -974,13 +974,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     mini = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
                          boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
-    for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
+    MINI.layers.stores = L.layerGroup(); MINI.layers.frontage = L.layerGroup(); MINI.layers.paths = L.layerGroup(); MINI.layers.routes = L.layerGroup();
+    for (const sh of GEO.shops) MINI.stores.push({ sh, m: L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }) });
     mini.createPane("people").style.zIndex = 650;
-    CROWD_MINI = L.layerGroup().addTo(mini);
-    for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(mini);
+    CROWD_MINI = L.layerGroup(); MINI.layers.crowds = CROWD_MINI;
+    for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(MINI.layers.frontage);
     for (const wj of Object.values(WASTE)) for (const it of wj.items_list || [])
       L.circleMarker([it.lat, it.lon], { radius: 3, weight: 1, color: "#fff", fillColor: C.waste, fillOpacity: 1, interactive: false }).addTo(mini);
     MO.miniPaths = L.layerGroup().addTo(mini); MO.miniNow = L.layerGroup().addTo(mini); MO.pathSig = "";
+    mlApply();
     $("minimap").addEventListener("click", openFullMap);
     crowdsRefresh();
     setMiniRoute();
@@ -989,7 +991,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (!mini) return;
     if (miniRoute) { miniRoute.remove(); miniRoute = null; }
     const g = GEO.walks[S.walk]; if (!g) return;
-    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(mini);
+    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(MINI.layers.routes || mini);
   }
   let miniLast = -1;
   let meFi = 0, meBearing = 0;
@@ -1090,6 +1092,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                      ["Gen_Status", "Generation"], ["_seen", "Seen on a walk"]];
   const ML_COLOUR = [["Main_Trade", "Trade"], ["Shop_Type", "Shop type"], ["Ownership", "Ownership"], ["Patronage", "Patronage"], ["Facade_Mat", "Facade"], ["Skeleton_Mat", "Structure"]];
   const OKABE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#F0E442", "#7f7f7f"];
+  const MINI = { layers: {}, stores: [] };
   const ML = { layers: {}, stores: [], on: Object.fromEntries(ML_LAYERS.map(([k, , d]) => [k, d])), colour: "Main_Trade", off: {} };
   try { const sv = JSON.parse(localStorage.getItem("shukMapLayers") || "null"); if (sv) { Object.assign(ML.on, sv.on || {}); ML.colour = sv.colour || ML.colour; ML.off = sv.off || {}; } } catch (e) {}
   const mlSave = () => { try { localStorage.setItem("shukMapLayers", JSON.stringify({ on: ML.on, colour: ML.colour, off: ML.off })); } catch (e) {} };
@@ -1114,9 +1117,20 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     }).join("");
   }
   function mlApply() {
-    if (!full) return;
+    const col = mlColourMap();
+    // the small map follows the same choices (user, 14 Oct)
+    if (mini) {
+      for (const [k] of ML_LAYERS) { const lay = MINI.layers[k]; if (!lay) continue; if (ML.on[k]) lay.addTo(mini); else lay.remove(); }
+      for (const { sh, m } of MINI.stores) {
+        const ok = ML_FIELDS.every(([f]) => !(ML.off[f] || []).includes(mlVal(sh, f)));
+        m.setStyle({ fillColor: col(mlVal(sh, ML.colour)) });
+        if (ok) m.addTo(MINI.layers.stores); else MINI.layers.stores.removeLayer(m);
+      }
+      if (ML.on.paths) mlPaths();
+    }
+    if (!full) { mlSave(); return; }
     for (const [k] of ML_LAYERS) { const lay = ML.layers[k]; if (!lay) continue; if (ML.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(full); else lay.remove(); }
-    const col = mlColourMap(); let shown = 0;
+    let shown = 0;
     for (const { sh, m } of ML.stores) {
       const ok = ML_FIELDS.every(([f]) => !(ML.off[f] || []).includes(mlVal(sh, f)));
       m.setStyle({ fillColor: col(mlVal(sh, ML.colour)) });
@@ -1143,14 +1157,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
     $("maplegend").innerHTML = parts.join("") || `<span class="muted">Nothing selected — open 🗂 Layers &amp; filters</span>`;
   }
-  let mlPathsDone = false;
+  const mlPathsBuilt = new Set();                                         // each map's paths layer is filled once
   async function mlPaths() {
-    if (mlPathsDone) return; mlPathsDone = true;
+    const todo = [ML.layers.paths, MINI.layers.paths].filter(l => l && !mlPathsBuilt.has(l));
+    if (!todo.length) return; todo.forEach(l => mlPathsBuilt.add(l));
     for (const w of Object.keys(GEO.walks)) {
       const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
       for (const m of Object.values(mo.tracks)) {
         const pts = []; m.lat.forEach((la, i) => { if (la != null) pts.push([la, m.lon[i]]); });
-        if (pts.length > 1) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(ML.layers.paths);
+        if (pts.length > 1) for (const lay of todo) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(lay);
       }
     }
   }
