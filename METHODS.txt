@@ -404,3 +404,13 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Caveats: speed noise floor ~0.3 m/s (METHODS 16); positions inherit ~2-3 m route error.
      Current data: 447 people, area mean 1.16 m/s.
 
+26. TIMELINE COMMENTS  (viewer/index.html "🚩 Comment"; pipeline/serve.py POST /api/comments)
+   - Free-text notes pinned to a moment of a walk: {id, walk, t, view yaw/pitch, text, colour, created,
+     updated}. Shown as coloured flags above the timeline (drawn flag icons, because emoji cannot be
+     recoloured); hover = text, click = jump to that moment and view direction + edit / delete.
+   - Colours: Okabe-Ito presets + any custom colour.
+   - Saved by the local server to data/processed/comments.json (validated: walk, numbers, colour #rrggbb,
+     text <= 2000 chars; atomic write; server listens on 127.0.0.1 only). If the server cannot be reached,
+     comments stay in the browser (localStorage) and the composer says so.
+   - data/ is gitignored, so comments are not committed; copy comments.json to share them.
+

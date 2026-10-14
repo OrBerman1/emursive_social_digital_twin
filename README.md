@@ -174,6 +174,10 @@ table (trade, shop type, ownership, patronage, facade, structure, informal vendo
 and colours stores by one of them. The **🌡 Speed map** layer paints the mean walking speed per area as a smooth
 colour surface with its own legend (smoothing radius and minimum people adjustable in the same panel).
 
+**Comments.** Press **🚩 Comment** next to Play to pin a note to the current moment; choose the flag colour and save.
+Flags appear above the timeline: hover to read, click to jump there and edit or delete. Comments are saved to
+`data\processed\comments.json` by the viewer's local server (copy that file to share them).
+
 **Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
 store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by
 trade, food, signs, objects, frontage materials), with **⬇ JSON** and **⬇ Excel** export. Esc cancels.

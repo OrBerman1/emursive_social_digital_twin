@@ -45,6 +45,27 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
 .tl { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
 .tl input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.tl { position: relative; }
+.tlwrap { flex: 1; min-width: 0; position: relative; display: flex; }
+.tlwrap input { width: 100%; }
+.flags { position: absolute; left: 8px; right: 8px; bottom: 100%; height: 26px; pointer-events: none; }
+.flag { position: absolute; bottom: -4px; transform: translateX(-2px); width: 22px; height: 26px; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; }
+.flag svg { display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+.flag:hover svg, .flag:focus-visible svg { transform: scale(1.2); transform-origin: 2px 24px; }
+.flagtip { position: absolute; bottom: 34px; transform: translateX(-50%); max-width: 280px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; white-space: pre-wrap; pointer-events: none; z-index: 30; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+.tl .addc { font: 600 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+.composer { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; z-index: 40; box-shadow: 0 10px 28px rgba(0,0,0,.5); font-size: 12.5px; }
+.composer header { display: flex; justify-content: space-between; align-items: center; } .composer header b { font: 700 .95rem var(--display); }
+.composer textarea { width: 100%; min-height: 72px; resize: vertical; font: 13px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; box-sizing: border-box; unicode-bidi: plaintext; }
+.composer .sw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.composer .sw button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.composer .sw button[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--bg) inset; }
+.composer .sw input[type=color] { flex: none; width: 30px; min-width: 30px; height: 24px; padding: 0; border: 1px solid var(--line); background: none; cursor: pointer; }
+.composer .row { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+.composer .row button { font: 600 12px var(--body); border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.composer .row button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.composer .row button.danger { margin-right: auto; color: #ff8a80; }
+.composer .status { font-size: 11.5px; color: var(--muted); }
 .tl .meta { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tl select { font: 12px var(--mono); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 4px; margin-left: 4px; }
 aside { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
@@ -204,7 +225,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       </div>
       <div class="tl">
         <button id="play">Play</button>
-        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position">
+        <button class="addc" id="addComment" title="Add a comment at this moment">🚩 Comment</button>
+        <div class="tlwrap"><div class="flags" id="flags" aria-label="Comments on the timeline"></div><div class="flagtip" id="flagTip" hidden></div>
+          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"></div>
+        <div class="composer" id="composer" hidden role="dialog" aria-label="Comment">
+          <header><b id="cmTitle">🚩 New comment</b><span class="status" id="cmWhen"></span></header>
+          <textarea id="cmText" placeholder="Write a note about this moment…" dir="auto"></textarea>
+          <div class="sw" id="cmSwatches"></div>
+          <div class="row"><button class="danger" id="cmDelete" hidden>Delete</button><span class="status" id="cmStatus"></span><button id="cmCancel">Cancel</button><button class="primary" id="cmSave">Save</button></div>
+        </div>
         <div class="meta" id="tmeta">0:00 / 0:00</div>
         <label class="meta" for="speed">Speed <select id="speed" autocomplete="off"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="0.75">×0.75</option><option value="1" selected>×1</option><option value="1.25">×1.25</option><option value="1.5">×1.5</option><option value="1.75">×1.75</option><option value="2">×2</option></select></label>
       </div>
@@ -417,6 +446,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       MO.data = null; MO.follow.clear(); MO.pathSig = ""; MO.lastKey = "";
       try { const rm = await fetch(`../data/processed/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
       renderChips();
+      if (typeof cmRender === "function") setTimeout(cmRender, 0);
       video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
@@ -1697,6 +1727,80 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     else if (e.key === " ") { togglePlay(); } else return;
     e.preventDefault();
   });
+  // ---------- timeline comments: flags on the timeline, saved to data/processed/comments.json via serve.py ----------
+  const FLAG_COLS = ["#E69F00", "#D55E00", "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#F0E442", "#ffffff"];
+  const CM = { list: [], edit: null, color: FLAG_COLS[0], server: true };
+  const flagSvg = (col, sz = 22) => `<svg viewBox="0 0 22 26" width="${sz}" height="${sz * 26 / 22}" aria-hidden="true"><rect x="1" y="1" width="2.4" height="24" rx="1" fill="#e5e9e5" stroke="#121819" stroke-width=".6"/>` +
+    `<path d="M3.4 2 C8 0, 12 5, 20.5 2.5 L20.5 13.5 C12 16, 8 11, 3.4 13 Z" fill="${col}" stroke="#121819" stroke-width=".9" stroke-linejoin="round"/></svg>`;
+  const cmEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  async function cmLoad() {
+    try { const r = await fetch("../data/processed/comments.json", { cache: "no-store" }); if (r.ok) CM.list = (await r.json()).comments || []; }
+    catch (e) {}
+    if (!CM.list.length) { try { CM.list = JSON.parse(localStorage.getItem("shukComments") || "[]"); } catch (e) {} }
+    cmRender();
+  }
+  async function cmSave() {
+    try { localStorage.setItem("shukComments", JSON.stringify(CM.list)); } catch (e) {}
+    try {
+      const r = await fetch("/api/comments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comments: CM.list }) });
+      if (!r.ok) throw new Error(r.status);
+      CM.server = true; return true;
+    } catch (e) { CM.server = false; return false; }
+  }
+  function cmRender() {
+    const dur = duration(), box = $("flags");
+    const mine = CM.list.filter(c => c.walk === S.walk).sort((a, b) => a.t - b.t);
+    box.innerHTML = dur ? mine.map(c => `<button class="flag" data-id="${cmEsc(c.id)}" style="left:${(c.t / dur * 100).toFixed(3)}%" aria-label="Comment at ${fmt(c.t)}: ${cmEsc(c.text.slice(0, 60))}">${flagSvg(c.color)}</button>`).join("") : "";
+  }
+  function cmSwatches() {
+    $("cmSwatches").innerHTML = `<span class="status">Flag colour</span>` + FLAG_COLS.map(c => `<button data-col="${c}" style="background:${c}" aria-label="Colour ${c}" aria-pressed="${c.toLowerCase() === CM.color.toLowerCase()}"></button>`).join("") +
+      `<input type="color" id="cmCustom" value="${CM.color}" aria-label="Custom colour"> <span id="cmPreview">${flagSvg(CM.color, 18)}</span>`;
+  }
+  function cmOpen(c) {
+    CM.edit = c || null;
+    const t = c ? c.t : curTime();
+    CM.color = c ? c.color : (CM.color || FLAG_COLS[0]);
+    $("cmTitle").textContent = c ? "🚩 Edit comment" : "🚩 New comment";
+    $("cmWhen").textContent = `${S.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(t)}`;
+    $("cmText").value = c ? c.text : ""; $("cmDelete").hidden = !c; $("cmStatus").textContent = "";
+    cmSwatches(); $("composer").hidden = false; $("cmText").focus();
+  }
+  $("addComment").addEventListener("click", () => { if (playing) togglePlay(); cmOpen(null); });
+  $("cmCancel").addEventListener("click", () => { $("composer").hidden = true; });
+  $("cmSwatches").addEventListener("click", e => { const b = e.target.closest("button[data-col]"); if (!b) return; CM.color = b.dataset.col; cmSwatches(); });
+  $("cmSwatches").addEventListener("input", e => { if (e.target.id === "cmCustom") { CM.color = e.target.value; $("cmPreview").innerHTML = flagSvg(CM.color, 18);
+    $("cmSwatches").querySelectorAll("button[data-col]").forEach(b => b.setAttribute("aria-pressed", "false")); } });
+  $("cmSave").addEventListener("click", async () => {
+    const text = $("cmText").value.trim(); if (!text) { $("cmStatus").textContent = "Write something first"; return; }
+    const now = new Date().toISOString();
+    if (CM.edit) Object.assign(CM.edit, { text, color: CM.color, updated: now });
+    else CM.list.push({ id: `c${Date.now().toString(36)}`, walk: S.walk, t: +curTime().toFixed(2), yaw: +S.yaw.toFixed(1), pitch: +S.pitch.toFixed(1), text, color: CM.color, created: now, updated: now });
+    const ok = await cmSave(); cmRender();
+    if (ok) $("composer").hidden = true; else $("cmStatus").textContent = "Saved in this browser only (server not reachable)";
+  });
+  $("cmDelete").addEventListener("click", async () => {
+    if (!CM.edit) return;
+    if ($("cmDelete").dataset.confirm !== "1") { $("cmDelete").dataset.confirm = "1"; $("cmDelete").textContent = "Click again to delete"; return; }
+    CM.list = CM.list.filter(c => c !== CM.edit); $("cmDelete").dataset.confirm = ""; $("cmDelete").textContent = "Delete";
+    await cmSave(); cmRender(); $("composer").hidden = true;
+  });
+  $("flags").addEventListener("click", e => {
+    const b = e.target.closest(".flag"); if (!b) return;
+    const c = CM.list.find(x => x.id === b.dataset.id); if (!c) return;
+    if (playing) togglePlay();
+    vt = c.t; if (videoOk()) video.currentTime = c.t;
+    S.yaw = c.yaw; S.pitch = c.pitch; $("flagTip").hidden = true;
+    cmOpen(c);
+  });
+  $("flags").addEventListener("mouseover", e => {
+    const b = e.target.closest(".flag"); if (!b) return;
+    const c = CM.list.find(x => x.id === b.dataset.id); if (!c) return;
+    const tip = $("flagTip"); tip.textContent = `${fmt(c.t)} · ${c.text}`; tip.style.left = b.style.left; tip.hidden = false;
+  });
+  $("flags").addEventListener("mouseout", e => { if (e.target.closest(".flag")) $("flagTip").hidden = true; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("composer").hidden) $("composer").hidden = true; });
+  video.addEventListener("loadedmetadata", cmRender);
+  cmLoad();
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
   $("play").addEventListener("click", togglePlay);
   $("mMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; MO.mode = b.dataset.m;

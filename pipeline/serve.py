@@ -1,16 +1,41 @@
 """Local static server with HTTP Range support (needed for seeking in the 360 video).
 
 usage:  python pipeline/serve.py [--port 8000]   then open http://localhost:8000/viewer/
+
+Also: POST /api/comments saves the viewer's timeline comments to data/processed/comments.json (validated, local only).
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from common import ROOT
+from common import PROCESSED, ROOT
+
+COMMENTS = PROCESSED / "comments.json"
+MAX_BODY = 1 << 20                   # 1 MB is plenty for text comments
+
+
+def clean_comments(data) -> list:
+    """Keep only well-formed comments: {id, walk, t, yaw, pitch, text, color, created, updated}."""
+    out = []
+    for c in (data or {}).get("comments", [])[:5000]:
+        if not isinstance(c, dict) or c.get("walk") not in ("walk1", "walk2"):
+            continue
+        text = str(c.get("text", ""))[:2000]
+        color = str(c.get("color", "#E69F00"))
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+            color = "#E69F00"
+        try:
+            out.append({"id": str(c.get("id", ""))[:40], "walk": c["walk"], "t": round(float(c.get("t", 0)), 2),
+                        "yaw": round(float(c.get("yaw", 0)), 1), "pitch": round(float(c.get("pitch", 0)), 1),
+                        "text": text, "color": color, "created": str(c.get("created", ""))[:40], "updated": str(c.get("updated", ""))[:40]})
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 class RangeHandler(SimpleHTTPRequestHandler):
@@ -22,6 +47,30 @@ class RangeHandler(SimpleHTTPRequestHandler):
         # the viewer and its data change often during development: always revalidate, never serve stale copies
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
+
+    def do_POST(self):
+        if self.path.split("?")[0] != "/api/comments":
+            self.send_error(404)
+            return
+        n = int(self.headers.get("Content-Length") or 0)
+        if n <= 0 or n > MAX_BODY:
+            self.send_error(413)
+            return
+        try:
+            comments = clean_comments(json.loads(self.rfile.read(n).decode("utf-8")))
+        except (ValueError, UnicodeDecodeError):
+            self.send_error(400)
+            return
+        COMMENTS.parent.mkdir(parents=True, exist_ok=True)
+        tmp = COMMENTS.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"comments": comments}, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(tmp, COMMENTS)                                  # atomic: never a half-written file
+        body = json.dumps({"saved": len(comments)}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def send_head(self):
         rng = self.headers.get("Range")
