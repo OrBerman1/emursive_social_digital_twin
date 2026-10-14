@@ -12,6 +12,11 @@
 - **Built but hidden:** waste on the floor (`waste.py`; viewer flag `SHOW_WASTE = false`): ~70% precision,
   user said not good enough. Stall materials per GIS store: not shown (store↔crop association and survey
   definitions unresolved) — shown instead as locations (`frontage.py`).
+- **Restitched project (14 Oct, branch `fix_video`):** `projects/shuk_hatikvah_v2` = same walks with the calibrated
+  blended stitch (`pipeline/stitch.py`, METHODS 30) that removes the seam line / missing strip; whole pipeline re-run
+  there, original project untouched. **User (14 Oct): continue with the restitched project; keep the old results.**
+  Viewers open it by default (`config/viewer.json` → `/api/projects` "default"); the original stays at
+  `?project=shuk_hatikvah`. Pipeline default (`run_all.py` without `--project`) is still the original project.
 - **Viewers:** original `viewer/index.html` (`start_viewer.bat`, port 8000) + five design variants on the
   shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
   (`start_viewer_1..5_*.bat`, ports 8001–8005). **Chosen design language (user, 14 Oct): Alex's `ui_alex`**

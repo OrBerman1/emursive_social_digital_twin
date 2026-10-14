@@ -411,7 +411,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = true; video.preload = "auto";
   video.hidden = true; document.body.appendChild(video);   // detached videos may never start loading in Chrome
   // ---------- project (projects.html / pipeline/projects_api.py): data paths, walks and their labels ----------
-  const PROJ = { id: new URLSearchParams(location.search).get("project") || "shuk_hatikvah", name: "Shuk HaTikvah",
+  const urlProject = new URLSearchParams(location.search).get("project");     // none -> the server's default (config/viewer.json)
+  const PROJ = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah",
                  processed: "/data/processed", interim: "/data/interim",
                  walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback = the original project
   const WALK_COLS = ["#4fb3bb", "#e0a948", "#c08bff", "#8cff5a", "#ff9a3c", "#38c6ff"];
@@ -423,7 +424,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   async function initProject() {
     try {
       const r = await fetch("/api/projects"); const j = await r.json();
-      const pr = (j.projects || []).find(x => x.id === PROJ.id) || (j.projects || [])[0];
+      const pr = (j.projects || []).find(x => x.id === (urlProject || j.default || PROJ.id)) || (j.projects || [])[0];
       if (pr) Object.assign(PROJ, { id: pr.id, name: pr.name, processed: pr.urls.processed, interim: pr.urls.interim,
         walks: Object.fromEntries(Object.entries(pr.walks).filter(([, v]) => v.analysed).map(([w, v]) => [w, { label: v.label }])) });
     } catch (e) { /* old server without the projects API: original project */ }

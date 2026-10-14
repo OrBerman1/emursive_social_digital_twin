@@ -5,6 +5,7 @@ models/
 # projects made on the projects page: their data and uploaded anchor files stay local; project.json is small
 projects/*/data/
 projects/*/config/anchor_files/
+projects/*/*.log
 *.insv
 *.zip
 *.pt

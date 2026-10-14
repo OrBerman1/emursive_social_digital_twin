@@ -4,7 +4,7 @@ usage:  python pipeline/serve.py [--port 8000]   then open http://localhost:8000
 
 Also (local only, all validated):
   POST /api/comments?project=<id>      timeline comments -> <project processed>/comments.json
-  GET  /api/projects                   projects with their walks, inputs and last analysis
+  GET  /api/projects                   projects with their walks, inputs and last analysis; "default" = config/viewer.json
   POST /api/projects {name}            new project
   PUT  /api/upload?project=&kind=video|store|anchors&filename=[&label=][&walk=]   streamed upload
   POST /api/run?project=<id>           start the analysis (one at a time);  GET /api/job?project=<id> = progress
@@ -28,7 +28,7 @@ from urllib.parse import parse_qs, urlparse
 import attach_api as ATT
 import jeeves as JV
 import projects_api as API
-from common import DEFAULT_PROJECT, ROOT
+from common import DEFAULT_PROJECT, ROOT, viewer_default_project
 
 MAX_BODY = 1 << 20                   # 1 MB is plenty for text comments
 
@@ -90,7 +90,7 @@ class RangeHandler(SimpleHTTPRequestHandler):
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         try:
             if method == "GET" and u.path == "/api/projects":
-                return self._json({"projects": API.list_info()}) or True
+                return self._json({"projects": API.list_info(), "default": viewer_default_project()}) or True
             if method == "GET" and u.path == "/api/job":
                 return self._json(API.job_state(q.get("project", DEFAULT_PROJECT))) or True
             if method == "GET" and u.path == "/api/settings":

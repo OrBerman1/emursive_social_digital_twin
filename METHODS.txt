@@ -494,3 +494,24 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      people in ~70 s -> 86 blue (68 + 18), 141 unclear; follow-up "how many of them are women" joins the table (5 s).
      Visual check of 30 random "blue": ~26 right (misses: dark patterned tops, a blue neighbour in the crop); 30 random
      "not blue": 30 right. Viewer: answers render with working jump buttons; follow-ups keep the chat.
+
+30. CALIBRATED BLENDED STITCH (fixes the cut line)  (pipeline/stitch.py; project shuk_hatikvah_v2, config/stitch.json)
+   - Problem (user, 14 Oct): a visible line cut the video and a strip of the scene was missing (people, signs, the
+     operator's hand). Cause: ffmpeg v360 dfisheye with ih_fov=190 cuts hard at the lens border with an approximate lens
+     model and no exposure match. Present in the raw frames already, so not caused by stabilisation.
+   - Method: equidistant fisheye model per lens (shared focal 611.2 px, centres fitted near the measured image-circle
+     centres, small rotation of lens 2 vs lens 1). Calibrated on SIFT matches in the lens-overlap ring of sample
+     frames: median ring error 1.40 deg (v360 settings) -> 0.29 deg. Global orientation matched to the old v360 output
+     (5,997 inliers, 0.87 deg) so the new frames keep the old yaw convention. 6 deg feathered blend across the seam +
+     per-frame exposure gain of each lens half; the 0.8% of the sphere neither lens sees (zenith/nadir) is filled from
+     the nearest lens edge. Fast path: one remap per lens, float blend only inside the seam band (80 ms per 3840 frame).
+   - Used only by projects that have config/stitch.json (extract_frames.py, encode_video.py); the original project is
+     untouched (no data overwritten). The new project re-runs the whole pipeline on the restitched frames.
+   - Checks: contact sheets of 12 stabilised frames per walk (no missing strip, no black areas); 20 s old-vs-new clip
+     at 30 fps (projects/shuk_hatikvah_v2/data/processed/walk1/compare_stitch_walk1.mp4): the cut through the operator
+     and hand is gone and the overhead lamp missing in the old stitch is now visible. Remaining artifact: the operator
+     (0.3-0.5 m from the lens) is softly doubled in the blend band; parallax, unavoidable with two lenses.
+   - Stabilisation on the restitched video (deg/frame, raw -> stabilised): walk 1 video 0.873 -> 0.236, frames
+     3.459 -> 0.903; walk 2 video 0.619 -> 0.309, frames 2.914 -> 0.967 (old stitch: 0.242 / 1.070 and 0.310 / 1.357).
+   - Default (user, 14 Oct): the viewers open the restitched project when the link names none (config/viewer.json,
+     returned as "default" by /api/projects); the original project's results are kept, at ?project=shuk_hatikvah.
