@@ -20,3 +20,4 @@ regex==2026.9.29
 pytesseract==0.3.13    # OCR (needs the Tesseract program, see setup.bat)
 symspellpy==6.10.0     # spellcheck
 python-doctr==1.1.0    # text detection only (db_resnet50)
+anthropic==1.13.0      # Claude API for the review stages of new projects (only used when an API key is set)

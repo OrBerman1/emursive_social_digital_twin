@@ -112,6 +112,13 @@ The viewer must be opened through this server; opening `viewer\index.html` direc
 - Look around: drag the image or arrow keys; mouse wheel zooms.
 - Walk 1 / Walk 2 buttons (top right).
 - Click a person's box for an information card (track ID, time seen, distance).
+- **📎 Attach file** in a person's card: attach an interview, note or photo to that person. People with files get an
+  orange 📎 on their box and on the timeline; click the timeline 📎 to jump to them. Files stay on this computer
+  (`data/processed/attachments/`, not in git).
+- **🎩 Ask Jeeves** (top right): ask about the project ("How many women are in the video?") or give it a task
+  ("Count all the people wearing blue shirts"). It answers from the analysed data and can look at the video; blue
+  buttons in the answer jump to that person or moment. Needs a Claude key (projects page: Anthropic `sk-ant-…` or
+  Amazon Bedrock `ABSK…`). Chats are kept per project.
 - **Layers:** people, IDs & distance, level-1 objects, level-2 objects, text on signs (OCR), hide tracks < 1 s,
   **Stabilised video (offline)** on/off (off = original video and detections).
 - **Min. confidence** slider (default 0.60).
@@ -122,6 +129,24 @@ After updating the code, restart `start_viewer.bat` and press **Ctrl+F5** once i
 
 **Hand-count validation:** http://localhost:8000/viewer/validate.html — 30 frames; type how many people
 you see in each, and the page compares your counts with the model's.
+
+### Projects: add data, or start a new area
+
+Open **http://localhost:8000/viewer/projects.html** (link "projects" in the viewer's title).
+- **Add data to a project** (also to Shuk HaTikvah): another 360 video (Insta360 ONE RS `.insv`, one walk), a
+  store table (`.xlsx` with at least `Shop_Name`, `X`, `Y` in WGS84, like `Shops_In_hatikva_30_7_26.xlsx`), or a
+  `.txt` of anchor points for one walk, e.g. `Hasaluf f104 yaw -8; Rosita Bar f163 yaw 150` (store name or
+  GlobalID, frame `f…` and view yaw from the viewer's top-left box; optional `pitch` and `fov`).
+- **New project** (another area): a name and a 360 video are required; the store table and anchors are optional.
+- **Run analysis**: runs the pipeline once for that project in the background, with a bar per step. Finished steps
+  are cached, so adding anchors later only re-runs the map steps. A new walk takes about 1–1.5 h on the GPU.
+- Without a store table **and** anchors for a walk there is no map for it (no paths, crowds, speed map,
+  segment summary); the 360 view, people, objects, signs and food still work.
+- **Claude API key** (optional, left panel): if saved, sign text is read by Claude and the pictured-people and
+  stall-material checks are reviewed by Claude. Without it, Tesseract and the automatic fallbacks run, and stall
+  materials are skipped. The key is stored only on this computer (`%LOCALAPPDATA%\ShukTwin`), never in the repo.
+- Each project lives in `projects/<id>/` (its data folder is not in git). The viewer opens a project with
+  `viewer/?project=<id>`.
 
 ## 6. Outputs for GIS
 
@@ -162,6 +187,25 @@ from a market vocabulary; menu/sign photos of food are kept apart. The Open Imag
 and under them is walkway floor (SegFormer, downloaded by `setup.bat` into `models\segformer-b2-ade\`), checks
 each item with CLIP, and writes items with map position and waste per 10 m of route
 (`data\processed\<walk>\waste_stab.json`). In the viewer: magenta boxes, a panel section, dots on both maps.
+
+**Crowds.** `pipeline\crowds.py` finds crowds from overlapping person boxes of similar size and puts them on
+the maps as orange markers (number = most people at once). Click one on the full map for its statistics
+(approximate size, speed mean ± std, walking/standing, age group, perceived gender) and **▶ Go to video**. The
+thresholds are adjustable live under **👥 Crowd settings** on the full map.
+
+**Map layers and filters.** In the full map, **🗂 Layers & filters** chooses what is shown (default: stores and
+crowds; optional: walk routes, frontage materials, everyone's paths), filters stores by any field of the store
+table (trade, shop type, ownership, patronage, facade, structure, informal vendor, generation, seen on a walk),
+and colours stores by one of them. The **🌡 Speed map** layer paints the mean walking speed per area as a smooth
+colour surface with its own legend (smoothing radius and minimum people adjustable in the same panel).
+
+**Comments.** Press **🚩 Comment** next to Play to pin a note to the current moment; choose the flag colour and save.
+Flags appear above the timeline: hover to read, click to jump there and edit or delete. Comments are saved to
+`data\processed\comments.json` by the viewer's local server (copy that file to share them).
+
+**Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
+store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by
+trade, food, signs, objects, frontage materials), with **⬇ JSON** and **⬇ Excel** export. Esc cancels.
 
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes

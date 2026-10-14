@@ -2,8 +2,8 @@
 
 ## Current state — read this first (updated 13 Oct 2026, evening)
 - **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–21: the method,
-  numbers and validation for every stage). Git: one branch per feature; current branch `design`
-  (pushed); `main` holds everything before it. Push only when the user asks, with
+  numbers and validation for every stage). Git: one branch per feature; `main` holds everything up to
+  the design variants (merged 14 Oct); current branch `advanced_features`. Push only when the user asks, with
   `git -c http.sslBackend=schannel push` (certificate issue on this machine).
 - **Shown in the viewer:** people (tracked, age colour, gender badge), motion arrows (camera motion
   removed, reliability gate), people paths on the map, interactive map (GTA-style minimap + full map,
@@ -14,11 +14,22 @@
   definitions unresolved) — shown instead as locations (`frontage.py`).
 - **Viewers:** original `viewer/index.html` (`start_viewer.bat`, port 8000) + five design variants on the
   shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
-  (`start_viewer_1..5_*.bat`, ports 8001–8005). The user has not chosen a direction yet.
+  (`start_viewer_1..5_*.bat`, ports 8001–8005). Design is PARKED until all features are done (user,
+  14 Oct): add new features to the base viewer `viewer/index.html` only, and list each one in PLAN.md
+  ("to port to the designs") so the chosen design can pick them up later.
+- **Projects (14 Oct):** `viewer/projects.html` + `pipeline/projects_api.py`: add data to a project or create a
+  new area; analysis = `run_all.py --project <id>` (conditional plan, progress in `<processed>/job.json`). Paths come
+  from `common.py` (`SHUK_PROJECT`; default `shuk_hatikvah` = the original `data/` + `config/`). New projects live in
+  `projects/<id>/`. Claude API mode (`vlm.py`, key from the projects page) only for new projects. METHODS 27.
+- **Files attached to people (14 Oct):** person card 📎 → `pipeline/attach_api.py` (per project, under `data/`,
+  keyed by walk + variant + track, with frame/yaw for re-linking). METHODS 28.
+- **🎩 Ask Jeeves (14 Oct):** `pipeline/jeeves.py` agent per project (tools: run_sql, view_people, view_scene,
+  classify_people) + viewer drawer. Claude via `pipeline/llm.py`: Sonnet 5.5 (user: not Opus), Anthropic key or the
+  hackathon Bedrock key (classic runtime, us-east-1; key in %LOCALAPPDATA%/ShukTwin, never in the repo). METHODS 29.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
-- **Open issues:** ~35 operator tracks (arm / T-shirt) still counted as people on walk 1; match stall
+- **Open issues:** (operator tracks: fixed 14 Oct, category "operator" via depicted.py) match stall
   crops to stores via shop names read on signs; ask Boaz what survey `Facade_Mat` / `Skeleton_Mat` mean;
   anchor outliers (Melech Haavatiach, the GlobalID stall); no hand-labelled ground truth yet for food,
   waste or motion.

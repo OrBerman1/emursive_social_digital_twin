@@ -12,11 +12,15 @@ counted as people. Four cues per person track, combined:
 Automatic cues alone were not reliable enough (CLIP >= 0.75 also fires on people behind glass, drivers and the
 operator's printed T-shirt; the size rule fires on far real people). So the cues PROPOSE candidates
 (p_depicted >= 0.3) and a vision review decides (config/depicted_review.json: depicted / operator / real),
-like the sign reading. Unreviewed tracks fall back to p_depicted >= 0.9.
+like the sign reading. With --api (new projects, ANTHROPIC_API_KEY set) the candidates are reviewed by Claude through
+the API (vlm.py; one context crop per track on numbered sheets; cached in depicted<_variant>/api_review.json).
+Unreviewed tracks fall back to p_depicted >= 0.9.
+Operator heuristic (crowds.operator_tracks: median box height >= 58 deg, or >= 48 deg near the operator direction)
+marks the remaining camera-operator tracks as category "operator"; every downstream stage keeps only "person".
 Output : data/interim/<walk>/depicted<_variant>/depicted.parquet
          (track, p_depicted, height_m, feet_up, near_sign, med_spd, is_depicted, reason)
 
-usage:  python pipeline/depicted.py [walk1 walk2] [--variant stab] [--force]
+usage:  python pipeline/depicted.py [walk1 walk2] [--variant stab] [--force] [--api]
 """
 from __future__ import annotations
 
@@ -31,7 +35,7 @@ import pandas as pd
 import torch
 
 from attributes import MODEL, crop, text_features
-from common import INTERIM, PROCESSED, ROOT, WALKS, Stage
+from common import CONFIG, INTERIM, PROCESSED, ROOT, WALKS, Stage
 
 VERSION = 1
 CATEGORY = "possible_rabi_sign"
@@ -44,7 +48,7 @@ PROMPTS = {
                  "a painted picture of a face on a sign", "a sticker with a photo of a man"],
 }
 H_MIN, H_MAX = 0.9, 2.2        # plausible standing body height (m); children ~1.0 m
-REVIEW = ROOT / "config" / "depicted_review.json"
+REVIEW = CONFIG / "depicted_review.json"
 P_CANDIDATE, P_FALLBACK = 0.3, 0.9
 
 
@@ -84,7 +88,56 @@ def clip_scores(walk: str, sfx: str, tr: pd.DataFrame, force: bool) -> pd.DataFr
     return df
 
 
-def run(walk: str, variant: str, force: bool) -> dict:
+API_PROMPT = """Each numbered cell shows one person detection (green box) from a 360-degree walk through a street market,
+with its surroundings. The camera is held upside down by an operator, so the operator's arm, hand or T-shirt can appear
+as a large close-up. For EVERY id decide what the green box contains:
+- real: a real, physically present person (shopper, vendor, passer-by, driver, a person behind glass)
+- depicted: a picture of a person - on a sign, poster, advertisement, portrait, sticker, packaging or screen
+- operator: the camera operator (close-up arm, hand, body or T-shirt print)
+- unclear: cannot be decided from this crop"""
+
+
+def api_review(walk: str, sfx: str, tr: pd.DataFrame, cand: list[int], skip: set) -> dict:
+    """Claude reviews the candidate tracks (one context crop each, 12 per sheet); cached per tracks file."""
+    import vlm
+    from collections import namedtuple
+    out_dir = INTERIM / walk / f"depicted{sfx}"
+    cache_p = out_dir / "api_review.json"
+    th = fhash(INTERIM / walk / f"tracks{sfx}" / "persons.parquet")
+    cache = json.loads(cache_p.read_text(encoding="utf-8")) if cache_p.exists() else {}
+    if cache.get("tracks_hash") != th:
+        cache = {"tracks_hash": th, "model": vlm.MODEL, "labels": {}}
+    todo = [t for t in cand if str(t) not in cache["labels"] and t not in skip]
+    R = namedtuple("R", "yaw yaw_l yaw_r pitch_top pitch_bot")
+    best = tr[(~tr.interp) & tr.track.isin(todo)].sort_values("ang_h", ascending=False).groupby("track").head(1)
+    best = best.sort_values("track")
+    item = {"type": "string", "enum": ["real", "depicted", "operator", "unclear"]}
+    n = -(-len(best) // 12)
+    for k in range(n):
+        part = best.iloc[k * 12:(k + 1) * 12]
+        ims, ids = [], []
+        for r in part.itertuples():
+            equi = cv2.imread(str(INTERIM / walk / f"frames{sfx}" / f"{int(r.frame):06d}.jpg"))
+            hw, hh = ((r.yaw_r - r.yaw_l) % 360) / 2, (r.pitch_top - r.pitch_bot) / 2
+            pm = (r.pitch_top + r.pitch_bot) / 2
+            big = R(r.yaw, r.yaw - 2 * hw, r.yaw + 2 * hw, pm + 2 * hh, pm - 2 * hh)     # 2x context around the box
+            im = crop(equi, big, size=360, isolate=False)
+            span = max(4 * hh, 4 * hw) * 1.25
+            bw, bh = 360 * 2 * hw / span, 360 * 2 * hh / span
+            cv2.rectangle(im, (int(180 - bw / 2), int(180 - bh / 2)), (int(180 + bw / 2), int(180 + bh / 2)), (0, 220, 0), 2)
+            ims.append(im); ids.append(f"T{int(r.track)}")
+        try:
+            ans = vlm.ask(vlm.sheet(ims, ids), API_PROMPT, vlm.id_map_schema(ids, item))
+            cache["labels"].update({i[1:]: lab for i, lab in ans.items()})
+            out_dir.mkdir(parents=True, exist_ok=True)
+            cache_p.write_text(json.dumps(cache, indent=1), encoding="utf-8")
+        except Exception as e:                                         # noqa: BLE001 - unreviewed tracks keep the fallback
+            print(f"[depicted api] {walk}: sheet {k + 1} failed: {e}", flush=True)
+        print(f"[depicted api] {walk} sheet {k + 1}/{n}", flush=True)
+    return {int(t): lab for t, lab in cache["labels"].items() if lab in ("real", "depicted", "operator")}
+
+
+def run(walk: str, variant: str, force: bool, use_api: bool = False) -> dict:
     sfx = f"_{variant}" if variant else ""
     tdir = INTERIM / walk / f"tracks{sfx}"
     tr = pd.read_parquet(tdir / "persons.parquet")
@@ -121,7 +174,13 @@ def run(walk: str, variant: str, force: bool) -> dict:
         spd = {int(t): mo["tracks"][str(g)]["med_spd"] for t, g in mo["id2g"].items()}
 
     review = json.loads(REVIEW.read_text(encoding="utf-8")).get(walk, {}) if REVIEW.exists() else {}
+    from crowds import operator_tracks                                   # camera operator (arm / T-shirt) heuristic
+    ops = operator_tracks(tr)
     label_of = {int(t): lab for lab in ("depicted", "operator", "real") for t in review.get(lab, [])}
+    api_of = {}
+    if use_api:
+        cand = sorted(int(t) for t, p in p_dep.items() if p >= P_CANDIDATE)
+        api_of = api_review(walk, sfx, tr, cand, set(label_of))
     rows = []
     for tid, t in tr.groupby("track"):
         p = float(p_dep.get(tid, np.nan))
@@ -131,8 +190,13 @@ def run(walk: str, variant: str, force: bool) -> dict:
         sp = spd.get(int(tid), np.nan)
         implausible = (fu > 0.5) or (np.isfinite(hm) and (hm < H_MIN or hm > H_MAX))
         lab = label_of.get(int(tid))
+        alab = api_of.get(int(tid))
         if lab:
             category, reason = {"depicted": CATEGORY, "operator": "operator", "real": "person"}[lab], f"vision review: {lab}"
+        elif alab:
+            category, reason = {"depicted": CATEGORY, "operator": "operator", "real": "person"}[alab], f"Claude API review: {alab}"
+        elif int(tid) in ops:
+            category, reason = "operator", "operator heuristic (huge box in the operator direction)"
         elif np.isfinite(p) and p >= P_FALLBACK:
             category, reason = CATEGORY, f"CLIP p={p:.2f} (not reviewed)"
         else:
@@ -155,9 +219,10 @@ def main() -> None:
     ap.add_argument("walks", nargs="*", default=list(WALKS))
     ap.add_argument("--variant", default="stab")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--api", action="store_true", help="review the candidates with Claude (needs ANTHROPIC_API_KEY)")
     a = ap.parse_args()
     for w in a.walks:
-        print(json.dumps(run(w, a.variant, a.force), ensure_ascii=False))
+        print(json.dumps(run(w, a.variant, a.force, a.api), ensure_ascii=False))
 
 
 if __name__ == "__main__":
