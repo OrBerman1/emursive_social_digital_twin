@@ -131,10 +131,15 @@ class Project:
             self.tables["comments"] = pd.DataFrame([{k: c[k] for k in ("walk", "t", "text", "created")} for c in cm.get("comments", [])])
         self.tables["attachments"] = pd.DataFrame([{"walk": a["walk"], "track": a["track"], "file": f["name"], "added": f["added"]}
                                                    for a in att["people"] if a.get("variant") == "stab" for f in a["files"]])
+        index = []
         for p in sorted((self.jdir / "classify").glob("*.json")) if (self.jdir / "classify").exists() else []:
             c = self._json(p)
             if c:
                 self.tables[c["table"]] = pd.DataFrame(c["rows"])
+                index.append({"table": c["table"], "question": c["question"], "labels": " | ".join(c["labels"]), "people": len(c["rows"]),
+                              "walks": ",".join(sorted({r["walk"] for r in c["rows"]}))})
+        # earlier visual answers (classify_people): reuse them instead of looking at the video again
+        self.tables["classifications"] = pd.DataFrame(index, columns=["table", "question", "labels", "people", "walks"])
 
     # ------------------------------------------------------------ facts for the system prompt
     def facts(self) -> str:
@@ -300,9 +305,18 @@ Project facts:
 SQL tables (SQLite):
 {schema}
 
-How to work:
-- Numbers come from run_sql. Visual questions the tables cannot answer (clothing, carrying bags, activities) need images:
-  view_people / view_scene to look, classify_people to answer for many people, then run_sql on its table to count.
+How to work - DATA FIRST, video second:
+- Always start from the analysed data (run_sql). Many questions are answered by the tables alone (counts, gender / age
+  estimates, who walks or stands, crowds, signs, food, stores, where and when). Look at the video only for what the
+  tables cannot tell (clothing, carrying, activities, checking a doubtful result).
+- Even for a visual question, the data is the baseline: use it to define and scope who or what to look at (e.g. "people
+  in blue shirts" = the people table WHERE in_viewer_count, maybe one walk or a time window), then classify only those,
+  and join the visual answer back to the data for the final numbers and breakdowns (by walk, gender, motion, place).
+- Check the classifications table first: an earlier classify_people run may already answer the question (same or
+  similar question) - reuse its table instead of classifying again, and say so. If several match, use the one that
+  covers the most people and mention how much the other one differs (that difference is a measure of uncertainty).
+- Numbers come from run_sql. view_people / view_scene to look; classify_people to answer one visual question for many
+  people, then run_sql on its table to count and join.
 - Count people WHERE in_viewer_count (seen >= 1 s, confidence >= 0.6), the same rule as the viewer's totals, unless
   the user asks otherwise. For counts over "people", say it is tracked people (a person split into two tracks counts twice) unless you use
   same_person_group. Give the method and its main uncertainty in one short line.

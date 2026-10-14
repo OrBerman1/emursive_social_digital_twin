@@ -480,6 +480,11 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      call, 4 in parallel, ~1 s/person; answers cached per question in <processed>/jeeves/classify/ and saved as a SQL
      table to count and join).
    - people.in_viewer_count = seen >= 1 s and confidence >= 0.6, the viewer's rule (walk 1: 528 of 619 tracks).
+   - Data first (user, 14 Oct): the agent starts from the analysed tables; many questions need no video. For visual
+     questions the data is the baseline: it defines and scopes who to look at, and the visual answer is joined back to
+     the data for numbers and breakdowns. Earlier classify_people runs are listed in table classifications (question,
+     labels, people) and reused instead of looking again (e.g. "blue shirts in walk 2, walking or standing?" answered
+     in 11 s from an earlier run + the motion data, no new images).
    - Answers contain {{p:walk:track}} and {{t:walk:seconds[:yaw]}} tokens -> jump buttons in the viewer.
    - Chats per project in <processed>/jeeves/chats/ (not in git). Person crops are made in memory, never stored.
    - Structured outputs on Bedrock: a schema with one property per sheet id is "too large a grammar"; vlm.py sends a
