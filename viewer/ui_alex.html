@@ -386,7 +386,12 @@ body.analysis .rail { top: 14px; }
 .side { display: flex; flex-direction: column; gap: 10px; padding: 10px; min-height: 0; background: #0d1117; }
 .sbox { background: var(--surf, #fff); border-radius: 16px; box-shadow: var(--shadow); }
 .mapbox { padding: 10px 12px 8px; flex: none; }
-.shd { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.shd { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+.amfull { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surf, #fff); color: var(--ink); border-radius: 999px; padding: 4px 11px; font: 600 12px var(--sans); cursor: pointer; }
+.amfull:hover { background: #eef2fb; color: var(--space); border-color: #cfdcf7; }
+body.analysis .mapx .mleg { max-width: min(420px, 55%); font-size: 11.5px; padding: 7px 10px; gap: 2px 10px; } body.analysis .mapx .ramp, body.analysis .mapx .rampx { width: 160px; }
+body.analysis .mapx .mside { width: min(320px, 45%); }
+:root[data-theme="dark"] .amfull { background: var(--surf2); } :root[data-theme="dark"] .amfull:hover { background: var(--hov); color: #8db8ff; }
 .shd small { font-weight: 500; font-size: 11.5px; color: var(--soft); }
 .amapwrap { position: relative; height: clamp(150px, 30vh, 260px); border-radius: 12px; overflow: hidden; }   /* leaves room for the lists on small screens */
 #amap { position: absolute; inset: 0; background: #e5e9ee; }
@@ -581,7 +586,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
 
 <aside class="side" id="side" hidden>
   <section class="sbox mapbox">
-    <div class="shd">Top-down map <small id="amapNote"></small></div>
+    <div class="shd"><span>Top-down map <small id="amapNote"></small></span><button class="amfull" id="amapFull" title="Open the full map (stores, crowds, speed map, segment summary) in place of the video; the analysis stays">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg>Full map</button></div>
     <div class="amapwrap"><div id="amap"></div><canvas id="amapLayer"></canvas><span class="n">N</span></div>
     <div class="alegend">
       <span><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="var(--person)" stroke="#fff" stroke-width="1.5"/></svg>People</span>
@@ -1488,6 +1494,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
   $("mxLayers").addEventListener("click", () => { const open = $("mxPanel").hidden; $("mxPanel").hidden = !open; $("mxLayers").setAttribute("aria-pressed", String(open)); if (open) $("mxSegPanel").hidden = true; });
   $("mxClose").addEventListener("click", mxClose);
   document.querySelector(".mini").addEventListener("click", mxOpen);
+  $("amapFull").addEventListener("click", mxOpen);                      // Analysis: the full map replaces the video, the analysis column stays
   setInterval(() => { if (!$("mapx").hidden) mxMe(); }, 200);
   document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("mapx").hidden) { if (SEG.on) segMode(false); else mxClose(); } });
 
