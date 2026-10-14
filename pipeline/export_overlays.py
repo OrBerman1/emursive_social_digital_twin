@@ -127,6 +127,16 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
             "frame_start": int(g.frame.min()), "frame_end": int(g.frame.max()), "t_start": R(g.frame.min() / FPS_ANALYSIS),
             "t_end": R(g.frame.max() / FPS_ANALYSIS), "confidence": R(g.conf.max(), 2),
             "model": "YOLO11x person + CLIP proposal + vision review (pipeline/depicted.py)", "walk_id": walk}})
+    cr_p = pdir / f"crowds{variant}.json"                              # crowds (crowds.py): one feature per crowd, ID C<walk>-<nn>
+    if cr_p.exists():
+        for c in json.loads(cr_p.read_text(encoding="utf-8")).get("crowds_list", []):
+            feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [c["lon"], c["lat"]]}, "properties": {
+                "entity_id": c.get("crowd_id", f"C-{c['id']}"), "entity_type": "crowd", "layer": "social", "class": "crowd",
+                "frame_start": c["frame_start"], "frame_end": c["frame_end"], "t_start": c["t_start_s"], "t_end": c["t_end_s"],
+                "chainage_m": c["chainage_m"], "people_max_at_once": c["people_max_at_once"], "people_median": c["people_median"],
+                "people_unique": c["people_unique"], "speed_mean_m_s": c["speed_mean_m_s"], "speed_std_m_s": c["speed_std_m_s"],
+                "age_group": c["age_group"], "perceived_gender": c["perceived_gender"], "members": c["members"],
+                "model": "crowds.py heuristic (overlapping similar-size person boxes)", "walk_id": walk}})
     (pdir / f"observations{variant}.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}), encoding="utf-8")
     size = (pdir / f"overlays{variant}.json").stat().st_size
     return {"walk": walk, "frames": n_frames, "tracks": len(tracks), "possible_rabi_sign": int(depicted.track.nunique()), "overlay_bytes": size}

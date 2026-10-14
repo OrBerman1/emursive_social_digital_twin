@@ -991,7 +991,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         const sz = Math.round(16 + Math.min(22, c.people_max_at_once * 2));
         L.marker([c.lat, c.lon], { zIndexOffset: 500, icon: L.divIcon({ className: "crowd-icon", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
           html: `<div style="width:${sz}px;height:${sz}px">${c.people_max_at_once}</div>` }) })
-          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 crowd · ~${c.people_max_at_once} people`).addTo(full);
+          .bindPopup(crowdHtml(c), { maxWidth: 300 }).bindTooltip(`👥 ${c.crowd_id || "crowd"} · ~${c.people_max_at_once} people`).addTo(full);
       }
       FM_LAYER = L.layerGroup().addTo(full);
       for (const p of FRONT)
@@ -1212,7 +1212,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const bar = (o, keys, hex) => `<div class="bar2">${keys.filter(k => o[k]).map(k => `<span style="width:${o[k] / n * 100}%;background:${hex[k]}" title="${k}: ${o[k]}"></span>`).join("")}</div>`;
     const rows = (o, keys) => keys.filter(k => o[k]).map(k => `<tr><td>${AGE_EMOJI[k] || ""} ${k}</td><td>${o[k]}</td></tr>`).join("");
     const sp = c.speed_mean_m_s == null ? "—" : `${c.speed_mean_m_s.toFixed(2)} ± ${c.speed_std_m_s.toFixed(2)} m/s`;
-    return `<div class="cpop"><h4>👥 Crowd · ${c.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(c.t_start_s)}</h4><table>
+    return `<div class="cpop"><h4>👥 Crowd ${c.crowd_id || ""} · ${c.walk === "walk1" ? "walk 1" : "walk 2"} · ${fmt(c.t_start_s)}</h4><table>
       <tr><td>People (approx.) · most at once</td><td><b>${c.people_max_at_once}</b></td></tr>
       <tr><td>Typical size (median)</td><td>${c.people_median}</td></tr>
       <tr><td>Different people over ${c.duration_s} s</td><td>${c.people_unique}</td></tr>

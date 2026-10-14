@@ -18,7 +18,8 @@ Method : 1. per analysis frame, people = tracked persons that pass the viewer de
             positions from motion.py, else camera position + ground distance along the bearing), speed mean and
             std over members (motion.py: camera motion removed, optical flow + geometry), age group and
             perceived gender (attributes.py), time span, route position, view yaw for "go to video".
-Output : data/processed/<walk>/crowds<_stab>.json
+Output : data/processed/<walk>/crowds<_stab>.json (each crowd has a persistent crowd_id "C<walk>-<nn>", numbered in
+         time order), and the crowds are appended to observations<_stab>.geojson by export_overlays.py
 
 usage:  python pipeline/crowds.py [walk1 walk2] [--variant stab] [--min-people 3]
 """
@@ -216,6 +217,11 @@ def run(walk: str, variant: str, min_people: int) -> dict:
             "age_group": ages, "perceived_gender": sexes, "members": [f"P-{t:04d}" for t in members],
             "view_frame": int(fm), "view_yaw": round(view_yaw, 1), "position_from": sorted(src),
         })
+    crowds.sort(key=lambda c: c["frame_start"])                         # persistent IDs in time order along the walk
+    wn = walk.replace("walk", "")
+    for i, c in enumerate(crowds, 1):
+        c["id"] = i
+        c["crowd_id"] = f"C{wn}-{i:02d}"                                 # e.g. C1-03 = walk 1, crowd 3
     res = {"walk": walk, "variant": variant, "crowds": len(crowds), "operator_tracks_excluded": len(ops), "max_dist_m": MAX_DIST_M, "min_people": min_people, "size_ratio": SIZE_RATIO, "gap_frac": GAP_FRAC,
            "min_duration_s": MIN_DUR_F / 5,
            "note": "Heuristic: overlapping person boxes of similar size (similar distance) = people together. Counts are approximate "

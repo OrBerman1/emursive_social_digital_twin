@@ -357,4 +357,7 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      "operator" (vision-review labels take precedence), so people counts, age/gender statistics, motion,
      crowds and segment summaries all exclude them. Walk 1: 655 -> 619 person tracks, viewer total
      561 -> 528 people; walk 2: 248 -> 236 tracks, total 187.
+   - Crowd IDs (14 Oct): persistent "C<walk>-<nn>" numbered in time order (walk 1: C1-01 ... C1-09); shown in the
+     map popup and tooltip, and each crowd is exported as a Point feature (entity_type "crowd") to
+     observations_stab.geojson with its statistics and member person IDs.
 
