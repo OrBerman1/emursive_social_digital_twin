@@ -1,0 +1,975 @@
+{
+ "stores": {
+  "10": null,
+  "11": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "corrugated metal",
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "12": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "steel frame",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "77": {
+   "facade": "Metal",
+   "structure": "steel",
+   "materials": [
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "85": null,
+  "86": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "115": null,
+  "116": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "117": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "wood / timber",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "118": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "119": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "glass",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "120": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "121": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "122": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles",
+    "steel frame",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "124": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning",
+    "plastic sheeting"
+   ],
+   "source": "Claude API"
+  },
+  "125": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "126": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "127": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "wood / timber",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "128": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "wood / timber",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "129": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "wood / timber",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "130": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "131": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "132": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "133": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "134": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "corrugated metal",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "135": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "136": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "138": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "139": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "140": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "141": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "142": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "glass"
+   ],
+   "source": "Claude API"
+  },
+  "143": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "plastic crates as display",
+    "steel frame",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "145": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "plastic crates as display",
+    "steel frame",
+    "glass"
+   ],
+   "source": "Claude API"
+  },
+  "146": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "plastic sheeting",
+    "ceramic tiles"
+   ],
+   "source": "Claude API"
+  },
+  "150": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "152": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "ceramic tiles",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "153": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "154": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "155": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "156": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "157": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "corrugated metal",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "158": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "corrugated metal",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "159": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "corrugated metal",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "160": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "wood / timber",
+    "steel frame",
+    "plastic crates as display",
+    "glass"
+   ],
+   "source": "Claude API"
+  },
+  "161": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "wood / timber",
+    "glass",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "162": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "163": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "corrugated metal",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "164": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "plastic crates as display",
+    "steel frame",
+    "canvas / fabric awning",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "165": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "166": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "plastic sheeting",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "167": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "168": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "wood / timber",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "169": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "plastic crates as display",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "170": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "canvas / fabric awning"
+   ],
+   "source": "Claude API"
+  },
+  "171": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning",
+    "plastic sheeting"
+   ],
+   "source": "Claude API"
+  },
+  "172": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "173": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "174": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "wood / timber",
+    "plastic sheeting",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "175": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "glass",
+    "plastic sheeting",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "176": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "wood / timber",
+    "corrugated metal",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "177": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "canvas / fabric awning",
+    "wood / timber"
+   ],
+   "source": "Claude API"
+  },
+  "178": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "180": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "plastic sheeting"
+   ],
+   "source": "Claude API"
+  },
+  "181": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "corrugated metal",
+    "plastic crates as display",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "182": null,
+  "183": null,
+  "187": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic sheeting",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "188": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic sheeting",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "189": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "190": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "191": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "192": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "193": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "corrugated metal",
+    "plastic sheeting",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "194": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic sheeting",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "195": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "plastic sheeting",
+    "steel frame",
+    "wood / timber",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "196": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "corrugated metal",
+    "steel frame",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "197": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "corrugated metal",
+    "plastic sheeting",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "198": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame",
+    "plastic crates as display",
+    "ceramic tiles"
+   ],
+   "source": "Claude API"
+  },
+  "199": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "wood / timber",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "200": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "wood / timber",
+    "glass",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "201": null,
+  "202": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "wood / timber",
+    "glass",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "203": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame",
+    "plastic sheeting"
+   ],
+   "source": "Claude API"
+  },
+  "204": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "205": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "206": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "corrugated metal",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "208": {
+   "facade": "Open",
+   "structure": "blocks",
+   "materials": [
+    "steel frame",
+    "plastic crates as display",
+    "glass"
+   ],
+   "source": "Claude API"
+  },
+  "209": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "plastic crates as display",
+    "ceramic tiles"
+   ],
+   "source": "Claude API"
+  },
+  "210": {
+   "facade": "Metal",
+   "structure": "blocks",
+   "materials": [
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "211": {
+   "facade": "Glass",
+   "structure": "blocks",
+   "materials": [
+    "glass",
+    "steel frame"
+   ],
+   "source": "Claude API"
+  },
+  "229": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "ceramic tiles"
+   ],
+   "source": "Claude API"
+  },
+  "230": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "wood / timber",
+    "canvas / fabric awning",
+    "ceramic tiles"
+   ],
+   "source": "Claude API"
+  },
+  "235": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "236": {
+   "facade": "Glass",
+   "structure": "steel",
+   "materials": [
+    "glass",
+    "steel frame",
+    "canvas / fabric awning",
+    "wood / timber",
+    "plastic crates as display"
+   ],
+   "source": "Claude API"
+  },
+  "238": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "steel frame",
+    "canvas / fabric awning",
+    "plastic crates as display",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "239": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "240": {
+   "facade": "Open",
+   "structure": "steel",
+   "materials": [
+    "canvas / fabric awning",
+    "steel frame",
+    "plastic crates as display",
+    "glass",
+    "corrugated metal"
+   ],
+   "source": "Claude API"
+  },
+  "249": null
+ },
+ "_note": "Vision review of stall frontage crops (stall_materials.py); null = store not visible."
+}
