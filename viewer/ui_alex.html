@@ -43,6 +43,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .menu button { display: flex; width: 100%; border: 0; background: none; padding: 9px 12px; border-radius: 8px; cursor: pointer; text-align: left; justify-content: space-between; }
 .menu button:hover { background: #f3f5f9; }
 .menu button[aria-checked="true"]::after { content: "✓"; color: var(--space); font-weight: 700; }
+.menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
+.menu-link { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+.menu-link:hover { background: #f3f5f9; } .menu-link small { color: var(--soft); }
 
 /* ---- stage ---- */
 .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab; outline: none; background: #111; }
@@ -180,7 +183,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 <body>
 <header>
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
-  <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false">Shuk HaTikvah <small id="walkName">· Hatikvah St</small>
+  <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false"><span id="projName">Shuk HaTikvah</span> <small id="walkName">· Hatikvah St</small>
     <svg width="16" height="16" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true">360° Exploration</button>
@@ -194,8 +197,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="avatar" title="Alex Alvisi">AA</div>
 </header>
 <div class="menu" id="walkMenu" role="menu" hidden>
-  <button role="menuitemradio" data-walk="walk1" aria-checked="true">Walk 1 · Hatikvah St</button>
-  <button role="menuitemradio" data-walk="walk2" aria-checked="false">Walk 2 · Hamevasser St</button>
+  <div id="walkItems"></div>
+  <div class="menu-sep"></div>
+  <a class="menu-link" id="projLink" href="projects.html" role="menuitem">Projects… <small>add data · new area</small></a>
 </div>
 
 <div class="stage" id="stage" aria-label="360 degree view. Follows the walking direction; drag to look around, scroll to zoom, click a dot for details.">
@@ -328,7 +332,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const load = async w => {
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
-    try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
+    try { FW = await J(`${E.project.processed}/${w}/forward.json`); } catch (e) { FW = null; }
     buildMotion(d); buildMarks(d); buildTrends(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
@@ -546,7 +550,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   });
   async function geoFor(w) {                       // exact georef if present, else the approximate one
     await E.ready;
-    if (!E.geo.walks[w]) { try { E.geo.walks[w] = await J(`../data/processed/${w}/georef_approx.json`); APPROX[w] = true; } catch (e) {} }
+    if (!E.geo.walks[w]) { try { E.geo.walks[w] = await J(`${E.project.processed}/${w}/georef_approx.json`); APPROX[w] = true; } catch (e) {} }
     return E.geo.walks[w];
   }
   // one map position per entity: where it was seen closest to the camera; f0 = first frame it was seen
@@ -720,7 +724,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   $("statsBody").addEventListener("mouseleave", () => { dtip.hidden = true; });
 
   // ---- timeline markers: crowd peaks (people), market-item peaks (objects), first sight of readable signs (space) ----
-  const bookmarks = { walk1: [], walk2: [] };
+  const bookmarks = {};
   let marks = [];
   function peaks(series, n, gap) {
     const idx = series.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]), out = [];
@@ -739,7 +743,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
   function renderMarks() {
     const d = E.data; if (!d) return;
-    const all = [...marks, ...bookmarks[E.walk].map(f => ({ f, k: "bookmark", t: "Bookmark" }))];
+    const all = [...marks, ...(bookmarks[E.walk] || []).map(f => ({ f, k: "bookmark", t: "Bookmark" }))];
     $("marks").innerHTML = all.map(m => `<button class="mk ${m.k}" style="left:${m.f / d.n_frames * 100}%" data-f="${m.f}" data-t="${esc(m.t)} · ${fmt(m.f / d.fps)}" aria-label="${esc(m.t)}"></button>`).join("");
   }
 
@@ -770,12 +774,13 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const p = st.duration ? st.t / st.duration * 100 : 0; $("thumb").style.left = p + "%"; $("done").style.width = p + "%";
   }, 100);
 
-  // ---- header: walk menu ----
+  // ---- header: project + walk menu (walks of the current project; ?project=<id>) ----
   $("placeBtn").addEventListener("click", () => { const m = $("walkMenu"); m.hidden = !m.hidden; $("placeBtn").setAttribute("aria-expanded", String(!m.hidden)); });
-  document.querySelectorAll("#walkMenu button").forEach(b => b.addEventListener("click", async () => {
-    document.querySelectorAll("#walkMenu button").forEach(x => x.setAttribute("aria-checked", String(x === b)));
-    $("walkMenu").hidden = true; pinned.length = 0; $("walkName").textContent = `· ${E.walkLabel(b.dataset.walk)}`; await load(b.dataset.walk);
-  }));
+  async function selectWalk(w) {
+    document.querySelectorAll("#walkItems button").forEach(x => x.setAttribute("aria-checked", String(x.dataset.walk === w)));
+    $("walkMenu").hidden = true; pinned.length = 0; $("walkName").textContent = `· ${E.walkLabel(w)}`; await load(w);
+  }
+  $("walkItems").addEventListener("click", ev => { const b = ev.target.closest("button[data-walk]"); if (b) selectWalk(b.dataset.walk); });
 
   // ---- tool rail + popovers ----
   const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop" };
@@ -786,7 +791,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
   const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 400); }, 1800); };
-  $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; bookmarks[E.walk].push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
+  $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; (bookmarks[E.walk] = bookmarks[E.walk] || []).push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
   $("searchIn").addEventListener("keydown", ev => {
     ev.stopPropagation();                      // keep typing out of the viewer's keyboard shortcuts
     if (ev.key !== "Enter") return;
@@ -803,7 +808,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }));
   $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
 
-  load("walk1");
+  E.ready.then(() => {
+    const P = E.project, ws = E.walkIds();
+    document.title = `${P.name} · 360° Exploration`; $("projName").textContent = P.name;
+    $("projLink").href = `projects.html?project=${encodeURIComponent(P.id)}`;
+    $("walkItems").innerHTML = ws.map((w, i) => `<button role="menuitemradio" data-walk="${w}" aria-checked="${i === 0}">${esc(`${cap(E.walkShort(w))} · ${E.walkLabel(w)}`)}</button>`).join("");
+    if (ws.length) selectWalk(ws[0]);
+    else { $("walkName").textContent = "· no analysed walk yet"; toast("No analysed walk yet: open Projects… to add a video and run the analysis"); }
+  });
 })();
 </script>
 </body>

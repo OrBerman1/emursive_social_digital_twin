@@ -105,22 +105,37 @@
     }
     E.boxRect = boxRect;
 
-    // ---- data ----
+    // ---- project (?project=<id>; projects.html / pipeline/projects_api.py): data paths, walks and their labels ----
     const J = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return r.json(); };
+    E.project = { id: new URLSearchParams(location.search).get("project") || "shuk_hatikvah", name: "Shuk HaTikvah",
+                  processed: "../data/processed", interim: "../data/interim",
+                  walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback: the original project
+    async function loadProject() {
+      try {
+        const ps = (await J("/api/projects")).projects || [], pr = ps.find(x => x.id === E.project.id) || ps[0];
+        if (pr) Object.assign(E.project, { id: pr.id, name: pr.name, processed: pr.urls.processed, interim: pr.urls.interim,
+          walks: Object.fromEntries(Object.entries(pr.walks).filter(([, v]) => v.analysed).map(([w, v]) => [w, { label: v.label }])) });
+      } catch (e) { /* old server without the projects API: original project */ }
+    }
+    E.walkIds = () => Object.keys(E.project.walks);
     async function loadStatic() {
-      try { E.geo.shops = (await J("../data/processed/shops.json")).shops || []; } catch (e) {}
-      for (const w of ["walk1", "walk2"]) { try { E.geo.walks[w] = await J(`../data/processed/${w}/georef.json`); } catch (e) {} }
-      try { E.geo.frontage = (await J("../data/processed/frontage_materials.json")).points_list || []; } catch (e) {}
+      await loadProject();
+      const P = E.project.processed;
+      try { E.geo.shops = (await J(`${P}/shops.json`)).shops || []; } catch (e) {}
+      for (const w of E.walkIds()) { try { E.geo.walks[w] = await J(`${P}/${w}/georef.json`); } catch (e) {} }
+      try { E.geo.frontage = (await J(`${P}/frontage_materials.json`)).points_list || []; } catch (e) {}
     }
     E.ready = loadStatic();
     E.load = async function (walk) {
+      await E.ready;
+      const P = E.project.processed;
       const keepT = E.walk === walk ? E.time() : 0;
       E.walk = walk; E.data = null; E.motion = null; E.seen = new Set(); totKey = "";
       let d;
-      try { d = await J(`../data/processed/${walk}/overlays_stab.json`); } catch (e) { d = await J(`../data/processed/${walk}/overlays.json`); }
+      try { d = await J(`${P}/${walk}/overlays_stab.json`); } catch (e) { d = await J(`${P}/${walk}/overlays.json`); }
       E.data = d;
-      try { E.motion = await J(`../data/processed/${walk}/motion_stab.json`); } catch (e) { E.motion = null; }
-      video.src = `../data/processed/${walk}/${d.video || "video/equirect.mp4"}`; video.load();
+      try { E.motion = await J(`${P}/${walk}/motion_stab.json`); } catch (e) { E.motion = null; }
+      video.src = `${P}/${walk}/${d.video || "video/equirect.mp4"}`; video.load();
       vt = keepT; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; video.playbackRate = E.speed; }, { once: true });
       if (E.onWalk) E.onWalk(walk);
@@ -248,7 +263,7 @@
       else if (d) {
         if (E.playing) { vt += dt * E.speed; if (vt >= E.duration()) vt = 0; }
         const want = Math.min(d.n_frames - 1, Math.round(vt * d.fps));
-        if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `../data/interim/${E.walk}/${d.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
+        if (want !== stillFi && !stillBusy) { stillFi = want; stillReady = false; stillBusy = true; still.src = `${E.project.interim}/${E.walk}/${d.frames_dir || "frames"}/${String(want).padStart(6, "0")}.jpg`; }
         if (stillReady) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, still); stillReady = false; }
       }
       const W = ov.width, H = ov.height, tx = Math.tan(E.fov * deg / 2);
@@ -299,7 +314,8 @@
       },
     };
     E.fmtTime = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-    E.walkLabel = w => (w === "walk1" ? "Hatikvah St" : "Hamevasser St");
+    E.walkLabel = w => (E.project.walks[w] || {}).label || w;
+    E.walkShort = w => `walk ${String(w).replace(/^walk/, "")}`;
     return E;
   }
   window.ShukEngine = { create, PALETTE, EMOJI, AGE_EMOJI, AGES, emojiOf: c => EMOJI[c] || "❔" };
