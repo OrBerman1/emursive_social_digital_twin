@@ -279,6 +279,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const stage = $("stage"), D2R = Math.PI / 180;
   const show = { person: true, object: true, decor: false, space: true, labels: true, trails: true };
   const DECOR = new Set(["hanging lamp", "flag", "awning"]);
+  const hidden = c => DECOR.has(c) && !show.decor;          // decor counts only when the "Decor" layer is on
   const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
   const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
   let auto = [], autoAt = 0, hover = null;
@@ -570,7 +571,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     };
     d.frames.forEach((F, f) => {
       for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7]);
-      for (const e of F.l2) if (!DECOR.has(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
+      for (const e of F.l2) if (!hidden(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
       for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { const pm = (e[5] + e[6]) / 2; note(`sign:${e[0]}`, "space", f, e[2], pm > 2 ? Math.max(2, Math.min(12, (2.8 - h) / Math.tan(pm * D2R))) : 6); }
     });
@@ -625,8 +626,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     d.frames.forEach((F, f) => {
       const ahead = yw => Math.abs(wrap(yw - fwdAt(f))) < 45;
       for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(e[0]); }
-      for (const e of F.o) if (e[1] >= E.conf && !DECOR.has(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { if (ahead(e[2])) T.space.view[f]++; seenS.add(e[0]); }
       T.person.cum[f] = seenP.size; T.object.cum[f] = seenO.size; T.space.cum[f] = seenS.size;
     });
@@ -674,7 +675,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const top = new Set(TOPOBJ.map(t => t[0])), counts = { ...byCls, __other: Object.entries(byCls).filter(([c]) => !top.has(c)).reduce((a, [, v]) => a + v, 0) };
       const segs = segsOf("o", [...TOPOBJ, ["__other", "Other", GREY]], counts);
       html = `<div class="dt">Types <small>· top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
-      note = "Decor (lamps, flags) excluded.";
+      note = show.decor ? "" : "Decor (lamps, flags) excluded.";
     } else {
       const d = st.data, read = [], counts = {};
       const fi = st.fi; for (let f = 0; f <= fi; f++) for (const e of d.frames[f].s || []) { const info = d.signs[e[0]]; if (info && info[3] && !read.some(x => x.id === e[0])) read.push({ id: e[0], text: info[0], lang: info[1] }); }
@@ -751,7 +752,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
   function buildMarks(d) {
     const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf).length);
-    const obj = d.frames.map(F => F.l2.filter(x => !DECOR.has(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
+    const obj = d.frames.map(F => F.l2.filter(x => !hidden(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
     const firstSign = new Map(); d.frames.forEach((F, i) => { for (const s of F.s || []) if ((d.signs[s[0]] || [])[3] && !firstSign.has(s[0])) firstSign.set(s[0], i); });
     const signs = [...firstSign.values()].sort((a, b) => a - b).filter((f, i, a) => i === 0 || f - a[i - 1] > d.fps * 8).slice(0, 10);
     marks = [...peaks(ppl, 8, d.fps * 12).map(f => ({ f, k: "person", t: `Crowd peak · ${ppl[f]} people` })),
@@ -819,6 +820,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   });
   document.querySelectorAll("[data-show]").forEach(i => i.addEventListener("change", () => {
     show[i.dataset.show] = i.checked; const chip = document.querySelector(`.chip[data-k="${i.dataset.show}"]`); if (chip) chip.setAttribute("aria-pressed", String(i.checked)); autoAt = 0;
+    if (i.dataset.show === "decor" && E.data) { buildTrends(E.data); buildMarks(E.data); buildMet(E.data, E.geo.walks[E.walk]); statsAt = 0; }
   }));
   document.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
