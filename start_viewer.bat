@@ -1,10 +1,10 @@
 @echo off
-rem Starts the local viewer server and opens the viewer in the default browser.
-rem Close this window (or press Ctrl+C in it) to stop the server.
+rem Main viewer (ui_alex): 360 exploration with pointer dots, info windows, round map + full map, Ask Jeeves
+rem Starts its own local server on port 8006 and opens the page. Close this window to stop it.
 cd /d "%~dp0"
-title Shuk HaTikvah viewer - close this window to stop
-echo Starting the viewer at http://localhost:8000/viewer/
-echo Keep this window open while viewing. Close it to stop the viewer.
-start "" "http://localhost:8000/viewer/"
-".venv\Scripts\python.exe" pipeline\serve.py --port 8000
+title Shuk HaTikvah viewer ui_alex - close this window to stop
+echo Viewer ui_alex - 360 exploration
+echo http://localhost:8006/viewer/ui_alex.html
+start "" "http://localhost:8006/viewer/ui_alex.html"
+".venv\Scripts\python.exe" pipeline\serve.py --port 8006
 pause

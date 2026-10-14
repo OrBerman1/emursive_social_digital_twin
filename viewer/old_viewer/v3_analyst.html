@@ -310,7 +310,7 @@ header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; bor
 </aside>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="engine.js"></script>
+<script src="../engine.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -399,7 +399,7 @@ header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; bor
     }
     if (e.kind === "frontage") {
       const p = e.info;
-      return hd("Frontage", "🧱") + `<img src="../data/processed/${esc(p.crop)}" alt="Frontage crop seen by the camera"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}${row("Side", esc(p.side || "—"))}</dl><div style="margin-top:8px;font-size:12.5px">${(p.materials || []).map(esc).join(" · ") || "—"}</div><div class="foot">Experimental · F-${esc(p.id)}</div>`;
+      return hd("Frontage", "🧱") + `<img src="/data/processed/${esc(p.crop)}" alt="Frontage crop seen by the camera"><dl>${row("Facade", esc(p.facade))}${row("Structure", esc(p.structure))}${row("Side", esc(p.side || "—"))}</dl><div style="margin-top:8px;font-size:12.5px">${(p.materials || []).map(esc).join(" · ") || "—"}</div><div class="foot">Experimental · F-${esc(p.id)}</div>`;
     }
     if (e.kind === "sign") return hd("Sign", "🪧") + `<div class="txt" dir="auto">${esc(e.text || "—")}</div><div class="foot">Read by OCR / vision model</div>`;
     if (e.kind === "food") return hd(e.cls, ShukEngine.emojiOf(e.cls)) + `<dl>${row("Type", kind === "pictured" ? "Food picture (not counted)" : "Food on display")}${row("Confidence", e.conf.toFixed(2))}</dl>`;

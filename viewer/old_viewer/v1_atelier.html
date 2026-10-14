@@ -147,7 +147,7 @@ h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="engine.js"></script>
+<script src="../engine.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -235,7 +235,7 @@ h1 small { font: 500 13px var(--sans); color: var(--soft); margin-left: 8px; }
     }
     if (e.kind === "frontage") {
       const p = e.info;
-      return `<h3>🧱 Frontage ${close}</h3><img src="../data/processed/${p.crop}" alt=""><dl>${row("Facade", p.facade)}${row("Structure", p.structure)}</dl><div style="margin-top:6px">${p.materials.map(esc).join(" · ") || "—"}</div><span class="tag">Experimental · what the camera saw here</span>`;
+      return `<h3>🧱 Frontage ${close}</h3><img src="/data/processed/${p.crop}" alt=""><dl>${row("Facade", p.facade)}${row("Structure", p.structure)}</dl><div style="margin-top:6px">${p.materials.map(esc).join(" · ") || "—"}</div><span class="tag">Experimental · what the camera saw here</span>`;
     }
     if (e.kind === "sign") return `<h3>🪧 Sign ${close}</h3><div dir="auto" style="font-size:16px;unicode-bidi:plaintext">${esc(e.text || "—")}</div><span class="tag">Read by a vision model</span>`;
     const name = e.kind === "pictured" ? "Pictured person" : e.cls;
