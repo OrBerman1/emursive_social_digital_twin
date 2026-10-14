@@ -104,6 +104,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .soft-tiles { filter: grayscale(.8) brightness(1.05); }
 .mini .n { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 500; font: 800 13px var(--sans); color: var(--ink); background: rgba(255,255,255,.95); border-radius: 999px; width: 26px; height: 26px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.15); pointer-events: none; }
 .mini .you svg { width: 60px; height: 60px; overflow: visible; }
+.mini .mm-layer { position: absolute; left: 0; top: 0; pointer-events: none; }
 .mini-cap { white-space: pre-line; position: absolute; right: 8px; bottom: 86px; width: 250px; text-align: center; color: #fff; font-size: 11px; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; z-index: 9; }
 
 /* ---- bottom transport ---- */
@@ -115,8 +116,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .track .rail-line { position: absolute; left: 0; right: 0; top: 17px; height: 2px; background: #d9dce4; border-radius: 2px; }
 .track .done { position: absolute; left: 0; top: 17px; height: 2px; background: #9aa3b5; border-radius: 2px; }
 .track .ticks { position: absolute; left: 0; right: 0; top: 22px; height: 6px; background: repeating-linear-gradient(90deg, #d9dce4 0 1px, transparent 1px 1.25%); }
-.track .mk { position: absolute; top: 12px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; }
-.track .mk.person { background: var(--person); } .track .mk.object { background: var(--object); top: 4px; } .track .mk.space { background: var(--space); }
+.track .mk { position: absolute; top: 12px; width: 10px; height: 10px; margin-left: -5px; border: 0; padding: 0; cursor: pointer; }
+.track .mk.person { background: var(--person); border-radius: 50%; }
+.track .mk.object { background: var(--object); border-radius: 1px; top: 4px; }
+.track .mk.space { background: var(--space); border-radius: 0; width: 12px; height: 11px; margin-left: -6px; top: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .track .mk.bookmark { background: #fff; border: 2px solid var(--ink); top: 3px; width: 11px; height: 11px; }
 .track .mk:hover { transform: scale(1.35); }
 .track .thumb { position: absolute; top: 9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #fff; border: 2px solid #c6cbd6; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; }
@@ -177,9 +180,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   </div>
 
   <div class="chips glass" data-no-drag>
-    <button class="chip" data-k="person" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></span><span class="lbl">People</span><span class="n" id="nP">0</span></button>
-    <button class="chip" data-k="object" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span><span class="lbl">Objects</span><span class="n" id="nO">0</span></button>
-    <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 21 20H3z"/><path d="M12 10v5"/></svg></span><span class="lbl">Space</span><span class="n" id="nS">0</span></button>
+    <button class="chip" data-k="person" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="var(--person)" stroke="#fff" stroke-width="2"/></svg></span><span class="lbl">People</span><span class="n" id="nP">0</span></button>
+    <button class="chip" data-k="object" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="var(--object)" stroke="#fff" stroke-width="2"/></svg></span><span class="lbl">Objects</span><span class="n" id="nO">0</span></button>
+    <button class="chip" data-k="space" aria-pressed="true"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 3.5 21 19.5H3z" fill="var(--space)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="lbl">Places</span><span class="n" id="nS">0</span></button>
   </div>
 
   <div class="mini" data-no-drag aria-label="Map: your position on the walk"><div id="mm"></div><span class="n">N</span></div>
@@ -202,7 +205,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <label><input type="checkbox" data-show="person" checked><span>People</span></label>
     <label><input type="checkbox" data-show="object" checked><span>Objects &amp; market items</span></label>
     <label><input type="checkbox" data-show="decor"><span>Decor (lamps, flags)</span></label>
-    <label><input type="checkbox" data-show="space" checked><span>Space: readable signs</span></label>
+    <label><input type="checkbox" data-show="space" checked><span>Places: readable signs</span></label>
     <label><input type="checkbox" data-show="labels" checked><span>Info windows for nearby entities</span></label>
         <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
   </div>
@@ -290,9 +293,18 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
-    buildMotion(d); buildMarks(d); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
+
+  // ---- legend shapes (video pointers, map, chips): people = yellow circle, objects = red square, places = blue triangle ----
+  function mark(c, g, x, y, r, lw) {
+    c.beginPath();
+    if (g === "person") c.arc(x, y, r, 0, 7);
+    else if (g === "object") c.rect(x - r * .9, y - r * .9, r * 1.8, r * 1.8);
+    else { c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.15, y + r * .8); c.lineTo(x - r * 1.15, y + r * .8); c.closePath(); }
+    c.fillStyle = COL[g]; c.fill(); c.lineWidth = lw; c.strokeStyle = "#fff"; c.lineJoin = "round"; c.stroke();
+  }
 
   // ---- pointer anchor: upper torso for people, centre for objects and signs ----
   const anchor = e => { const r = e.rect; return e.kind === "person" ? [(r[0] + r[2]) / 2, r[1] + (r[3] - r[1]) * 0.22] : [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
@@ -460,8 +472,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const [x, y] = anchor(e), isPin = pinnedKeys.has(keyOf(e)), isHov = hover && keyOf(hover) === keyOf(e), r = (g === "person" ? 5.5 : 4.5) * k;
       c.globalAlpha = Math.min(1, e.alpha * 1.3);
       if (isPin || isHov) { c.fillStyle = COL[g] + "55"; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
-      c.fillStyle = "#fff"; c.beginPath(); c.arc(x, y, r + 2.2 * k, 0, 7); c.fill();
-      c.fillStyle = COL[g]; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+      mark(c, g, x, y, r, 2.2 * k);
       if (g === "person" && (isPin || isHov)) {          // viewfinder corners around the head
         const rr = e.rect, hw = Math.min((rr[2] - rr[0]) * 0.26, (rr[3] - rr[1]) * 0.085), cx = (rr[0] + rr[2]) / 2, top = rr[1] - hw * 0.2, hh = hw * 2.5, L = Math.min(10 * k, hw * .7);
         c.strokeStyle = COL.person; c.lineWidth = 2 * k; c.beginPath();
@@ -482,38 +493,75 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   E.onClick = h => { if (!h || !groupOf(h)) return; const key = keyOf(h); if (isPinned(key)) unpin(key); else pin({ kind: h.kind, id: h.id }); };
 
   // ---- round mini map (same look as the Lens design): north-up OSM streets + buildings, "N" badge, you + view cone ----
-  // Live position, view bearing and nearby people need data/processed/<walk>/georef.json; without it the map sits on
-  // the market centre (as in Lens) and says so in the caption.
-  const MARKET = [32.0527, 34.7903];
-  let mm = null, mmMe = null, mmRoute = null, mmDots = null;
+  // Position comes from georef.json (shop anchors, exact) or else georef_approx.json (pipeline/walk_path.py: walk shape
+  // from gyro + walking direction fitted to the OSM street; approximate). Everything met on the walk is drawn where it
+  // was seen, with the legend shapes: people = yellow circles, objects = red squares, places = blue triangles.
+  const MARKET = [32.0527, 34.7903], APPROX = {};
+  let mm = null, mmMe = null, mmRoute = null, mmCanvas = null, MET = [];
   const YOU = `<svg viewBox="0 0 60 60" aria-hidden="true"><g id="cone"><path d="M30 30 L16 4 A30 30 0 0 1 44 4 Z" fill="rgba(47,124,246,.32)" stroke="rgba(47,124,246,.75)" stroke-width="1"/></g><circle cx="30" cy="30" r="6.5" fill="#1d2433" stroke="#fff" stroke-width="3"/></svg>`;
   const offset = (lat, lon, brg, m) => [lat + m * Math.cos(brg * D2R) / 110574, lon + m * Math.sin(brg * D2R) / (111320 * Math.cos(lat * D2R))];
   E.ready.then(() => {
-    mm = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false }).setView(MARKET, 18);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, className: "soft-tiles" }).addTo(mm);
-    mmDots = L.layerGroup().addTo(mm);
+    mm = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView(MARKET, 18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 21, maxNativeZoom: 19, className: "soft-tiles" }).addTo(mm);
+    mm.createPane("met").style.zIndex = 450;                     // under the marker pane (600): "you" + cone stay on top
+    mmCanvas = document.createElement("canvas"); mmCanvas.className = "mm-layer"; mm.getPane("met").appendChild(mmCanvas);
     mmMe = L.marker(MARKET, { icon: L.divIcon({ className: "you", iconSize: [60, 60], iconAnchor: [30, 30], html: YOU }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(mm);
     mapRoute();
   });
+  async function geoFor(w) {                       // exact georef if present, else the approximate one
+    await E.ready;
+    if (!E.geo.walks[w]) { try { E.geo.walks[w] = await J(`../data/processed/${w}/georef_approx.json`); APPROX[w] = true; } catch (e) {} }
+    return E.geo.walks[w];
+  }
+  // one map position per entity: where it was seen closest to the camera; f0 = first frame it was seen
+  function buildMet(d, g) {
+    MET = []; if (!g) return;
+    const h = d.camera_height_m || 1.3, best = new Map();
+    const note = (key, g_, f, yw, dist, cls) => {
+      if (!(dist > 0.5 && dist < 30) || g.lat[f] == null) return;
+      const b = best.get(key);
+      if (!b) best.set(key, { key, g: g_, f0: f, dist, f, yw, cls });
+      else if (dist < b.dist) Object.assign(b, { dist, f, yw });
+    };
+    d.frames.forEach((F, f) => {
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7]);
+      for (const e of F.l2) if (!DECOR.has(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
+      for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
+      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { const pm = (e[5] + e[6]) / 2; note(`sign:${e[0]}`, "space", f, e[2], pm > 2 ? Math.max(2, Math.min(12, (2.8 - h) / Math.tan(pm * D2R))) : 6); }
+    });
+    for (const b of best.values()) { const [la, lo] = offset(g.lat[b.f], g.lon[b.f], g.yaw0_bearing_deg[b.f] + b.yw, b.dist); MET.push({ ...b, lat: la, lon: lo }); }
+    MET.sort((a, b) => a.f0 - b.f0);
+  }
   function mapRoute() {
     if (!mm) return; if (mmRoute) { mmRoute.remove(); mmRoute = null; }
     const g = E.geo.walks[E.walk]; if (!g) { mm.setView(MARKET, 18); mmMe.setLatLng(MARKET); return; }
-    mmRoute = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(q => q[0] != null), { color: COL.person, weight: 4, opacity: .55, lineCap: "round" }).addTo(mm);
+    mmRoute = L.polyline(g.lat.map((a, i) => [a, g.lon[i]]).filter(q => q[0] != null), { color: "#1d2433", weight: 3, opacity: .35, dashArray: "5 6", lineCap: "round" }).addTo(mm);
+    const i0 = g.lat.findIndex(v => v != null); mm.setView([g.lat[i0], g.lon[i0]], 19.5);
   }
   setInterval(() => {
     const st = E.state; if (!st || !mm) return;
     const cone = mmMe.getElement() && mmMe.getElement().querySelector("#cone"), rel = Math.round(wrap(E.yaw - fwdAt(st.fi)));
     const how = follow ? "following the walking direction" : Math.abs(rel) < 8 ? "looking ahead" : `${Math.abs(rel)}° ${rel > 0 ? "right" : "left"} of the walking direction`;
-    mmDots.clearLayers();
+    const W = $("mm").clientWidth, H = $("mm").clientHeight, dpr = Math.min(2, devicePixelRatio || 1), c = mmCanvas.getContext("2d");
+    if (mmCanvas.width !== W * dpr) { mmCanvas.width = W * dpr; mmCanvas.height = H * dpr; mmCanvas.style.width = W + "px"; mmCanvas.style.height = H + "px"; }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
     if (!st.cam) { $("mmCap").textContent = `${how}\napprox. position · needs the shop table`; return; }
-    const { lat, lon, bearing, yaw0 } = st.cam;
+    const { lat, lon, bearing } = st.cam;
     mmMe.setLatLng([lat, lon]); mm.panTo([lat, lon], { animate: false });
+    L.DomUtil.setPosition(mmCanvas, mm.containerPointToLayerPoint([0, 0]));   // the pane moves with the map; keep the canvas on the view
     if (cone) cone.setAttribute("transform", `rotate(${bearing.toFixed(1)} 30 30)`);
-    const F = st.data.frames[st.fi];
-    if (F && show.person) for (const x of F.p) if (x[7] && x[1] >= E.conf)
-      L.circleMarker(offset(lat, lon, yaw0 + x[2], x[7]), { radius: 4, weight: 1.5, color: "#3a2f00", fillColor: COL.person, fillOpacity: 1, interactive: false }).addTo(mmDots);
-    $("mmCap").textContent = `facing ${Math.round(bearing)}° · ${how}`;
-  }, 150);
+    // everything met so far on the walk; what is in view right now is drawn larger
+    const now = new Set(st.entities.map(e => keyOf(e)));
+    for (const m of MET) {
+      if (m.f0 > st.fi) break;
+      if (!show[m.g]) continue;
+      const q = mm.latLngToContainerPoint([m.lat, m.lon]); if (q.x < -10 || q.y < -10 || q.x > W + 10 || q.y > H + 10) continue;
+      const live = now.has(m.key);
+      c.globalAlpha = live ? 1 : 0.8; mark(c, m.g, q.x, q.y, live ? 5.5 : 3.6, live ? 1.8 : 1.2);
+    }
+    c.globalAlpha = 1;
+    $("mmCap").textContent = `facing ${Math.round(bearing)}° · ${how}` + (APPROX[E.walk] ? "\napproximate position (fitted to the street)" : "");
+  }, 120);
 
   // ---- stats popover ----
   function updateStats(st) {
