@@ -1,7 +1,7 @@
 # CLAUDE.md — Shuk HaTikvah 360° Social Immersive Digital Twin (Hackathon)
 
 ## Current state — read this first (updated 13 Oct 2026, evening)
-- **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–21: the method,
+- **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–30: the method,
   numbers and validation for every stage). Git: one branch per feature; `main` holds everything up to
   the design variants (merged 14 Oct); current branch `advanced_features`. Push only when the user asks, with
   `git -c http.sslBackend=schannel push` (certificate issue on this machine).
@@ -26,6 +26,10 @@
 - **🎩 Ask Jeeves (14 Oct):** `pipeline/jeeves.py` agent per project (tools: run_sql, view_people, view_scene,
   classify_people) + viewer drawer. Claude via `pipeline/llm.py`: Sonnet 5.5 (user: not Opus), Anthropic key or the
   hackathon Bedrock key (classic runtime, us-east-1; key in %LOCALAPPDATA%/ShukTwin, never in the repo). METHODS 29.
+- **Person linking (14 Oct):** `pipeline/link_persons.py` (cheap, after motion, before crowds/export) adds a person id
+  per track (track ids unchanged) and smooths gender/age over the person; links only where the vision review
+  `config/person_links_review.json` says "same" (4 of 15 candidates; track ends are where the tracker switches
+  people). Overlays: `tracks_fields` += person, sex_track, age_track. Undo: `pipeline/restore_person_linking_backup.py`. METHODS 30.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
