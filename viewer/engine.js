@@ -171,7 +171,9 @@
       return { dx: s1[0] - s0[0], dy: s1[1] - s0[1], spd: m.spd };
     };
 
-    // ---- totals over the whole walk (unique track IDs passing the same filters) ----
+    // person id of a track (link_persons.py, tracks_fields "person"): a person split into several tracks counts once
+    E.personOf = (d, id) => (d.tracks[id] || [])[7] ?? id;
+    // ---- totals over the whole walk (unique persons whose tracks pass the same filters) ----
     let totKey = "", totVal = null;
     function totals(d) {
       const key = `${E.walk}|${E.conf}|${E.minLen}`;
@@ -183,7 +185,8 @@
         for (const e of F.l2) best.l2.set(e[8], e[0]);
         for (const e of (F.fd || [])) best.fd.set(e[7], e[0]);
       }
-      let people = 0; for (const [id, c] of best.p) if (c >= E.conf && ((d.tracks[id] || [])[2] || 0) >= E.minLen) people++;
+      const ps = new Set(); for (const [id, c] of best.p) if (c >= E.conf && ((d.tracks[id] || [])[2] || 0) >= E.minLen) ps.add(E.personOf(d, id));
+      const people = ps.size;
       const food = [...best.fd.values()].filter(c => c !== "Food picture (menu/sign)").length;
       totVal = { people, objects: best.o.size, level2: best.l2.size, food, signs: Object.values(d.signs || {}).filter(x => x[3]).length,
                  pictured: Object.keys(d.dp_tracks || {}).length };
@@ -222,7 +225,7 @@
           else if (key === "s") { const info = (d.signs || {})[id]; if (!info) continue; cls = "sign"; extra = { text: info[0], lang: info[1], readable: !!info[3] }; }
           else if (key === "dp") cls = "pictured";
           else cls = e[0];
-          if (key === "p" && al >= 0.5) { counts.people.frame++; E.seen.add(id); }
+          if (key === "p" && al >= 0.5) { counts.people.frame++; E.seen.add(E.personOf(d, id)); }
           if (!inFov(e[2])) continue;
           const rect = boxRect(e[2], e[3], e[4], e[5], e[6]); if (!rect) continue;
           const ent = { key, kind, id, cls, conf, alpha: al, yaw: e[2], pt: e[5], pb: e[6], rect, ...extra };

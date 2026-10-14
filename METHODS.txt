@@ -515,3 +515,48 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      3.459 -> 0.903; walk 2 video 0.619 -> 0.309, frames 2.914 -> 0.967 (old stitch: 0.242 / 1.070 and 0.310 / 1.357).
    - Default (user, 14 Oct): the viewers open the restitched project when the link names none (config/viewer.json,
      returned as "default" by /api/projects); the original project's results are kept, at ?project=shuk_hatikvah.
+
+31. PERSON LINKING + SMOOTHED GENDER / AGE PER PERSON  (link_persons.py; config\person_links_review.json)
+   - Problem (user, 14 Oct): gender / age are labelled per TRACK; when a track breaks the pieces get separate labels
+     (far piece "uncertain", near piece "woman") and the person is counted twice.
+   - Track ids are NOT changed (attachments, comments, Jeeves classifications are keyed by them): the stage adds a
+     person id per track (= smallest track id of the linked set) -> data/interim/<walk>/persons_linked_stab/
+     links.parquet (+ summary.json, manifest.json). Cheap stage, after motion.py, before crowds.py / export.
+   - Candidates: (a) motion.py's map re-links (consecutive members of each id2g group); (b) image gap bridges: B starts
+     1-10 frames (<= 2 s) after A ends, direction predicted from a line over A's last / B's first 2 s (forward +
+     backward, wrap-safe at +-180) within 0.35 x box height, mid pitch within 0.25 x box height, box height and
+     ground distance ratios within 1.3, unambiguous both ways (second best >= 0.15 worse in cost).
+     Never linked: operator / pictured tracks (depicted.py), tracks mostly closer than ~1.25 m (feet below -42 deg) or
+     >= 40 deg tall (the operator's arm / T-shirt where depicted.py missed it, partial boxes), tracks that share any
+     frame, sets with a confident man and a confident woman.
+   - Visual check (contact sheets, 4 isolated crops of the last 2 s of A | 4 of the first 2 s of B): of 15 candidates
+     (11 walk 1, 4 walk 2): 4 same person, 5 different (another person or the camera operator), 6 unclear. A first,
+     looser version linked the operator's arm to shoppers (10 of 25 links). Loosening the gap bridge (cost 1-2.2, 31
+     pairs) gave mostly different people. An extra gate (map link must continue in the image: direction <= 15 deg,
+     mid pitch <= 8 deg) kept 6, of which only 2 were confirmed (1 wrong, 3 unclear). Colour histograms and CLIP
+     image similarity of the two sides did not separate same / different. Reason: track ends are exactly where the
+     tracker slides from one person to another (ID switches inside tracks), so the end of A is often not the person
+     the rest of A shows.
+   - Therefore the vision review decides (config/person_links_review.json: same / different / unclear, like
+     depicted_review.json); only "same" is linked. Unreviewed candidates are linked only with --auto (automatic gates;
+     ~1 in 3 confirmed). --review-sheet PATH writes the sheets for a new review (scratch folder only, never data/).
+   - Smoothed attributes: per-track CLIP probabilities (attributes.parquet) averaged over the person with weight = sum
+     of the track's crop heights in degrees (attributes_raw.parquet: bigger / closer / more crops count more); same rule
+     as attributes.py: man / woman if >= 0.75, age group if its probability >= 0.5, else uncertain. A one-track person
+     keeps exactly its own label. Every track of a person gets the person's label; the track's own label is kept.
+   - Numbers (stab): walk 1 619 tracks -> 617 persons (2 links), viewer total 528 -> 526; walk 2 236 -> 234 (2 links),
+     viewer total 187 -> 185. Label changes: 1 track uncertain -> woman (P-0454 + P-0682), 2 age groups; motion.py's
+     groups with conflicting labels were mostly wrong links (not merged here). Crowds unchanged.
+   - Export: overlays tracks_fields += person, sex_track, age_track; sex / age are now the person's (all viewers show
+     them unchanged); observations: person_id per track. Viewer totals ("whole walk", "so far") count distinct persons.
+     Jeeves: people.linked_person, gender_track_est / age_group_track_est; facts count persons.
+   - motion.py's own id2g groups (paths, motion arrows) are unchanged and contain wrong merges (see the check above).
+   - Undo: .venv\Scripts\python pipeline\restore_person_linking_backup.py (copies data/backup/
+     before_person_linking_20261014 back, renames persons_linked_stab to .undone).
+   - The real fix for double counting is upstream: cut ID switches inside tracks (tracks.py), then link; that changes
+     track ids and was out of scope.
+   - Restitched project (15 Oct): its track ids differ, so it has its own vision review
+     (projects/shuk_hatikvah_v2/config/person_links_review.json): walk 1 1 of 15 candidates "same" (7 different incl. the
+     operator's arm, 6 unclear) -> 638 persons from 639 tracks; walk 2 2 of 3 "same" -> 234 persons from 236 tracks.
+   - ui_alex counts persons, not tracks (engine.js E.personOf): walk totals, "unique so far", statistics cumulative,
+     segment summary and Analysis zones.
