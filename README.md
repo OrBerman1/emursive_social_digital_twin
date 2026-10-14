@@ -108,15 +108,19 @@ To force a stage to recompute, run it alone with `--force`.
 
 ## 5. Open the viewer
 
-**Main viewer (design `ui_alex`):** double-click **`start_viewer_ui_alex.bat`** → http://localhost:8006/viewer/ui_alex.html
-(Mac: `start_viewer_ui_alex_mac.command`). Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at
-the top. The original viewer below still works and has the same data.
+**Main viewer (design `ui_alex`):** double-click **`start_viewer.bat`** (same as `start_viewer_ui_alex.bat`;
+Mac: `start_viewer_mac.command`) → http://localhost:8006/viewer/ui_alex.html (http://localhost:8006/viewer/ opens it too).
+It opens the restitched project (`config/viewer.json`); the original results stay at `?project=shuk_hatikvah`.
+Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at the top.
 
-1. Double-click **`start_viewer.bat`**. A black window (the local server) opens and the viewer opens in
-   your browser at **http://localhost:8000/viewer/**. Keep the black window open while viewing.
+1. A black window (the local server) opens and the viewer opens in your browser. Keep the black window open while
+   viewing; if it is closed, the page stops loading.
 2. To stop: close the browser tab and the black window.
 
-The viewer must be opened through this server; opening `viewer\index.html` directly does not work.
+The viewer must be opened through this server; opening the html file directly does not work.
+**Earlier viewers** (the original viewer and the five design variants) are kept in `viewer/old_viewer/` with their
+launchers (`viewer\old_viewer\start_viewer_original.bat`, port 8000; `start_viewer_1..5_*.bat`, ports 8001–8005).
+The controls below describe the original viewer.
 
 **Controls**
 - Play / pause (or space bar); drag the timeline; **Speed** ×0.25 – ×2.
@@ -165,8 +169,8 @@ Open **http://localhost:8000/viewer/projects.html** (link "projects" in the view
 frames and times seen, confidence, model). Positions along the route currently use an assumed walking
 pace; real coordinates follow once anchor points on the GIS map are available (the videos contain no GPS).
 
-**Five alternative viewer designs** (branch `design`; the original viewer stays as it is). Each has its own
-launcher and port, so several can run side by side:
+**Five alternative viewer designs** (branch `design`; now in `viewer/old_viewer/`, launchers there too). Each has
+its own launcher and port, so several can run side by side:
 
 | Launcher | Design | Idea |
 |---|---|---|
