@@ -10,8 +10,8 @@
 /* Layout: real-data viewer. 360 video (WebGL) with an overlay canvas, side panel, timeline below. */
 :root {
   --bg: #121819; --surface: #1b2324; --ink: #e5e9e5; --muted: #93a09d; --line: #33403f;
-  --accent: #4fb3bb; --person: #ef6f62; --obj: #e0a948; --l2: #b49be6; --waste: #d1a865; --logi: #f0a050;
-  --ocr: #6fd3c8; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #b597d1; --ag2: #6fbf8a; --ag3: #6aa7d6; --ag4: #e0a35a;
+  --accent: #4fb3bb; --person: #ef6f62; --obj: #e0a948; --l2: #b49be6; --waste: #e05cc8; --logi: #f0a050;
+  --ocr: #6fd3c8; --dp: #f2d16b; --food: #3fa7ff; --frontage: #e6d3b3; --sx-m: #6a9cc0; --sx-w: #cf82a8; --sx-u: #56605f; --ag1: #e2f7dc; --ag2: #9fe08f; --ag3: #4caf50; --ag4: #1b6e2a; --ag-u: #9aa3a1;  /* age: one green ramp, light = young -> dark = old */
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -37,10 +37,11 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .counters { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
 .counters span { font: 500 11px var(--mono); background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; display: inline-flex; gap: 5px; align-items: center; }
 .counters i { width: 8px; height: 8px; border-radius: 50%; }
-.vcard { position: absolute; left: 0; top: 0; width: 240px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.vcard { position: absolute; left: 0; top: 0; z-index: 6; width: 270px; background: var(--surface); border: 1px solid var(--person); border-radius: 6px; padding: 8px 10px; font-size: 12px; display: grid; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
 .vcard header { display: flex; gap: 6px; align-items: center; }
 .vcard b { font: 700 .95rem var(--display); flex: 1; }
-.vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 0 4px; }
+.vcard button { all: unset; cursor: pointer; color: var(--muted); padding: 2px 6px; font-size: 14px; border-radius: 4px; }
+.vcard button:hover { color: var(--ink); background: var(--line); }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
 .tl { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
 .tl input { flex: 1; min-width: 0; accent-color: var(--accent); }
@@ -54,6 +55,8 @@ aside section:first-child { border-top: 0; }
 .big { display: flex; align-items: baseline; gap: 10px; }
 .big b { font: 700 2.3rem/1 var(--display); font-variant-numeric: tabular-nums; }
 .big span { color: var(--muted); font-size: 12.5px; }
+.big b.tot { font-size: 1.35rem; color: var(--muted); font-weight: 600; }
+.big b.tot span { font-size: inherit; color: inherit; }
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; margin: 0; font-variant-numeric: tabular-nums; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); text-align: right; }
 .layers { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -61,6 +64,28 @@ aside section:first-child { border-top: 0; }
 .layers input { accent-color: var(--accent); margin: 0; }
 .note { font-size: 12px; color: var(--muted); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* ---- map: GTA-style mini-map (bottom right of the video) + full map overlay ---- */
+.minimap { position: absolute; right: 12px; bottom: 12px; width: 200px; height: 200px; border-radius: 50%; overflow: hidden;
+  border: 3px solid rgba(229,233,229,.85); box-shadow: 0 4px 16px rgba(0,0,0,.5); cursor: pointer; z-index: 4; background: #1b2324; }
+.minimap .rot { position: absolute; left: -50px; top: -50px; width: 300px; height: 300px; transform-origin: 150px 150px; }
+.minimap .mm { width: 300px; height: 300px; }
+.minimap .me { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 500; }
+.minimap .me svg { position: absolute; left: -40px; top: -40px; }
+.minimap .north { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 501; }
+.minimap .north span { position: absolute; left: -9px; top: -100px; font: 700 12px var(--mono); color: #fff; background: #c0392b; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; }
+.minimap .hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 10px var(--mono); color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; z-index: 502; }
+.mapfull { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; }
+.mapfull .box { position: relative; width: min(1200px, 100%); height: min(85vh, 900px); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.mapfull #fullmap { position: absolute; inset: 0; }
+.mapfull .bar { position: absolute; left: 10px; top: 10px; z-index: 1001; display: flex; gap: 8px; align-items: center; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); }
+.mapfull .bar button { font: 600 12px var(--body); background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.mapfull .legend2 { position: absolute; right: 10px; bottom: 24px; z-index: 1001; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink); display: grid; gap: 3px; max-height: 50%; overflow-y: auto; }
+.mapfull .legend2 i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.leaflet-popup-content { font: 13px var(--body); }
+.leaflet-popup-content b { font-family: var(--display); }
+.leaflet-popup-content .go { margin-top: 6px; font: 600 12px var(--body); background: #4fb3bb; color: #121819; border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.leaflet-popup-content .muted { color: #777; font-size: 12px; }
+
 .bar { display: flex; height: 11px; border-radius: 3px; overflow: hidden; background: var(--line); }
 .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .legend span { display: flex; gap: 6px; align-items: center; } .legend i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
@@ -70,6 +95,29 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .signs .t { unicode-bidi: plaintext; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .signs .lg { font: 600 10px var(--mono); text-transform: uppercase; background: var(--ocr); color: #101515; border-radius: 3px; padding: 1px 5px; }
 .signs small { font: 11px var(--mono); color: var(--muted); }
+  /* ---- motion & followed people ---- */
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .seg button { font: 500 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { display: inline-flex; align-items: center; border: 1.5px solid var(--c); border-radius: 20px; overflow: hidden; font: 500 11.5px var(--mono); }
+  .chip button { all: unset; cursor: pointer; padding: 2px 8px; color: var(--ink); }
+  .chip button:first-child { background: color-mix(in srgb, var(--c) 28%, transparent); }
+  .chip button:hover { background: color-mix(in srgb, var(--c) 50%, transparent); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; margin-right: 5px; }
+  .rowbtn { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rowbtn button { font: 600 12px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .vcard .vfollow { all: unset; cursor: pointer; text-align: center; font: 600 12px var(--body); border: 1.5px solid var(--c, var(--accent)); color: var(--ink);
+                    border-radius: 4px; padding: 5px 8px; background: color-mix(in srgb, var(--c, var(--accent)) 22%, transparent); }
+  .vcard .vfollow[disabled] { opacity: .5; cursor: default; }
+  .vcard img.fm { width: 100%; border-radius: 4px; display: block; }
+  .leaflet-popup-content img.fm { width: 220px; border-radius: 4px; display: block; margin: 4px 0; }
+  .me-icon { background: none; border: none; }
+  .me-icon svg { overflow: visible; display: block; }
+  .me-cone { fill: rgba(16, 21, 21, .55); stroke: #fff; stroke-width: 2.5; paint-order: stroke; }
+  .me-dot { fill: #e5484d; stroke: #fff; stroke-width: 3.5; }
+  .me-tag { position: absolute; left: 50%; top: 62px; transform: translateX(-50%); white-space: nowrap; font: 600 11px/1.4 system-ui, sans-serif;
+            color: #fff; background: #e5484d; padding: 1px 6px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -89,6 +137,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="hud" id="hud"></div>
         <div class="counters" id="ctr"></div>
         <div class="vcard" id="vcard" hidden></div>
+        <div class="minimap" id="minimap" title="Open the full map" hidden>
+          <div class="rot" id="mmrot"><div class="mm" id="mm"></div></div>
+          <div class="me"><svg width="80" height="80" viewBox="-40 -40 80 80"><path id="mmcone" d="" fill="rgba(79,179,187,.35)" stroke="rgba(79,179,187,.9)" stroke-width="1"/><circle r="6" fill="#4fb3bb" stroke="#fff" stroke-width="2"/></svg></div>
+          <div class="north" id="mmnorth"><span>N</span></div>
+          <div class="hint">click: full map</div>
+        </div>
+
         <div class="loading" id="loading">Loading video and overlays…</div>
       </div>
       <div class="tl">
@@ -101,30 +156,62 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <aside>
       <section>
         <div class="lbl">People in view <em id="frameLbl"></em></div>
-        <div class="big"><b id="pView">0</b><span id="pSub"></span></div>
+        <div class="big"><b id="pView">0</b><b class="tot">/ <span id="pTot">0</span></b><span id="pSub"></span></div>
         <dl class="kv">
           <dt>People in the whole 360° frame</dt><dd id="pAll">0</dd>
           <dt>Unique people so far (tracked)</dt><dd id="pUnique">0</dd>
           <dt>Unique people, whole walk</dt><dd id="pTotal">0</dd>
+          <dt>🖼️ Pictured people on signs (not counted)</dt><dd id="dpCount">0</dd>
         </dl>
+      </section>
+      <section id="secMotion">
+        <div class="lbl">Motion &amp; paths <em>camera motion removed · ≤ 12 m</em></div>
+        <div class="note">Arrow = walking direction (two independent methods agree). Solid ring = standing. Dashed ring with ? = moving, direction uncertain.</div>
+        <div class="seg" id="mMode" role="group" aria-label="Show motion arrows for">
+          <button data-m="none" aria-pressed="false">None</button>
+          <button data-m="followed" aria-pressed="true">Followed</button>
+          <button data-m="view" aria-pressed="false">All in view</button>
+          <button data-m="walking" aria-pressed="false">Walking</button>
+          <button data-m="standing" aria-pressed="false">Standing</button>
+        </div>
+        <dl class="kv">
+          <dt>Walking in view (≥ 0.5 m/s)</dt><dd id="mWalk">—</dd>
+          <dt>Standing in view (≤ 0.3 m/s)</dt><dd id="mStand">—</dd>
+          <dt>Walkers with / against you</dt><dd id="mDir">—</dd>
+        </dl>
+        <div class="lbl">Followed <em id="fCount">0</em></div>
+        <div class="chips" id="fChips"></div>
+        <div class="rowbtn"><button id="fView">+ Follow everyone in view</button><button id="fClear">Clear</button></div>
+        <div class="note">Click a person's emoji, then <b>Follow</b> in the card, or <b>Shift + drag</b> on the video to follow everyone in a box. Each followed person keeps one colour on the box, the motion arrow, the chip and the path on both maps. Click a chip to jump to where that person first appears.</div>
       </section>
       <section id="secSex">
         <div class="lbl">Perceived gender in view <em>estimated · aggregate</em></div>
         <div class="bar" id="sxBar"></div>
         <div class="legend" id="sxLeg"></div>
-        <div class="lbl">Age groups in view <em>estimated</em></div>
+        <div class="lbl">Age groups in view <em>estimated · = box colours</em></div>
         <div class="bar" id="agBar"></div>
         <div class="legend" id="agLeg"></div>
-        <div class="note">Per tracked person from body appearance (CLIP zero-shot, voted over its best crops); never shown on individuals. Not yet validated against hand labels.</div>
+        <div class="note">Per tracked person from body appearance (CLIP zero-shot, voted over its best crops). On boxes: emoji background blue = man, pink = woman, grey = uncertain. Not yet validated against hand labels.</div>
       </section>
       <section>
         <div class="lbl">Text in view <em id="txCount"></em></div>
         <ul class="signs" id="txList"></ul>
-        <div class="note">Tesseract 5 (heb+eng) on detected sign crops, then final-letter fix + spellcheck. <b>Low accuracy</b> (spot check: ~3 of 24 confident reads fully correct); a vision-model reader is planned.</div>
+        <div class="note">Text found by docTR detection; each sign read by a vision-language model (Claude) from its best crop. Spot check: 16/16 correct or correct fragments. Cut-off signs are recorded as the visible fragment.</div>
       </section>
       <section>
         <div class="lbl">Objects in view <em>level 1 · COCO</em></div>
         <dl class="kv" id="objList"></dl>
+      </section>
+      <section id="fdsec">
+        <div class="lbl">Food on display in view <em>where: Open Images V7 · what: CLIP</em></div>
+        <dl class="kv" id="fdList"></dl>
+        <div class="note">Each entry is a tracked display or stack, not single items. Found by YOLOv8x (Open Images V7) + COCO produce, named by CLIP from a market vocabulary (sample check: ~80% right when confident). 🥗 Produce (unsure) = food, item not named confidently.</div>
+      </section>
+      <section id="wssec" hidden>
+        <div class="lbl">Waste on the floor in view <em>on the walkway only</em></div>
+        <dl class="kv" id="wsList"></dl>
+        <dl class="kv"><dt>Here (this 10 m of route)</dt><dd id="wsHere">—</dd><dt>Walk average per 10 m</dt><dd id="wsAvg">—</dd></dl>
+        <div class="note">Open-vocabulary detection (YOLO-World, waste prompts), kept only where the ground around it is floor (SegFormer, ADE20K), checked by CLIP (waste vs stock, drains, feet). Each item is tracked; counts are items, not area.</div>
       </section>
       <section id="l2sec">
         <div class="lbl">Level 2 in view <em>open vocabulary</em></div>
@@ -134,10 +221,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="lbl">Layers</div>
         <div class="layers">
           <label><input type="checkbox" id="Lp" checked>People</label>
-          <label><input type="checkbox" id="Lid" checked>IDs &amp; distance</label>
+          <label><input type="checkbox" id="Lid" checked>Emoji badges</label>
+          <label><input type="checkbox" id="Lage" checked>Colour people by age</label>
+          <label><input type="checkbox" id="Lsex" checked>Gender on emoji badge</label>
           <label><input type="checkbox" id="Lo" checked>Level-1 objects</label>
           <label><input type="checkbox" id="Ll2" checked>Level-2 objects</label>
           <label><input type="checkbox" id="Ltx" checked>Text on signs (OCR)</label>
+          <label><input type="checkbox" id="Lfd" checked>🍅 Food on display</label>
+          <label><input type="checkbox" id="Lfm" checked>🧱 Frontage materials (experimental)</label>
+          <label hidden><input type="checkbox" id="Lws">🗑️ Waste on the floor</label>
+          <label><input type="checkbox" id="Ldp" checked>🖼️ People on signs (possible_rabi_sign)</label>
           <label><input type="checkbox" id="Lmin" checked>Hide tracks &lt; 1 s</label>
           <label><input type="checkbox" id="Lvar" checked>Stabilised video (offline)</label>
         </div>
@@ -151,6 +244,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     </aside>
   </div>
 </div>
+<div class="mapfull" id="mapfull" hidden>
+  <div class="box">
+    <div id="fullmap"></div>
+    <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
+    <div class="legend2" id="maplegend"></div>
+  </div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -221,6 +323,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       let r = await fetch(`../data/processed/${walk}/overlays${v}.json`);
       if (!r.ok) { r = await fetch(`../data/processed/${walk}/overlays.json`); $("Lvar").checked = false; }
       S.data = await r.json();
+      if (typeof setMiniRoute === "function") setMiniRoute();
+      MO.data = null; MO.follow.clear(); MO.pathSig = ""; MO.lastKey = "";
+      try { const rm = await fetch(`../data/processed/${walk}/motion${v}.json`); if (rm.ok) MO.data = await rm.json(); } catch (e) {}
+      renderChips();
       video.src = `../data/processed/${walk}/${S.data.video || "video/equirect.mp4"}`; video.load();
       vt = sameWalk ? keepT : 0; stillFi = -1; stillBusy = false;
       video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; }, { once: true });
@@ -236,7 +342,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const objCol = { person: "--person" };
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const C = { person: css("--person"), obj: css("--obj"), l2: css("--l2"), ocr: css("--ocr"), surface: css("--surface"), ink: css("--ink") };
+  const C = { frontage: css("--frontage"), waste: css("--waste"), food: css("--food"), dp: css("--dp"), person: css("--person"), obj: css("--obj"), l2: css("--l2"), ocr: css("--ocr"), surface: css("--surface"), ink: css("--ink") };
   function inFov(yw) { return Math.abs(((yw - S.yaw + 540) % 360) - 180) < S.fov / 2; }
   function boxRect(yw, yl, yr, pt, pb) {
     let wspan = ((yr - yl) % 360 + 360) % 360;
@@ -246,6 +352,58 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const xs = ok.map(p => p[0]), ys = ok.map(p => p[1]);
     return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
   }
+  // one emoji per class instead of a text label; numbers go to the card that opens on click
+  const EMOJI = {
+    person: "🧍", bicycle: "🚲", motorcycle: "🏍️", car: "🚗", truck: "🚚", bus: "🚌", chair: "🪑", bench: "🪑",
+    umbrella: "☂️", handbag: "👜", backpack: "🎒", suitcase: "🧳", "potted plant": "🪴", "dining table": "🪵",
+    banana: "🍌", apple: "🍎", orange: "🍊", carrot: "🥕", broccoli: "🥦", bottle: "🧴",
+    "plastic crate": "📦", "stack of crates": "📦", "cardboard box": "📦", "flattened cardboard": "📦", packaging: "📦", "delivery box": "📦",
+    "plastic bag": "🛍️", "garbage bag": "🗑️", "trash bin": "🗑️", "organic waste": "🍂", "fruit and vegetable waste": "🍂",
+    "hand truck": "🛒", "trolley cart": "🛒", "wheeled shopping trolley": "🛒", walker: "🦯", wheelchair: "🦽", "mobility scooter": "🦼",
+    broom: "🧹", "e-bike": "🛵", pallet: "🪵", "display table": "🪵", "plastic chair": "🪑", stool: "🪑", awning: "⛱️",
+    Apple: "🍎", Banana: "🍌", Orange: "🍊", Lemon: "🍋", Grapefruit: "🍊", Grape: "🍇", Strawberry: "🍓", Watermelon: "🍉", "Winter melon": "🍈",
+    Cantaloupe: "🍈", Mango: "🥭", Pineapple: "🍍", Peach: "🍑", Pear: "🍐", Pomegranate: "🍎", "Common fig": "🟣", Coconut: "🥥", Fruit: "🍇",
+    Tomato: "🍅", Potato: "🥔", Carrot: "🥕", Cucumber: "🥒", Zucchini: "🥒", "Bell pepper": "🫑", Broccoli: "🥦", Cabbage: "🥬", Artichoke: "🌿",
+    Radish: "🌶️", Pumpkin: "🎃", "Squash (Plant)": "🎃", "Garden Asparagus": "🌿", Vegetable: "🥬",
+    Bread: "🍞", Bagel: "🥯", "Baked goods": "🥐", Cake: "🍰", Cookie: "🍪", Muffin: "🧁", Pastry: "🥐", Croissant: "🥐", Doughnut: "🍩",
+    Pretzel: "🥨", Waffle: "🧇", Candy: "🍬", Cheese: "🧀", "Egg (Food)": "🥚", Fish: "🐟", Seafood: "🦐", Honeycomb: "🍯", Juice: "🧃",
+    Coffee: "☕", Drink: "🥤", "Fast food": "🍔", Food: "🍽️", Popcorn: "🍿", "Ice cream": "🍦", Dessert: "🍮", Sandwich: "🥪", Pizza: "🍕",
+    Hamburger: "🍔", "Hot dog": "🌭",
+    // market vocabulary of pipeline/food.py (CLIP names of the food displays)
+    Tomatoes: "🍅", Cucumbers: "🥒", "Bell peppers": "🫑", "Chili peppers": "🌶️", Eggplants: "🍆", Potatoes: "🥔", Onions: "🧅",
+    Garlic: "🧄", Carrots: "🥕", "Cabbage & lettuce": "🥬", Herbs: "🌿", Corn: "🌽", Mushrooms: "🍄", Watermelons: "🍉", Melons: "🍈",
+    Bananas: "🍌", Apples: "🍎", "Oranges & citrus": "🍊", Grapes: "🍇", Strawberries: "🍓", Mangoes: "🥭", "Peaches & plums": "🍑",
+    Pomegranates: "🔴", Pears: "🍐", "Dates & dried fruit": "🌴", "Nuts & seeds": "🥜", Spices: "🧂", "Olives & pickles": "🫒",
+    "Sweets & halva": "🍬", "Bread & pita": "🥖", "Pastries & cakes": "🥐", "Cheese & dairy": "🧀", Meat: "🥩", Eggs: "🥚",
+    "Drinks & juice": "🧃", "Prepared food": "🍲", "Packaged groceries": "🛒", "Mixed fruit & vegetables": "🧺", "Produce (unsure)": "🥗", "Food picture (menu/sign)": "🖼️",
+    cardboard: "📦", "paper & litter": "🧻", "plastic bag": "🛍️", "bottle / can": "🥤", "organic waste": "🍂", "garbage bag": "🗑️",
+    "price sign": "🏷️", "shop sign": "🪧", flag: "🚩", "hanging lamp": "💡", text: "🪧",
+  };
+  const emojiOf = cls => EMOJI[cls] || "❔";
+  // perceived age group per person (team coding scheme): box colour + age emoji (user decision 13 Oct)
+  const AGE_EMOJI = { "child": "🧒", "young adult 18-35": "🧑", "middle adult 36-60": "🧔", "older adult 61+": "🧓", "uncertain": "👤" };
+  const AGE_VAR = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--ag-u" };
+  const ageCol = {};
+  for (const [g, v] of Object.entries(AGE_VAR)) ageCol[g] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const ageOf = id => ((S.data && S.data.tracks[id]) || [])[6] || "uncertain";
+  const SEX_BG = {};
+  for (const [g, v] of Object.entries({ man: "--sx-m", woman: "--sx-w", uncertain: "--ag-u" }))
+    SEX_BG[g] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const sexBg = id => SEX_BG[((S.data && S.data.tracks[id]) || [])[5] || "uncertain"] || SEX_BG.uncertain;
+
+  function badge(e, r, col, bg) {
+    const k = ov.width / vp.clientWidth, h = r[3] - r[1];
+    if (!$("Lid").checked || h < 14 * k) return null;
+    const fs = Math.max(13, Math.min(26, h / k * 0.22)) * k, pad = 2 * k;
+    octx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    const w = octx.measureText(e).width + pad * 2, x = r[0], y = r[1] - fs - pad * 2;
+    if (placed.some(q => x < q[2] && x + w > q[0] && y < q[3] && y + fs + pad * 2 > q[1])) return null;
+    placed.push([x, y, x + w, y + fs + pad * 2]);
+    octx.fillStyle = bg || "rgba(16,21,21,.72)"; octx.fillRect(x, y, w, fs + pad * 2);
+    octx.strokeStyle = col; octx.lineWidth = 1.2 * k; octx.strokeRect(x, y, w, fs + pad * 2);
+    octx.fillStyle = "#fff"; octx.textBaseline = "top"; octx.fillText(e, x + pad, y + pad); octx.textBaseline = "alphabetic";
+    return [x, y, x + w, y + fs + pad * 2];                              // click target: the card opens from the emoji
+  }
   let placed = [];   // label rectangles drawn this frame (declutter: skip labels that would overlap)
   function label(t, x, y, col) {
     const k = ov.width / vp.clientWidth;
@@ -254,6 +412,27 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
     placed.push(r);
     octx.fillStyle = col; octx.fillRect(x, y - th, tw, th); octx.fillStyle = "#101515"; octx.fillText(t, x + pad, y - th * 0.27);
+  }
+  // Totals for the whole walk = unique track IDs that pass the same filters as the view
+  // (max confidence >= slider; level 2 uses max(0.15, slider - 0.2); length >= 1 s if "hide tracks < 1 s").
+  let totKey = "", totVal = null;
+  function totals(d, minLen) {
+    const key = `${S.walk}|${S.data && S.data.variant}|${S.conf}|${minLen}`;
+    if (key === totKey) return totVal;
+    const best = { p: new Map(), o: new Map(), l2: new Map() };
+    for (const F of d.frames) {
+      for (const e of F.p) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
+      for (const e of F.o) { const b = best.o.get(e[7]); best.o.set(e[7], [e[0], Math.max(b ? b[1] : 0, e[1])]); }
+      for (const e of F.l2) { const b = best.l2.get(e[8]); best.l2.set(e[8], [e[0], Math.max(b ? b[1] : 0, e[1])]); }
+    }
+    const lenP = id => (d.tracks[id] || [])[2] || 0, lenO = id => (d.obj_len || {})[id] || 0;
+    let people = 0;
+    for (const [id, c] of best.p) if (c >= S.conf && lenP(id) >= minLen) people++;
+    const byCls = (m, thr) => { const out = {}; for (const [id, [cls, c]] of m) if (c >= thr && lenO(id) >= minLen) out[cls] = (out[cls] || 0) + 1; return out; };
+    const signs = Object.entries(d.signs || {}).filter(([id, x]) => x[3] && (((d.sign_len || {})[id] ?? 99) >= minLen)).length;
+    totVal = { people, o: byCls(best.o, S.conf), l2: byCls(best.l2, Math.max(0.15, S.conf - 0.2)), signs };
+    totKey = key;
+    return totVal;
   }
   function frame() {
     requestAnimationFrame(frame);
@@ -276,6 +455,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const fr = Math.max(0, curTime() * d.fps), f0 = Math.min(d.n_frames - 1, Math.floor(fr)), f1 = Math.min(d.n_frames - 1, f0 + 1), a = fr - f0;
     const fi = Math.min(d.n_frames - 1, Math.round(fr)), E = { p: [], o: [], l2: [] }, A = d.frames[f0] || E, B = d.frames[f1] || E;
     const minLen = $("Lmin").checked ? 5 : 0;
+    const T = totals(d, minLen);
     const lerpA = (x, y) => x + (((y - x + 540) % 360) - 180) * a;
     const qa = null, qb = null;
     function toStab(e, r) {
@@ -301,19 +481,24 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const trLen = id => (d.tracks[id] || [])[2], objLen = id => (d.obj_len || {})[id];
     const k = ov.width / vp.clientWidth;
     // people
-    let pView = 0, pAll = 0, anchor = null; const inViewIds = [];
+    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [];
     for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
       const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
-      if (al >= 0.5) { pAll++; S.seen.add(id); }
+      if (al >= 0.5) { pAll++; S.seen.add(id); presentIds.push(id); }
       if (!inFov(yw)) continue; if (al >= 0.5) { pView++; inViewIds.push(id); }
       if (!$("Lp").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
       const sel = S.sel && S.sel.kind === "p" && S.sel.id === id;
       octx.globalAlpha = al;
-      octx.strokeStyle = C.person; octx.lineWidth = (sel ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
-      if ($("Lid").checked && r[3] - r[1] > 40 * k) label(`P-${String(id).padStart(4, "0")} ${cf.toFixed(2)}${dist ? " · " + dist.toFixed(1) + " m" : ""}`, r[0], r[1], C.person);
+      const byAge = $("Lage").checked, ag = ageOf(id), pc = byAge ? ageCol[ag] : C.person;
+      octx.strokeStyle = pc; octx.lineWidth = (sel ? 3 : 1.8) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const fol = MO.follow.get(gidOf(id));
+      if (fol) { const o = 3.5 * k; octx.strokeStyle = fol; octx.lineWidth = 2.5 * k; octx.setLineDash([7 * k, 4 * k]); octx.strokeRect(r[0] - o, r[1] - o, r[2] - r[0] + 2 * o, r[3] - r[1] + 2 * o); octx.setLineDash([]); }
+      const bb = badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
+      const mNow = moAt(id, fi);
+      if (mNow && moShown(id, mNow)) drawMotionArrow(r, yw, pb, mNow, fi, fol || "#f4f4f4", al);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "p", id, r, info: p });
+      S.hits.push({ kind: "p", id, r, b: bb, info: p });
       if (sel) anchor = r;
     }
     // level-1 objects (tracked + smoothed in the pipeline)
@@ -323,10 +508,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (al >= 0.5) oc[cls] = (oc[cls] || 0) + 1;
       if (!$("Lo").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
-      if (r[3] - r[1] > 25 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[1], C.obj);
+      const selO = S.sel && S.sel.kind === "o" && S.sel.id === o[7];
+      octx.globalAlpha = al; octx.strokeStyle = C.obj; octx.lineWidth = (selO ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const bb = badge(emojiOf(cls), r, C.obj);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "o", id: cls, r, info: o });
+      S.hits.push({ kind: "o", id: o[7], r, b: bb, info: o });
+      if (selO) anchor = r;
     }
     // level-2 objects
     for (const [o, al] of blend(A.l2, B.l2, 8, objLen)) {
@@ -334,29 +521,115 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       if (al >= 0.5) l2c[cls] = (l2c[cls] || 0) + 1;
       if (!$("Ll2").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = 1.6 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      if (r[3] - r[1] > 20 * k) label(`${cls} ${cf.toFixed(2)}`, r[0], r[3] + 15 * k, C.l2);
+      const selL = S.sel && S.sel.kind === "l2" && S.sel.id === o[8];
+      octx.globalAlpha = al; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = C.l2; octx.lineWidth = (selL ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      const bb = badge(emojiOf(cls), r, C.l2);
       octx.globalAlpha = 1;
-      S.hits.push({ kind: "l2", id: cls, r, info: o });
+      S.hits.push({ kind: "l2", id: o[8], r, b: bb, info: o });
+      if (selL) anchor = r;
     }
-    // OCR signs (stabilised frame, static between detections)
-    const signsInView = [];
-    for (const sg of ((d.frames[fi] || {}).s || [])) {
-      const [id, yw, yl, yr, pt, pb] = sg, info = (d.signs || {})[id]; if (!info || !inFov(yw)) continue;
-      signsInView.push([id, info]);
+    // OCR signs: tracked + smoothed in the pipeline; interpolated, faded and length-filtered like the other layers
+    const signsInView = [], sgLen = id => (d.sign_len || {})[id] ?? 99;
+    for (const [sg, al] of blend(A.s || [], B.s || [], 0, sgLen)) {
+      const [id, , yw, yl, yr, pt, pb] = sg, info = (d.signs || {})[id]; if (!info || !inFov(yw)) continue;
+      if (al >= 0.5) signsInView.push([id, info]);
       if (!$("Ltx").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
-      octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = 1.5 * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
-      if (info[3]) label(`${info[0]} · ${info[1]} ${Math.round(info[2])}`, r[0], r[3] + 15 * k, C.ocr);
+      const selS = S.sel && S.sel.kind === "s" && S.sel.id === id;
+      octx.globalAlpha = al;
+      octx.setLineDash([3 * k, 3 * k]); octx.strokeStyle = C.ocr; octx.lineWidth = (selS ? 3 : 1.5) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      const bb = info[3] ? badge("🪧", r, C.ocr) : null;
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "s", id, r, b: bb, info: sg });
+      if (selS) anchor = r;
     }
+    // pictured people on signs / posters (category possible_rabi_sign): own layer, never counted as people
+    let dpView = 0;
+    for (const [q, al] of blend(A.dp || [], B.dp || [], 0, id => ((d.dp_tracks || {})[id] || [])[2] || 99)) {
+      const [id, , yw, yl, yr, pt, pb] = q; if (!inFov(yw)) continue;
+      if (al >= 0.5) dpView++;
+      if (!$("Ldp").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const selD = S.sel && S.sel.kind === "dp" && S.sel.id === id;
+      octx.globalAlpha = al;
+      octx.setLineDash([2 * k, 4 * k]); octx.strokeStyle = C.dp; octx.lineWidth = (selD ? 3 : 1.6) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); octx.setLineDash([]);
+      const bb = badge("🖼️", r, C.dp);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "dp", id, r, b: bb, info: q });
+      if (selD) anchor = r;
+    }
+    $("dpCount").textContent = `${dpView} in view / ${Object.keys(d.dp_tracks || {}).length}`;
+    // frontage materials (location-based): a clickable 🧱 badge at the spot while passing it (+-3 s)
+    if ($("Lfm").checked && FRONT.length && GEO.walks[S.walk]) {
+      const g = GEO.walks[S.walk], h = d.camera_height_m || 1.3;
+      for (const p of FRONT) {
+        if (p.walk !== S.walk || Math.abs(p.frame - fi) > 15 || g.lat[fi] == null) continue;
+        const dx = (p.lon - g.lon[fi]) * 111320 * Math.cos(g.lat[fi] * deg), dy = (p.lat - g.lat[fi]) * 110574, dist = Math.hypot(dx, dy);
+        const yw = ((Math.atan2(dx, dy) / deg - g.yaw0_bearing_deg[fi]) + 540) % 360 - 180, pt = Math.atan2(1.6 - h, Math.max(dist, 1)) / deg;
+        if (!inFov(yw)) continue;
+        const q = project(yw, pt); if (!q) continue;
+        const fs = 20 * k, pad = 3 * k, x0 = q[0] - fs / 2 - pad, y0 = q[1] - fs / 2 - pad, bw = fs + 2 * pad;
+        const selF = S.sel && S.sel.kind === "fm" && S.sel.id === p.id;
+        octx.fillStyle = "rgba(16,21,21,.75)"; octx.fillRect(x0, y0, bw, bw);
+        octx.strokeStyle = C.frontage; octx.lineWidth = (selF ? 3 : 1.6) * k; octx.strokeRect(x0, y0, bw, bw);
+        octx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`; octx.textBaseline = "top"; octx.fillText("🧱", x0 + pad, y0 + pad); octx.textBaseline = "alphabetic";
+        const rr = [x0, y0, x0 + bw, y0 + bw];
+        S.hits.push({ kind: "fm", id: p.id, r: rr, b: rr, info: p });
+        if (selF) anchor = rr;
+      }
+    }
+    // waste on the floor (waste.py)
+    const wsc = {}, wsLen = () => 99;                                    // items are already verified (floor + CLIP): no 1 s filter
+    for (const [o, al] of blend(A.w || [], B.w || [], 7, wsLen)) {
+      const [cls, , yw, yl, yr, pt, pb] = o; if (!inFov(yw)) continue;
+      if (al >= 0.5) wsc[cls] = (wsc[cls] || 0) + 1;
+      if (!$("Lws").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const selW = S.sel && S.sel.kind === "ws" && S.sel.id === o[7];
+      octx.globalAlpha = al; octx.strokeStyle = C.waste; octx.lineWidth = (selW ? 3 : 1.8) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const bb = badge(emojiOf(cls), r, C.waste);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "ws", id: o[7], r, b: bb, info: o });
+      if (selW) anchor = r;
+    }
+    const wsSig = JSON.stringify(wsc) + fi;
+    if (wsSig !== frame.wsSig) { frame.wsSig = wsSig;
+      $("wsList").innerHTML = Object.entries(wsc).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<dt>${emojiOf(c)} ${c}</dt><dd>${n}</dd>`).join("") || `<dt>none seen in this direction</dt><dd></dd>`;
+      const wj = WASTE[S.walk];
+      if (wj && GEO.walks[S.walk]) {
+        const g = GEO.walks[S.walk]; let ch = 0; for (let i = 1; i <= Math.min(fi, g.lat.length - 1); i++) ch += 111320 * Math.hypot((g.lon[i] - g.lon[i - 1]) * Math.cos(g.lat[i] * deg), g.lat[i] - g.lat[i - 1]) / 1.0067;
+        const bin = Math.min(wj.per_10m.length - 1, Math.floor(ch / 10));
+        $("wsHere").textContent = `${wj.per_10m[bin]} items (${Math.round(bin * 10)}–${Math.round(bin * 10 + 10)} m)`;
+        $("wsAvg").textContent = (wj.items / Math.max(1, wj.per_10m.length)).toFixed(1);
+      }
+    }
+    // food on display (food.py): tracked displays/stacks, emoji per class
+    const fdc = {}, fdLen = id => (d.food_len || {})[id] || 0;
+    for (const [o, al] of blend(A.fd || [], B.fd || [], 7, fdLen)) {
+      const [cls, cf, yw, yl, yr, pt, pb] = o; if (!inFov(yw)) continue;
+      if (al >= 0.5) fdc[cls] = (fdc[cls] || 0) + 1;
+      if (!$("Lfd").checked) continue;
+      const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;
+      const selF = S.sel && S.sel.kind === "fd" && S.sel.id === o[7];
+      octx.globalAlpha = al; octx.strokeStyle = C.food; octx.lineWidth = (selF ? 3 : 1.4) * k; octx.strokeRect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      const bb = badge(emojiOf(cls), r, C.food);
+      octx.globalAlpha = 1;
+      S.hits.push({ kind: "fd", id: o[7], r, b: bb, info: o });
+      if (selF) anchor = r;
+    }
+    const fdSig = JSON.stringify(fdc);
+    if (fdSig !== frame.fdSig) { frame.fdSig = fdSig;
+      const real = Object.entries(fdc).filter(([c]) => c !== "Food picture (menu/sign)").sort((a, b) => b[1] - a[1]);
+      $("fdList").innerHTML = (real.map(([c, n]) => `<dt>${emojiOf(c)} ${c}</dt><dd>${n}</dd>`).join("") || `<dt>no food in this direction</dt><dd></dd>`) +
+        (fdc["Food picture (menu/sign)"] ? `<dt class="muted">🖼️ food pictures on menus/signs (not counted)</dt><dd>${fdc["Food picture (menu/sign)"]}</dd>` : ""); }
     // perceived gender + age, aggregate over people in view only
     const SX = ["man", "woman", "uncertain"], SXV = { man: "--sx-m", woman: "--sx-w", uncertain: "--sx-u" };
-    const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--sx-u" };
+    const AG = ["child", "young adult 18-35", "middle adult 36-60", "older adult 61+", "uncertain"], AGV = { "child": "--ag1", "young adult 18-35": "--ag2", "middle adult 36-60": "--ag3", "older adult 61+": "--ag4", "uncertain": "--ag-u" };
     const sxc = Object.fromEntries(SX.map(x => [x, 0])), agc = Object.fromEntries(AG.map(x => [x, 0]));
     for (const id of inViewIds) { const t = d.tracks[id] || []; sxc[t[5] || "uncertain"] = (sxc[t[5] || "uncertain"] || 0) + 1; agc[t[6] || "uncertain"] = (agc[t[6] || "uncertain"] || 0) + 1; }
     const nIn = inViewIds.length || 1;
     const bar = (keys, c, v) => keys.map(x => `<div style="width:${(c[x] / nIn * 100).toFixed(1)}%;background:var(${v[x]})"></div>`).join("");
-    const leg = (keys, c, v) => keys.map(x => `<span><i style="background:var(${v[x]})"></i>${x}<b>${Math.round(c[x] / nIn * 100)}%</b></span>`).join("");
+    const leg = (keys, c, v) => keys.map(x => `<span><i style="background:var(${v[x]})"></i>${AGE_EMOJI[x] && keys.includes("child") ? AGE_EMOJI[x] + " " : ""}${x}<b>${Math.round(c[x] / nIn * 100)}%</b></span>`).join("");
     const sxSig = JSON.stringify([sxc, agc]);
     if (sxSig !== frame.sxSig) { frame.sxSig = sxSig; $("sxBar").innerHTML = bar(SX, sxc, SXV); $("sxLeg").innerHTML = leg(SX, sxc, SXV); $("agBar").innerHTML = bar(AG, agc, AGV); $("agLeg").innerHTML = leg(AG, agc, AGV); }
     const esc = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
@@ -364,47 +637,401 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (txSig !== frame.txSig) {
       frame.txSig = txSig;
       const rd = signsInView.filter(x => x[1][3]);
-      $("txCount").textContent = `${signsInView.length} signs · ${rd.length} read`;
-      $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small>${Math.round(i[2])}</small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
+      $("txCount").textContent = `${rd.length} / ${T.signs} read · ${signsInView.length} detected in view`;
+      $("txList").innerHTML = rd.length ? rd.map(([id, i]) => `<li><span class="lg">${esc(i[1])}</span><span class="t" dir="auto">${esc(i[0])}</span><small></small></li>`).join("") : `<li class="note">No readable signs in this direction.</li>`;
     }
     // panel
-    $("pView").textContent = pView; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size;
+    $("pView").textContent = pView; $("pTot").textContent = T.people; $("pAll").textContent = pAll; $("pUnique").textContent = S.seen.size; $("pTotal").textContent = T.people;
     $("pSub").textContent = `within ${Math.round(S.fov)}° view`;
     $("frameLbl").textContent = `frame ${fi}`;
-    const kvs = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
-    if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc); $("l2List").innerHTML = kvs(l2c); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
-    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView} people</span><span><i style="background:${C.obj}"></i>${Object.values(oc).reduce((a, b) => a + b, 0)} objects</span><span><i style="background:${C.l2}"></i>${Object.values(l2c).reduce((a, b) => a + b, 0)} level 2</span>`;
+    const kvs = (o, tot) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([a, b]) => `<dt>${a}</dt><dd>${b} / ${tot[a] ?? b}</dd>`).join("") || `<dt>none above threshold</dt><dd></dd>`;
+    if (fi !== frame.lastFi || frame.lastConf !== S.conf || frame.lastYaw !== Math.round(S.yaw)) { $("objList").innerHTML = kvs(oc, T.o); $("l2List").innerHTML = kvs(l2c, T.l2); frame.lastFi = fi; frame.lastConf = S.conf; frame.lastYaw = Math.round(S.yaw); }
+    const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
+    $("ctr").innerHTML = `<span><i style="background:${C.person}"></i>${pView}/${T.people} people</span><span><i style="background:${C.obj}"></i>${sum(oc)}/${sum(T.o)} objects</span><span><i style="background:${C.l2}"></i>${sum(l2c)}/${sum(T.l2)} level 2</span><span><i style="background:${C.ocr}"></i>${signsInView.filter(x => x[1][3]).length}/${T.signs} signs</span><span><i style="background:${C.dp}"></i>${dpView}/${Object.keys(d.dp_tracks || {}).length} 🖼️ on signs</span>`;
     const t = curTime() || 0;
     $("hud").innerHTML = `t ${t.toFixed(1)} s · frame ${fi}/${d.n_frames - 1}<br>view yaw ${Math.round(S.yaw)}° · pitch ${Math.round(S.pitch)}° · fov ${Math.round(S.fov)}°<br>route ≈ ${(t * d.pace_m_s).toFixed(0)} m (assumed pace)`;
     $("tmeta").textContent = `${fmt(t)} / ${fmt(duration())}`;
+    updateMini(fi);
+    MO.inView = inViewIds; MO.present = presentIds;
+    if (MO.data) {
+      let nw = 0, ns = 0, withC = 0, agC = 0; const g = GEO.walks[S.walk];
+      const cb = g && g.lat[Math.min(fi + 3, g.lat.length - 1)] != null ? Math.atan2((g.lon[Math.min(fi + 3, g.lon.length - 1)] - g.lon[Math.max(0, fi - 3)]) * Math.cos(g.lat[fi] * deg), g.lat[Math.min(fi + 3, g.lat.length - 1)] - g.lat[Math.max(0, fi - 3)]) / deg : null;
+      for (const id of inViewIds) { const m = moAt(id, fi); if (!m) continue;
+        if (m.spd >= MO.data.walk_m_s) { nw++; if (cb != null) { if (Math.abs(((m.brg - cb + 540) % 360) - 180) < 90) withC++; else agC++; } } else if (m.spd <= MO.data.stand_m_s) ns++; }
+      const nm = inViewIds.filter(id => moAt(id, fi)).length;
+      $("mWalk").textContent = `${nw} / ${nm}`; $("mStand").textContent = `${ns} / ${nm}`; $("mDir").textContent = nw ? `${withC} / ${agC}` : "—";
+      updateMapPeople(fi);
+    }
+    if (MO.lasso) { const q = MO.lasso; octx.setLineDash([6 * k, 4 * k]); octx.strokeStyle = "#fff"; octx.lineWidth = 1.5 * k; octx.fillStyle = "rgba(79,179,187,.12)";
+      octx.fillRect(Math.min(q.x0, q.x1), Math.min(q.y0, q.y1), Math.abs(q.x1 - q.x0), Math.abs(q.y1 - q.y0)); octx.strokeRect(Math.min(q.x0, q.x1), Math.min(q.y0, q.y1), Math.abs(q.x1 - q.x0), Math.abs(q.y1 - q.y0)); octx.setLineDash([]); }
     if (!scrubbing && duration()) $("scrub").value = Math.round(t / duration() * 1000);
-    // in-view card follows the selected person
+    // in-view card for the selected box (any kind): all numbers live here, not on the boxes
     const vc = $("vcard");
-    if (S.sel && S.sel.kind === "p" && anchor) {
-      const tr = d.tracks[S.sel.id] || [];
-      vc.innerHTML = `<header><b>P-${String(S.sel.id).padStart(4, "0")}</b><button aria-label="Close">✕</button></header><dl class="kv"><dt>Seen</dt><dd>frames ${tr[0]}–${tr[1]}</dd><dt>Duration</dt><dd>${((tr[1] - tr[0]) / d.fps).toFixed(1)} s</dd><dt>Max confidence</dt><dd>${tr[3]}</dd><dt>Median distance</dt><dd>${tr[4] ?? "—"} m</dd></dl><div class="note">Persistent track ID from the cached detections.</div>`;
+    if (S.sel && anchor) {
+      const h = S.hits.find(x => x.kind === S.sel.kind && x.id === S.sel.id), info = h ? h.info : null;
+      const esc2 = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+      const row = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
+      let title = "", rows = "", note = "", foot = "";
+      if (S.sel.kind === "p") {
+        const tr = d.tracks[S.sel.id] || [];
+        title = `${$("Lage").checked ? AGE_EMOJI[tr[6] || "uncertain"] : "🧍"} Person · P-${String(S.sel.id).padStart(4, "0")}`;
+        rows = row("Confidence (now)", info ? info[1].toFixed(2) : "—") + row("Distance (now)", info && info[7] ? info[7].toFixed(1) + " m" : "—") +
+               row("Seen", `frames ${tr[0]}–${tr[1]}`) + row("Duration", `${((tr[1] - tr[0]) / d.fps).toFixed(1)} s`) +
+               row("Max confidence", tr[3]) + row("Median distance", `${tr[4] ?? "—"} m`) +
+               row("Age group (estimated)", `${AGE_EMOJI[tr[6] || "uncertain"] || ""} ${tr[6] || "uncertain"}`) +
+               row("Perceived gender (estimated)", tr[5] || "uncertain");
+        const mt = moTrack(S.sel.id), mn = moAt(S.sel.id, fi), fc = MO.follow.get(gidOf(S.sel.id));
+        rows += row("Speed now", mn ? `${mn.spd.toFixed(1)} m/s` : "—") +
+                row("Movement", mt ? `${mt.state}${mt.rel !== "—" ? " · " + mt.rel : ""}` : "—") +
+                row("Direction now", mn ? (mn.ok ? "reliable" : mn.spd < 0.35 ? "standing" : "uncertain") : "—") +
+                row("Path on map", mt ? `${mt.len_m} m in ${mt.dur_s} s${mt.members.length > 1 ? ` · ${mt.members.length} pieces re-linked` : ""}` : "no reliable position (> 12 m)");
+        foot = mt ? `<button class="vfollow" data-id="${S.sel.id}" style="--c:${fc || "var(--accent)"}">${fc ? "● Following · click to stop" : "📍 Follow: path on map + motion arrow"}</button>`
+                  : `<button class="vfollow" disabled>Too far away for a map path</button>`;
+        note = "Age, gender: CLIP estimates, not validated. Speed, path: from foot point + camera height, camera motion removed.";
+      } else if (S.sel.kind === "o" || S.sel.kind === "l2") {
+        const lvl = S.sel.kind === "o" ? "Level 1 (YOLO11, COCO)" : "Level 2 (YOLO-World, text prompt)";
+        const n = (d.obj_len || {})[S.sel.id] || 0;
+        title = `${emojiOf(info ? info[0] : "")} ${info ? esc2(info[0]) : "object"} · O-${S.sel.id}`;
+        rows = row("Confidence (now)", info ? info[1].toFixed(2) : "—") + (S.sel.kind === "l2" && info && info[7] ? row("Distance (now)", info[7].toFixed(1) + " m") : "") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Detector", lvl);
+      } else if (S.sel.kind === "fm") {
+        const p = FRONT.find(x => x.id === S.sel.id) || {};
+        title = `🧱 Frontage materials · M-${S.sel.id}`;
+        rows = `</dl><img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop"><dl class="kv">` +
+               row("Facade", p.facade || "—") + row("Structure", p.structure || "—") +
+               row("Materials", (p.materials || []).join(", ") || "—") + row("Where", `${p.chainage_m} m along the route, ${p.side} side`);
+        note = "Experimental: what the camera saw at this spot (vision review of a frontage crop). Location-based, not tied to a store name.";
+      } else if (S.sel.kind === "ws") {
+        const it = ((WASTE[S.walk] || {}).items_list || []).find(x => x.id === S.sel.id) || {};
+        title = `${emojiOf(info ? info[0] : "")} Waste · ${info ? esc2(info[0]) : ""} · W-${S.sel.id}`;
+        rows = row("Type (CLIP)", info ? esc2(info[0]) : "—") + row("Waste probability", info ? info[1].toFixed(2) : "—") +
+               row("Detected as", esc2(it.det || "—")) + row("Seen", it.frame0 != null ? `frames ${it.frame0}–${it.frame1}` : "—") +
+               row("Route position", it.chainage_m != null ? `${it.chainage_m} m` : "—");
+        note = "On the walkway: the ground around it is floor (SegFormer). Verified by CLIP against stock, drains, feet and puddles.";
+      } else if (S.sel.kind === "fd") {
+        const n = (d.food_len || {})[S.sel.id] || 0;
+        title = `${emojiOf(info ? info[0] : "")} ${info ? esc2(info[0]) : "food"} · F-${S.sel.id}`;
+        rows = row("Group", (d.food_group || {})[info ? info[0] : ""] || "—") + row("Confidence (now)", info ? info[1].toFixed(2) : "—") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Found by", "YOLOv8x Open Images V7 + COCO") + row("Named by", "CLIP ViT-L/14, market vocabulary");
+        note = "A display or stack of this food, tracked over time; not a count of individual items.";
+      } else if (S.sel.kind === "dp") {
+        const t = (d.dp_tracks || {})[S.sel.id] || [];
+        title = `🖼️ possible_rabi_sign · P-${String(S.sel.id).padStart(4, "0")}`;
+        rows = row("Category", "pictured person (sign, poster, portrait)") + row("Seen", `frames ${t[0]}–${t[1]}`) +
+               row("Picture score (CLIP)", t[3] ?? "—") + row("Decided by", esc2(t[4] || "—"));
+        note = "Detected as a person by YOLO, but it is a picture. Not counted as a person, not in the gender/age or motion statistics.";
+      } else if (S.sel.kind === "s") {
+        const si = (d.signs || {})[S.sel.id] || [];
+        const n = (d.sign_len || {})[S.sel.id] || 0;
+        title = `🪧 Sign · T-${S.sel.id}`;
+        rows = row("Text", `<span dir="auto" style="unicode-bidi:plaintext">${esc2(si[0] || "—")}</span>`) + row("Language", si[1] || "—") +
+               row("Seen for", `${(n / d.fps).toFixed(1)} s (${n} frames)`) + row("Read by", d.ocr_source === "ocr_vlm_stab" ? "vision model (Claude)" : "Tesseract");
+      }
+      const html = `<header><b>${title}</b><button class="vclose" aria-label="Close">✕</button></header><dl class="kv">${rows}</dl>${foot}${note ? `<div class="note">${note}</div>` : ""}`;
+      if (html !== vc.dataset.html) { vc.innerHTML = html; vc.dataset.html = html; }   // rebuild only when the content changes
       vc.hidden = false;
-      const cx = anchor[2] / k + 12, cy = anchor[1] / k;
-      vc.style.transform = `translate(${Math.min(vp.clientWidth - 250, Math.max(6, cx))}px, ${Math.min(vp.clientHeight - 140, Math.max(6, cy))}px)`;
+      // place right of the box; flip to the left when it would leave the view; keep fully inside
+      const cw = vc.offsetWidth || 270, ch = vc.offsetHeight || 160, W2 = vp.clientWidth, H2 = vp.clientHeight;
+      let cx = anchor[2] / k + 12;
+      if (cx + cw > W2 - 6) cx = anchor[0] / k - cw - 12;
+      cx = Math.max(6, Math.min(W2 - cw - 6, cx));
+      const cy = Math.max(6, Math.min(H2 - ch - 6, anchor[1] / k));
+      vc.style.transform = `translate(${cx}px, ${cy}px)`;
     } else vc.hidden = true;
   }
+  // ---------------- motion & followed people (pipeline/motion.py: positions on the map, camera motion removed) ----------------
+  const FOLLOW_COLS = ["#ff4f8b", "#38c6ff", "#ffd23f", "#8cff5a", "#ff9a3c", "#c08bff", "#2fe0b8", "#ffffff"];
+  const MO = { data: null, mode: "followed", follow: new Map(), lasso: null, lastFi: -1, pathSig: "", inView: [], present: [],
+               miniPaths: null, miniNow: null, fullPaths: null, fullNow: null };
+  const pid = id => `P-${String(id).padStart(4, "0")}`;
+  const gidOf = id => (MO.data && MO.data.id2g && MO.data.id2g[id]) ?? id;      // re-linked track pieces share one person id
+  const moTrack = id => MO.data && MO.data.tracks[gidOf(id)];
+  function moAt(id, fi) {
+    const m = moTrack(id); if (!m) return null;
+    const i = fi - m.f0; if (i < 0 || i >= m.lat.length || m.lat[i] == null) return null;
+    return { lat: m.lat[i], lon: m.lon[i], spd: m.spd[i], brg: m.brg[i], ok: m.ok ? m.ok[i] === 1 : m.spd[i] >= 0.5 };
+  }
+  function moShown(id, m) {
+    if (!MO.data) return false;
+    if (MO.mode === "followed") return MO.follow.has(gidOf(id));
+    if (MO.mode === "view") return !!m;
+    if (MO.mode === "walking") return !!m && m.spd >= MO.data.walk_m_s;
+    if (MO.mode === "standing") return !!m && m.spd <= MO.data.stand_m_s;
+    return false;
+  }
+  function toggleFollow(id, on) {
+    id = gidOf(id);
+    if (on === undefined) on = !MO.follow.has(id);
+    if (on && !MO.follow.has(id)) {
+      const used = new Set(MO.follow.values());
+      MO.follow.set(id, FOLLOW_COLS.find(c => !used.has(c)) || FOLLOW_COLS[MO.follow.size % FOLLOW_COLS.length]);
+    } else if (!on) MO.follow.delete(id);
+    renderChips(); $("vcard").dataset.html = ""; MO.lastFi = -1;
+  }
+  function renderChips() {
+    $("fCount").textContent = MO.follow.size;
+    $("fChips").innerHTML = MO.follow.size ? [...MO.follow].map(([id, c]) =>
+      `<span class="chip" style="--c:${c}"><button data-go="${id}" title="Jump to where ${pid(id)} first appears"><i></i>${pid(id)}</button><button data-rm="${id}" aria-label="Stop following ${pid(id)}">✕</button></span>`).join("")
+      : `<span class="note">No one followed yet.</span>`;
+  }
+  function goToPerson(id) {
+    const d = S.data, tr = d && d.tracks[id]; if (!tr) return;
+    const m = moTrack(id), f = m ? m.f0 : tr[0];
+    vt = f / d.fps; if (videoOk()) video.currentTime = vt;
+    const e = (d.frames[f] || { p: [] }).p.find(x => x[0] === id); if (e) { S.yaw = e[2]; S.pitch = -8; }
+    S.sel = { kind: "p", id };
+  }
+  // ground arrow for a person, drawn from the feet in the person's walking direction (perspective-correct)
+  function drawMotionArrow(r, yw, pb, m, fi, col, al) {
+    const g = GEO.walks[S.walk], h = S.data.camera_height_m || 1.3; if (!g || pb > -1) return;
+    const k = ov.width / vp.clientWidth, foot = [(r[0] + r[2]) / 2, r[3]];
+    octx.globalAlpha = al;
+    if (!m.ok) {                                                        // no reliable direction: ring at the feet
+      const rad = Math.max(4, (r[2] - r[0]) * 0.18), unsure = m.spd >= 0.35;   // standing = solid ring; moving but direction unsure = dashed "?"
+      octx.lineWidth = 2.5 * k; octx.strokeStyle = "rgba(0,0,0,.6)"; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad + k, (rad + k) * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      if (unsure) octx.setLineDash([3 * k, 3 * k]);
+      octx.lineWidth = 1.6 * k; octx.strokeStyle = col; octx.beginPath(); octx.ellipse(foot[0], foot[1], rad, rad * .4, 0, 0, 2 * Math.PI); octx.stroke();
+      octx.setLineDash([]);
+      if (unsure) { octx.font = `700 ${11 * k}px "IBM Plex Mono", monospace`; octx.fillStyle = col; octx.fillText("?", foot[0] + rad + 2 * k, foot[1] + 4 * k); }
+      octx.globalAlpha = 1; return;
+    }
+    const D = h / Math.tan(-pb * deg), a = (m.brg - g.yaw0_bearing_deg[fi]) * deg, L = Math.max(0.8, Math.min(3, m.spd * 1.6));
+    const Px = D * Math.sin(yw * deg), Py = D * Math.cos(yw * deg), Qx = Px + L * Math.sin(a), Qy = Py + L * Math.cos(a);
+    const s0 = project(yw, pb), s1 = project(Math.atan2(Qx, Qy) / deg, -Math.atan(h / Math.hypot(Qx, Qy)) / deg);
+    if (!s0 || !s1) { octx.globalAlpha = 1; return; }
+    let dx = s1[0] - s0[0], dy = s1[1] - s0[1]; const n = Math.hypot(dx, dy); if (n < 3) { octx.globalAlpha = 1; return; }
+    const ex = foot[0] + dx, ey = foot[1] + dy, ux = dx / n, uy = dy / n, hl = Math.min(14 * k, n * .45);
+    const head = [[ex, ey], [ex - ux * hl - uy * hl * .55, ey - uy * hl + ux * hl * .55], [ex - ux * hl + uy * hl * .55, ey - uy * hl - ux * hl * .55]];
+    for (const [w, c] of [[5.5 * k, "rgba(0,0,0,.55)"], [2.6 * k, col]]) {
+      octx.lineWidth = w; octx.strokeStyle = c; octx.lineCap = "round";
+      octx.beginPath(); octx.moveTo(foot[0], foot[1]); octx.lineTo(ex - ux * hl * .6, ey - uy * hl * .6); octx.stroke();
+    }
+    octx.fillStyle = col; octx.strokeStyle = "rgba(0,0,0,.55)"; octx.lineWidth = 1.5 * k;
+    octx.beginPath(); octx.moveTo(...head[0]); octx.lineTo(...head[1]); octx.lineTo(...head[2]); octx.closePath(); octx.fill(); octx.stroke();
+    octx.globalAlpha = 1;
+  }
+  // map layers: full paths of followed people + current positions/arrows of the people selected by the mode
+  const llOff = (lat, lon, dx, dy) => [lat + dy / 110574, lon + dx / (111320 * Math.cos(lat * deg))];
+  function mapArrow(layer, m, col, scale, followed) {
+    const L2 = Math.max(1.2, Math.min(5, m.spd * 2.5)), b = m.brg * deg;
+    L.circleMarker([m.lat, m.lon], { radius: followed ? 6 * scale : 3.5 * scale, weight: followed ? 2.5 : 1.5, color: followed ? "#fff" : "#111", fillColor: col, fillOpacity: 1, interactive: false, pane: "people" }).addTo(layer);
+    if (!m.ok) return;                                                  // arrows only where the direction is reliable
+    const e = llOff(m.lat, m.lon, L2 * Math.sin(b), L2 * Math.cos(b));
+    const hl = 0.9, h1 = llOff(e[0], e[1], -hl * Math.sin(b - 0.5), -hl * Math.cos(b - 0.5)), h2 = llOff(e[0], e[1], -hl * Math.sin(b + 0.5), -hl * Math.cos(b + 0.5));
+    L.polyline([[m.lat, m.lon], e], { color: col, weight: (followed ? 3.5 : 2.5) * scale, opacity: .95, interactive: false, pane: "people" }).addTo(layer);
+    L.polyline([h1, e, h2], { color: col, weight: (followed ? 3.5 : 2.5) * scale, opacity: .95, interactive: false, pane: "people" }).addTo(layer);
+  }
+  function updateMapPeople(fi) {
+    if (!MO.data || !window.L) return;
+    const sig = `${S.walk}|${[...MO.follow].join()}`;
+    if (sig !== MO.pathSig) {                                           // followed paths: rebuild only when the set changes
+      MO.pathSig = sig;
+      for (const lay of [MO.miniPaths, MO.fullPaths]) {
+        if (!lay) continue; lay.clearLayers();
+        for (const [id, c] of MO.follow) {
+          const m = moTrack(id); if (!m) continue;
+          const segs = [[]]; m.lat.forEach((la, i) => { if (la == null) { if (segs[segs.length - 1].length) segs.push([]); } else segs[segs.length - 1].push([la, m.lon[i]]); });
+          for (const sgm of segs) if (sgm.length > 1) {
+            L.polyline(sgm, { color: "#111", weight: lay === MO.fullPaths ? 7 : 5, opacity: .45, interactive: false, pane: "people" }).addTo(lay);
+            L.polyline(sgm, { color: c, weight: lay === MO.fullPaths ? 4 : 3, opacity: .95, interactive: false, pane: "people" }).addTo(lay);
+            if (lay === MO.fullPaths)                                     // wide invisible line: hover shows who it is
+              L.polyline(sgm, { color: c, weight: 12, opacity: 0, pane: "people" }).bindTooltip(`${pid(id)} · ${m.len_m} m · ${m.state}`, { sticky: true }).addTo(lay);
+          }
+          const first = m.lat.findIndex(x => x != null);
+          L.circleMarker([m.lat[first], m.lon[first]], { radius: 3, color: c, weight: 2, fillColor: "#111", fillOpacity: 1, interactive: false, pane: "people" }).addTo(lay);
+        }
+      }
+    }
+    const key = `${fi}|${MO.mode}|${sig}|${MO.inView.join()}`;
+    if (key === MO.lastKey) return; MO.lastKey = key;
+    for (const [lay, sc] of [[MO.miniNow, 0.8], [MO.fullNow, 1]]) {
+      if (!lay) continue; lay.clearLayers();
+      const ids = MO.mode === "view" ? MO.inView : MO.mode === "followed" || MO.mode === "none" ? [] : MO.present;
+      for (const id of ids) { if (MO.follow.has(gidOf(id))) continue; const m = moAt(id, fi); if (m && moShown(id, m)) mapArrow(lay, m, "#f4f4f4", sc, false); }
+      for (const [id, c] of MO.follow) { const m = moAt(id, fi); if (m) mapArrow(lay, m, c, sc, true); }
+    }
+  }
+  // ---------------- map (stores from the team's GIS table, walks fitted to store anchors: pipeline/georef.py) ----------------
+  const GEO = { shops: null, walks: {} };
+  const WASTE = {};
+  let FRONT = [];                                                       // frontage materials, location-based (pipeline/frontage.py)
+  const SHOW_WASTE = false;   // waste results are kept (waste.py) but not shown until detection is good enough (team decision)
+  const TRADE_COL = { "Fruit/Vegetables": "#6fbf8a", "Butcher": "#ef6f62", "Minimarket": "#e0a948", "Clothing": "#b49be6", "Street Food": "#f0a050",
+                      "Bakery": "#d1a865", "Restaurant": "#e07b9b", "Drinks": "#6aa7d6", "Electronics": "#9aa3a1", "Jewelery": "#cfc06a", "Cafe": "#a0785a" };
+  const tradeCol = t => TRADE_COL[t] || "#cfd8d6";
+  let mini = null, full = null, miniRoute = null, fullMe = null;
+  async function loadGeo() {
+    try {
+      GEO.shops = (await (await fetch("../data/processed/shops.json")).json()).shops;
+      for (const w of ["walk1", "walk2"]) {
+        try { GEO.walks[w] = await (await fetch(`../data/processed/${w}/georef.json`)).json(); } catch (e) {}
+        if (w === "walk1") try { const rf = await fetch("../data/processed/frontage_materials.json"); if (rf.ok) FRONT = (await rf.json()).points_list || []; } catch (e) {}
+        if (SHOW_WASTE) try { const rw = await fetch(`../data/processed/${w}/waste_stab.json`); if (rw.ok) WASTE[w] = await rw.json(); } catch (e) {}
+      }
+    } catch (e) { return; }
+    if (!window.L || !GEO.shops) return;
+    $("minimap").hidden = false;
+    mini = L.map("mm", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+                         boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25 }).setView([GEO.shops[0].lat, GEO.shops[0].lon], 19);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19 }).addTo(mini);
+    for (const sh of GEO.shops) L.circleMarker([sh.lat, sh.lon], { radius: 4, weight: 1, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .45 }).addTo(mini);
+    mini.createPane("people").style.zIndex = 650;
+    for (const p of FRONT) L.circleMarker([p.lat, p.lon], { radius: 3, weight: 1, color: "#333", fillColor: C.frontage, fillOpacity: 1, interactive: false }).addTo(mini);
+    for (const wj of Object.values(WASTE)) for (const it of wj.items_list || [])
+      L.circleMarker([it.lat, it.lon], { radius: 3, weight: 1, color: "#fff", fillColor: C.waste, fillOpacity: 1, interactive: false }).addTo(mini);
+    MO.miniPaths = L.layerGroup().addTo(mini); MO.miniNow = L.layerGroup().addTo(mini); MO.pathSig = "";
+    $("minimap").addEventListener("click", openFullMap);
+    setMiniRoute();
+  }
+  function setMiniRoute() {
+    if (!mini) return;
+    if (miniRoute) { miniRoute.remove(); miniRoute = null; }
+    const g = GEO.walks[S.walk]; if (!g) return;
+    miniRoute = L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: "#4fb3bb", weight: 4, opacity: .8 }).addTo(mini);
+  }
+  let miniLast = -1;
+  let meFi = 0, meBearing = 0;
+  function updateFullMe(pan) {
+    if (!fullMe || $("mapfull").hidden) return;
+    const g = GEO.walks[S.walk]; if (!g || !g.lat[meFi]) return;
+    fullMe.setLatLng([g.lat[meFi], g.lon[meFi]]);
+    const el = fullMe.getElement(); if (!el) return;
+    const half = Math.min(60, S.fov / 2) * Math.PI / 180, R = 44;
+    const cone = el.querySelector(".me-cone");
+    cone.setAttribute("d", `M0,0 L${R * Math.sin(-half)},${-R * Math.cos(half)} A${R},${R} 0 0 1 ${R * Math.sin(half)},${-R * Math.cos(half)} Z`);
+    cone.setAttribute("transform", `rotate(${meBearing})`);
+    if (pan && !full.getBounds().pad(-0.1).contains(fullMe.getLatLng())) full.panTo(fullMe.getLatLng());
+  }
+  function updateMini(fi) {
+    if (!mini) return;
+    const g = GEO.walks[S.walk]; if (!g || !g.lat[fi]) return;
+    const bearing = (g.yaw0_bearing_deg[fi] + S.yaw + 360) % 360;                 // map bearing of the current view direction
+    meFi = fi; meBearing = bearing; updateFullMe(false);
+    const key = fi * 1000 + Math.round(bearing);
+    if (key !== miniLast) { mini.setView([g.lat[fi], g.lon[fi]], mini.getZoom(), { animate: false }); miniLast = key; }
+    // heading-up (GTA): rotate the map so the view direction points up; the cone stays fixed, north marker rotates
+    $("mmrot").style.transform = `rotate(${-bearing}deg)`;
+    const half = Math.min(60, S.fov / 2) * Math.PI / 180, R = 34;
+    $("mmcone").setAttribute("d", `M0,0 L${R * Math.sin(-half)},${-R * Math.cos(half)} A${R},${R} 0 0 1 ${R * Math.sin(half)},${-R * Math.cos(half)} Z`);
+    $("mmnorth").style.transform = `rotate(${-bearing}deg)`;
+  }
+  function openFullMap() {
+    $("mapfull").hidden = false;
+    if (!full) {
+      full = L.map("fullmap", { zoomSnap: 0.5, maxZoom: 22 });
+      full.createPane("people").style.zIndex = 650;                     // followed people above the "you are here" marker
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, maxNativeZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors · stores: team GIS survey 30.7.26" }).addTo(full);
+      const cols = { walk1: "#4fb3bb", walk2: "#e0a948" };
+      for (const [w, g] of Object.entries(GEO.walks)) {
+        L.polyline(g.lat.map((la, i) => [la, g.lon[i]]), { color: cols[w], weight: 5, opacity: .85 }).addTo(full)
+          .bindTooltip(w === "walk1" ? "Walk 1 · Hatikvah St" : "Walk 2 · Hamevasser St", { sticky: true });
+      }
+      const esc3 = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+      for (const sh of GEO.shops) {
+        const m = L.circleMarker([sh.lat, sh.lon], { radius: sh.seen ? 7 : 5, weight: 1.5, color: "#111", fillColor: tradeCol(sh.Main_Trade), fillOpacity: sh.seen ? .95 : .4 }).addTo(full);
+        const info = [["Trade", sh.Main_Trade], ["Category", sh.Sub_Category], ["Type", sh.Shop_Type], ["Ownership", sh.Ownership], ["Facade", sh.Facade_Mat], ["Skeleton", sh.Skeleton_Mat]]
+          .filter(x => x[1]).map(([a, b]) => `${a}: ${esc3(b)}`).join("<br>");
+        const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
+                              : `<div class="muted">Not passed on the recorded walks.</div>`;
+        m.bindPopup(`<b>${esc3(sh.name)}</b><br>${info}<br>${where}`);
+        m.bindTooltip(esc3(sh.name));
+      }
+      full.on("popupopen", e => {
+        const b = e.popup.getElement().querySelector(".go"); if (!b) return;
+        if (b.dataset.fm) { b.addEventListener("click", () => { const p = FRONT.find(x => String(x.id) === b.dataset.fm); if (p) goToFrontage(p); }); return; }
+        b.addEventListener("click", () => { const sh = GEO.shops.find(x => String(x.OBJECTID) === b.dataset.oid); if (sh) goToShop(sh); });
+      });
+      const used = Object.keys(TRADE_COL);
+      $("maplegend").innerHTML = used.map(t => `<span><i style="background:${TRADE_COL[t]}"></i>${t}</span>`).join("") + `<span><i style="background:#cfd8d6"></i>other / unknown</span><span class="muted">bright = on a walk (clickable)</span><span>🧱 frontage materials (experimental)</span>${SHOW_WASTE ? `<span><i style="background:${C.waste}"></i>waste on the floor</span>` : ""}`;
+      $("mapinfo").textContent = `${GEO.shops.length} stores · ${GEO.shops.filter(x => x.seen).length} on the walks`;
+      const all = GEO.shops.map(x => [x.lat, x.lon]); full.fitBounds(all, { padding: [30, 30] });
+      for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
+        L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
+          .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
+      for (const p of FRONT)
+        L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
+          .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(full);
+      MO.fullPaths = L.layerGroup().addTo(full); MO.fullNow = L.layerGroup().addTo(full); MO.pathSig = ""; MO.lastKey = "";
+      // "you are here": current camera position + view cone, kept live by updateMini()
+      fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
+        html: `<svg viewBox="-48 -48 96 96" width="96" height="96"><path class="me-cone" d=""/><circle r="7" class="me-dot"/></svg><span class="me-tag">you are here</span>` }) }).addTo(full);
+    }
+    // always open centred on the current camera position, at street level
+    const centre = () => {
+      full.invalidateSize();
+      const g = GEO.walks[S.walk];
+      const pts = [];
+      for (const id of MO.follow.keys()) { const m = moTrack(id); if (m) m.lat.forEach((la, i) => { if (la != null) pts.push([la, m.lon[i]]); }); }
+      if (pts.length && g && g.lat[meFi]) { pts.push([g.lat[meFi], g.lon[meFi]]); full.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 21, animate: false }); }
+      else if (g && g.lat[meFi]) full.setView([g.lat[meFi], g.lon[meFi]], 19, { animate: false });
+      updateFullMe(false);
+    };
+    centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
+  }
+  $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
+  $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
+  const fmHtml = (p, withBtn) => `<b>🧱 Frontage materials</b> <span class="muted">· experimental</span><br>` +
+    `<img class="fm" src="../data/processed/${p.crop}" alt="Frontage crop">` +
+    `Facade: ${p.facade} · structure: ${p.structure}<br>Materials: ${p.materials.length ? p.materials.join(", ") : "—"}<br>` +
+    `<span class="muted">${p.walk === "walk1" ? "walk 1" : "walk 2"} · ${p.chainage_m} m along the route · ${p.side} side · what the camera saw here, not tied to a store name</span>` +
+    (withBtn ? `<br><button class="go" data-fm="${p.id}">▶ Go to video</button>` : "");
+  async function goToFrontage(p) {
+    $("mapfull").hidden = true;
+    if (p.walk !== S.walk) await load(p.walk);
+    vt = p.frame / (S.data ? S.data.fps : 5);
+    if (videoOk()) video.currentTime = vt;
+    S.yaw = p.yaw; S.pitch = 0; S.sel = { kind: "fm", id: p.id };
+  }
+  async function goToShop(sh) {
+    const t = sh.seen;
+    $("mapfull").hidden = true;
+    if (t.walk !== S.walk) await load(t.walk);
+    vt = t.frame / (S.data ? S.data.fps : 5);
+    if (videoOk()) video.currentTime = vt;
+    S.yaw = t.yaw; S.pitch = -3;
+  }
   requestAnimationFrame(frame);
+  loadGeo();
 
   // ---------- interaction ----------
   let drag = null, scrubbing = false;
-  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard")) return; drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
-  vp.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+  const canvasXY = e => { const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; };
+  vp.addEventListener("pointerdown", e => { if (e.target.closest(".vcard, .minimap")) return;
+    vp.style.cursor = "";
+    if (e.shiftKey) { const [x, y] = canvasXY(e); MO.lasso = { x0: x, y0: y, x1: x, y1: y }; vp.setPointerCapture(e.pointerId); return; }
+    drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; vp.setPointerCapture(e.pointerId); vp.classList.add("drag"); });
+  vp.addEventListener("pointermove", e => { if (MO.lasso) { const [x, y] = canvasXY(e); MO.lasso.x1 = x; MO.lasso.y1 = y; return; } if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
     const s = S.fov / vp.clientWidth; S.yaw = ((drag.yaw - dx * s + 540) % 360) - 180; S.pitch = Math.max(-85, Math.min(85, drag.pitch + dy * s)); });
+  // the card opens from the emoji badge (easier to hit than a box); boxes only when emoji badges are switched off
+  function hitAt(x, y, k) {
+    const sl = 4 * k, inR = (q, s0) => q && x >= q[0] - s0 && x <= q[2] + s0 && y >= q[1] - s0 && y <= q[3] + s0;
+    const hs = S.hits.slice().reverse();
+    return $("Lid").checked ? hs.find(h => inR(h.b, sl)) : hs.find(h => inR(h.r, 0));
+  }
+  vp.addEventListener("pointermove", e => {                             // pointer cursor over a clickable emoji
+    if (drag || MO.lasso) return;
+    const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth;
+    vp.style.cursor = hitAt((e.clientX - r.left) * k, (e.clientY - r.top) * k, k) ? "pointer" : "";
+  });
   vp.addEventListener("pointerup", e => {
+    if (MO.lasso) {                                                    // shift + drag: follow everyone whose box centre is inside
+      const q = MO.lasso, x0 = Math.min(q.x0, q.x1), x1 = Math.max(q.x0, q.x1), y0 = Math.min(q.y0, q.y1), y1 = Math.max(q.y0, q.y1);
+      for (const h of S.hits) if (h.kind === "p" && moTrack(h.id)) { const cx = (h.r[0] + h.r[2]) / 2, cy = (h.r[1] + h.r[3]) / 2; if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) toggleFollow(h.id, true); }
+      MO.lasso = null; return;
+    }
     vp.classList.remove("drag");
     if (drag && !drag.moved) {
       const r = vp.getBoundingClientRect(), k = ov.width / vp.clientWidth, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
-      const h = S.hits.slice().reverse().find(h => x >= h.r[0] && x <= h.r[2] && y >= h.r[1] && y <= h.r[3]);
-      S.sel = h && h.kind === "p" ? (S.sel && S.sel.id === h.id ? null : { kind: "p", id: h.id }) : null;
+      const h = hitAt(x, y, k);
+      S.sel = h ? (S.sel && S.sel.kind === h.kind && S.sel.id === h.id ? null : { kind: h.kind, id: h.id }) : null;
     }
     drag = null;
   });
-  $("vcard").addEventListener("click", e => { if (e.target.closest("button")) S.sel = null; });
+  // close on press (pointerdown), so a card refresh between press and release cannot swallow the click
+  $("vcard").addEventListener("pointerdown", e => {
+    const fb = e.target.closest(".vfollow"); if (fb) { if (!fb.disabled) toggleFollow(+fb.dataset.id); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
   vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
   vp.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") S.yaw -= 6; else if (e.key === "ArrowRight") S.yaw += 6;
@@ -414,6 +1041,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   });
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
   $("play").addEventListener("click", togglePlay);
+  $("mMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; MO.mode = b.dataset.m;
+    $("mMode").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); MO.lastKey = ""; });
+  $("fChips").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.rm) toggleFollow(+b.dataset.rm, false); else if (b.dataset.go) goToPerson(+b.dataset.go); });
+  $("fView").addEventListener("click", () => { for (const id of MO.inView) if (moTrack(id)) toggleFollow(id, true); });
+  $("fClear").addEventListener("click", () => { MO.follow.clear(); renderChips(); MO.lastFi = -1; $("vcard").dataset.html = ""; });
   $("scrub").addEventListener("input", () => { scrubbing = true; vt = $("scrub").value / 1000 * duration(); if (videoOk()) video.currentTime = vt; });
   $("scrub").addEventListener("change", () => { scrubbing = false; });
   $("conf").addEventListener("input", () => { S.conf = +$("conf").value; $("confV").textContent = S.conf.toFixed(2); });
