@@ -140,9 +140,33 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=range] { width: 100%; accent-color: var(--space); }
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
-.stats .big { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 12.5px; padding-top: 8px; }
+/* statistics panel: People / Objects / Places, donuts that follow the walk + a trend along the whole walk */
+.pop.stats { width: 340px; max-height: calc(100% - 150px); overflow: auto; }
+.seg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; margin-bottom: 10px; }
+.seg button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 6px 4px; font-weight: 600; font-size: 12.5px; color: var(--soft); cursor: pointer; display: flex; gap: 6px; align-items: center; justify-content: center; }
+.seg button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.donut { display: block; width: 100%; height: auto; overflow: visible; }
+.donut .ctr { font: 700 30px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
+.donut .ctr2 { font: 500 11px var(--sans); fill: var(--soft); }
+.donut .lb { font: 600 11px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
+.donut .lb tspan.n { font-weight: 700; }
+.donut .lb tspan.k { fill: #52514e; font-weight: 500; }
+.donut path { cursor: default; transition: opacity .15s; }
+.donut path:hover { opacity: .8; }
+.dt { font-weight: 700; font-size: 12.5px; margin: 6px 0 0; display: flex; justify-content: space-between; }
+.dt small { font-weight: 500; color: var(--soft); }
+.leg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: #52514e; margin: 2px 0 8px; }
+.leg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.trend { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+.trend .tlbl { font-size: 11.5px; color: var(--soft); margin-bottom: 4px; }
+.trend svg { width: 100%; height: 56px; display: block; cursor: crosshair; }
+.tip2 { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.signs { font-size: 13px; margin: 0 0 6px; }
+.signs div { padding: 4px 0; border-bottom: 1px solid var(--line); unicode-bidi: plaintext; direction: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nums summary { cursor: pointer; font-size: 12px; color: var(--soft); padding-top: 8px; }
+.stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 12.5px; padding-top: 6px; }
 .stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dtip { position: fixed; background: var(--ink); color: #fff; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 </style>
 </head>
@@ -174,7 +198,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="rail glass" data-no-drag>
     <button id="tCenter" data-tip="Follow the walking direction" aria-label="Follow the walking direction" aria-pressed="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
     <button id="tSearch" data-tip="Find a person by ID" aria-label="Find"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>
-    <button id="tStats" data-tip="What's in view" aria-label="Statistics"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M7 17v-6M12 17V6M17 17v-9"/></svg></button>
+    <button id="tStats" data-tip="Statistics" aria-label="Statistics"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M7 17v-6M12 17V6M17 17v-9"/></svg></button>
     <button id="tMark" data-tip="Bookmark this moment" aria-label="Bookmark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>
     <button id="tLayers" data-tip="Layers & filters" aria-label="Layers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 5 9-5" opacity=".6"/></svg></button>
   </div>
@@ -215,10 +239,15 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="searchHint">Jumps to when they first appear and opens their card.</div>
   </div>
   <div class="pop glass stats" id="statsPop" data-no-drag hidden>
-    <h4>In view now</h4>
-    <div class="big" id="sPeople">0</div><div style="color:var(--soft)">people · <span id="sSeen">0</span> unique so far on this walk</div>
-    <div class="grid" id="sGrid"></div>
-    <div class="hint">Gender and age group are perceived estimates from video, shown as aggregates.</div>
+    <div class="seg" role="tablist" aria-label="Statistics for">
+      <button role="tab" data-tab="person" aria-selected="true"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(--person)"/></svg>People</button>
+      <button role="tab" data-tab="object" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="var(--object)"/></svg>Objects</button>
+      <button role="tab" data-tab="space" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5z" fill="var(--space)"/></svg>Places</button>
+    </div>
+    <div id="statsBody"></div>
+    <div class="trend"><div class="tlbl" id="trendLbl"></div><svg id="trend" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Count along the walk"></svg><div class="tip2" id="trendTip" hidden></div></div>
+    <details class="nums"><summary>Numbers</summary><div class="grid" id="sGrid"></div></details>
+    <div class="hint" id="statsNote"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
 </div>
@@ -293,7 +322,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
-    buildMotion(d); buildMarks(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
+    buildMotion(d); buildMarks(d); buildTrends(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
 
@@ -563,14 +592,114 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     $("mmCap").textContent = `facing ${Math.round(bearing)}° · ${how}` + (APPROX[E.walk] ? "\napproximate position (fitted to the street)" : "");
   }, 120);
 
-  // ---- stats popover ----
-  function updateStats(st) {
-    if ($("statsPop").hidden) return;
-    $("sPeople").textContent = st.counts.people.view; $("sSeen").textContent = st.uniqueSoFar;
-    const a = st.counts.age, s = st.counts.sex, rows = [["Men (perceived)", s.man || 0], ["Women (perceived)", s.woman || 0], ["Gender uncertain", s.uncertain || 0],
-      ...ShukEngine.AGES.map(k => [AGE[k][0] + (k === "uncertain" ? " (age uncertain)" : ""), a[k] || 0])];
-    $("sGrid").innerHTML = rows.map(([l, v]) => `<span>${l}</span><span>${v}</span>`).join("");
+  // ---- statistics panel ----
+  // People: gender + age donuts (people in view, centre number); Objects: top-5 classes of the walk + Other (in view);
+  // Places: readable signs read so far, by language. Segment colours follow the category (fixed per walk), validated:
+  // categorical slots blue/orange/aqua/yellow/magenta, age = one-hue ordinal ramp, "uncertain"/"other" = neutral grey.
+  const SL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"], GREY = "#b9b8b2";
+  const GENDER = [["man", "Men", SL[0]], ["woman", "Women", SL[1]], ["uncertain", "Uncertain", GREY]];
+  const AGEC = [["child", "Child", "#86b6ef"], ["young adult 18-35", "Young adult", "#3987e5"], ["middle adult 36-60", "Adult", "#1c5cab"], ["older adult 61+", "Older adult", "#0d366b"], ["uncertain", "Uncertain", GREY]];
+  const LANG = [["he", "Hebrew", SL[0]], ["en", "English", SL[1]], ["ar", "Arabic", SL[2]], ["other", "Other", GREY]];
+  let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0;
+  const tween = {};                                   // displayed (eased) segment values, so the donuts glide
+  function buildTrends(d) {
+    const len = d.n_frames, people = new Array(len).fill(0), objects = new Array(len).fill(0), places = new Array(len).fill(0), cls = new Map(), seen = new Set();
+    let read = 0;
+    d.frames.forEach((F, f) => {
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) people[f]++;
+      for (const e of F.o) if (e[1] >= E.conf && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3] && !seen.has(e[0])) { seen.add(e[0]); read++; }
+      places[f] = read;
+    });
+    TOPOBJ = [...cls.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c], i) => [c, cap(c), SL[i]]);
+    TREND = { person: people, object: objects, space: places };
+    for (const k in tween) delete tween[k];
+    drawTrend();
   }
+  // donut with a 2px surface gap between segments, centre number, direct labels around
+  function donut(id, segs, centre, sub) {
+    const W = 300, H = 178, cx = W / 2, cy = H / 2, R = 62, r = 42, tot = segs.reduce((a, s) => a + s.v, 0);
+    const arc = (a0, a1, rr) => [cx + rr * Math.sin(a0), cy - rr * Math.cos(a0), cx + rr * Math.sin(a1), cy - rr * Math.cos(a1)];
+    let out = `<svg class="donut" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sub)}: ${segs.map(s => `${s.label} ${Math.round(s.n)}`).join(", ")}">`;
+    if (tot <= 0.01) out += `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="#e7e9ef" stroke-width="${R - r}"/>`;
+    let a = 0;
+    for (const sg of segs) {
+      if (sg.v <= 0.001 || tot <= 0.01) continue;
+      const span = sg.v / tot * Math.PI * 2, a0 = a, a1 = a + Math.min(span, Math.PI * 2 - 1e-4); a += span;
+      const large = a1 - a0 > Math.PI ? 1 : 0, [x0, y0, x1, y1] = arc(a0, a1, R), [x2, y2, x3, y3] = arc(a1, a0, r);
+      out += `<path d="M${x0} ${y0}A${R} ${R} 0 ${large} 1 ${x1} ${y1}L${x2} ${y2}A${r} ${r} 0 ${large} 0 ${x3} ${y3}Z" fill="${sg.col}" stroke="#fcfcfb" stroke-width="2" stroke-linejoin="round" data-tip="${esc(sg.label)}: ${Math.round(sg.n)} (${Math.round(sg.v / tot * 100)}%)"/>`;
+      if (span > 0.22 && Math.round(sg.n) > 0) {        // direct label outside the segment
+        const m = (a0 + a1) / 2, lx = cx + (R + 12) * Math.sin(m), ly = cy - (R + 12) * Math.cos(m), anchor = Math.sin(m) > 0.15 ? "start" : Math.sin(m) < -0.15 ? "end" : "middle";
+        out += `<text class="lb" x="${lx}" y="${ly + 4}" text-anchor="${anchor}"><tspan class="n">${Math.round(sg.n)}</tspan> <tspan class="k">${esc(sg.label.length > 13 ? sg.label.slice(0, 12) + "…" : sg.label)}</tspan></text>`;
+      }
+    }
+    out += `<text class="ctr" x="${cx}" y="${cy + 6}" text-anchor="middle">${centre}</text><text class="ctr2" x="${cx}" y="${cy + 22}" text-anchor="middle">${esc(sub)}</text></svg>`;
+    return out;
+  }
+  const legend = segs => `<div class="leg">${segs.map(s => `<span><i style="background:${s.col}"></i>${esc(s.label)}</span>`).join("")}</div>`;
+  const ease = (key, v) => { const o = tween[key] ?? v; const n = o + (v - o) * 0.35; tween[key] = Math.abs(n - v) < 0.02 ? v : n; return tween[key]; };
+  const segsOf = (prefix, defs, counts) => defs.map(([k, label, col]) => ({ label, col, n: counts[k] || 0, v: ease(`${prefix}:${k}`, counts[k] || 0) }));
+  function updateStats(st) {
+    if ($("statsPop").hidden || !TREND || !st || !st.counts) return;
+    const now = performance.now(); if (now - statsAt < 120) return; statsAt = now;
+    let html = "", rows = [], note = "";
+    if (tab === "person") {
+      const sx = st.counts.sex, ag = st.counts.age, n = st.counts.people.view;
+      const g = segsOf("g", GENDER, sx), a = segsOf("a", AGEC, ag);
+      html = `<div class="dt">Gender <small>perceived · ${st.uniqueSoFar} unique so far</small></div>${donut("g", g, n, "in view")}${legend(g)}` +
+             `<div class="dt">Age group <small>perceived</small></div>${donut("a", a, n, "in view")}${legend(a)}`;
+      rows = [...GENDER.map(([k, l]) => [`${l} (perceived)`, sx[k] || 0]), ...AGEC.map(([k, l]) => [`${l === "Uncertain" ? "Age uncertain" : l}`, ag[k] || 0])];
+      note = "Gender and age group are perceived estimates from video, shown as aggregates only.";
+    } else if (tab === "object") {
+      const byCls = {}; let n = 0;
+      for (const e of st.entities) if (e.alpha >= 0.5 && groupOf(e) === "object") { n++; byCls[e.cls] = (byCls[e.cls] || 0) + 1; }
+      const top = new Set(TOPOBJ.map(t => t[0])), counts = { ...byCls, __other: Object.entries(byCls).filter(([c]) => !top.has(c)).reduce((a, [, v]) => a + v, 0) };
+      const segs = segsOf("o", [...TOPOBJ, ["__other", "Other", GREY]], counts);
+      html = `<div class="dt">Objects in view <small>5 most common on this walk + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
+      rows = segs.map(s => [s.label, s.n]);
+      note = "Detected objects and market items (decor such as lamps and flags excluded). Colours stay with each type for the whole walk.";
+    } else {
+      const d = st.data, read = [], counts = {};
+      const fi = st.fi; for (let f = 0; f <= fi; f++) for (const e of d.frames[f].s || []) { const info = d.signs[e[0]]; if (info && info[3] && !read.some(x => x.id === e[0])) read.push({ id: e[0], text: info[0], lang: info[1] }); }
+      for (const r of read) { const k = ["he", "en", "ar"].includes(r.lang) ? r.lang : "other"; counts[k] = (counts[k] || 0) + 1; }
+      const segs = segsOf("l", LANG, counts);
+      html = `<div class="dt">Signs read so far <small>${st.counts.signsRead.length} in view now</small></div>${donut("l", segs, read.length, "read")}${legend(segs)}` +
+             `<div class="dt">Latest signs</div><div class="signs">${read.slice(-4).reverse().map(r => `<div dir="auto">${esc(r.text)}</div>`).join("") || "<div>—</div>"}</div>`;
+      rows = segs.map(s => [s.label, s.n]);
+      note = "Places = readable signs (OCR). Most signs are only briefly in view, so this tab counts what has been read so far on the walk.";
+    }
+    $("statsBody").innerHTML = html; $("statsNote").textContent = note;
+    $("sGrid").innerHTML = rows.map(([l, v]) => `<span>${esc(l)}</span><span>${Math.round(v)}</span>`).join("");
+    drawTrend(st);
+  }
+  // trend along the whole walk (1 s bins), playhead at the current moment; hover = value, click = jump there
+  function drawTrend(st) {
+    if (!TREND || !E.data) return;
+    const ser = TREND[tab], d = E.data, bin = d.fps, pts = [];
+    for (let i = 0; i < ser.length; i += bin) pts.push(Math.max(...ser.slice(i, i + bin)));
+    const mx = Math.max(1, ...pts), W = 300, H = 56, X = i => i / Math.max(1, pts.length - 1) * W, Y = v => H - 4 - v / mx * (H - 10);
+    const col = COL[tab], fi = st ? st.fi : 0, px = fi / Math.max(1, d.n_frames - 1) * W;
+    const line = pts.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+    $("trend").innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` +
+      `<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="#1d2433" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+    $("trendLbl").textContent = { person: "People in view along the walk", object: "Objects in view along the walk", space: "Signs read along the walk (cumulative)" }[tab] + ` · max ${mx}`;
+    $("trend").dataset.pts = JSON.stringify(pts);
+  }
+  $("trend").addEventListener("mousemove", ev => {
+    const r = $("trend").getBoundingClientRect(), pts = JSON.parse($("trend").dataset.pts || "[]"); if (!pts.length) return;
+    const i = Math.round((ev.clientX - r.left) / r.width * (pts.length - 1)), tip = $("trendTip");
+    tip.hidden = false; tip.style.left = `${ev.clientX - r.left}px`; tip.textContent = `${fmt(i)} · ${pts[i]}`;
+  });
+  $("trend").addEventListener("mouseleave", () => { $("trendTip").hidden = true; });
+  $("trend").addEventListener("click", ev => { const r = $("trend").getBoundingClientRect(); E.seek((ev.clientX - r.left) / r.width * E.duration()); });
+  document.querySelectorAll("#statsPop .seg button").forEach(b => b.addEventListener("click", () => {
+    tab = b.dataset.tab; document.querySelectorAll("#statsPop .seg button").forEach(x => x.setAttribute("aria-selected", String(x === b))); statsAt = 0; updateStats(E.state || {});
+  }));
+  // hover tooltip for donut segments
+  const dtip = document.createElement("div"); dtip.className = "dtip"; dtip.hidden = true; document.body.appendChild(dtip);
+  $("statsBody").addEventListener("mousemove", ev => { const t = ev.target.closest("path[data-tip]"); if (!t) { dtip.hidden = true; return; } dtip.hidden = false; dtip.textContent = t.dataset.tip; dtip.style.left = `${ev.clientX + 12}px`; dtip.style.top = `${ev.clientY + 12}px`; });
+  $("statsBody").addEventListener("mouseleave", () => { dtip.hidden = true; });
 
   // ---- timeline markers: crowd peaks (people), market-item peaks (objects), first sight of readable signs (space) ----
   const bookmarks = { walk1: [], walk2: [] };
@@ -635,7 +764,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
   for (const [b, p] of Object.entries(pops)) $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
   $("setBtn").addEventListener("click", () => $("tLayers").click());
-  document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops(); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
+  // outside clicks close Layers/Search; the statistics panel stays open while you watch
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
   const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.hidden = true, 400); }, 1800); };
   $("tMark").addEventListener("click", () => { const st = E.state; if (!st) return; bookmarks[E.walk].push(st.fi); renderMarks(); toast(`Bookmarked ${fmt(st.t)}`); });
@@ -653,7 +783,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   document.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
   }));
-  $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); });
+  $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
 
   load("walk1");
 })();
