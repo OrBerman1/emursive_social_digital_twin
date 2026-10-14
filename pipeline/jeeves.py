@@ -77,6 +77,10 @@ class Project:
                                "motion_state": m["state"] if m else None, "median_speed_m_s": m["med_spd"] if m else None,
                                "path_len_m": m["len_m"] if m else None, "relative_to_camera": m["rel"] if m else None,
                                "same_person_group": g, "attached_files": files_of.get((w, tid), 0),
+                               # linked person (link_persons.py): one id per real person; gender_est / age_group_est are
+                               # smoothed over it, the *_track_est columns keep the track's own estimate
+                               "linked_person": f"P-{(t[7] if len(t) > 7 else tid):04d}",
+                               "gender_track_est": (t[8] if len(t) > 8 else t[5]) or "uncertain", "age_group_track_est": (t[9] if len(t) > 9 else t[6]) or "uncertain",
                                "in_viewer_count": bool(t[2] >= 5 and t[3] >= 0.6)})
             T["people"] += people
             pp = self.interim / w / "tracks_stab" / "persons.parquet"
@@ -147,10 +151,12 @@ class Project:
         lines = [f"Project: {self.proj.get('name', self.id)} (id {self.id})."]
         for w in self.tables["walks"].itertuples():
             p = pe[(pe.walk == w.walk) & pe.in_viewer_count]
-            g = p.gender_est.value_counts().to_dict(); a = p.age_group_est.value_counts().to_dict()
+            pp = p.drop_duplicates("linked_person")                         # one row per linked person
+            g = pp.gender_est.value_counts().to_dict(); a = pp.age_group_est.value_counts().to_dict()
             st = p.motion_state.value_counts().to_dict()
-            lines.append(f"- {w.walk} = {w.label}: {w.duration_s:.0f} s of 360 video; {len(p)} people as counted in the viewer "
-                         f"(in_viewer_count; {w.people} tracks in total incl. short / low-confidence ones); perceived gender {g}; age group {a}; motion {st}; on the map: {'yes' if w.mapped else 'no'}.")
+            lines.append(f"- {w.walk} = {w.label}: {w.duration_s:.0f} s of 360 video; {len(pp)} people as counted in the viewer "
+                         f"(distinct linked_person with an in_viewer_count track; {len(p)} such tracks, {w.people} tracks in total incl. short / low-confidence ones); "
+                         f"perceived gender {g}; age group {a} (per person); motion {st} (per track); on the map: {'yes' if w.mapped else 'no'}.")
         for k in ("objects", "signs", "food", "crowds", "stores", "comments", "attachments"):
             if k in self.tables and len(self.tables[k]):
                 lines.append(f"- {k}: {len(self.tables[k])} rows")
@@ -288,9 +294,11 @@ data-analysis tasks for urban researchers (planners, anthropologists) about this
 How the data was made (know the source and error of every number you give):
 - 360 walks filmed with a handheld Insta360 camera, stabilised offline, analysed at 5 frames per second.
 - People: YOLO11 detection + tracking. One "track" = one person while continuously visible; the same real person can be
-  split into several tracks (motion.py re-links some: same_person_group). The camera operator and people pictured on
+  split into several tracks. linked_person joins pieces confirmed as the same person (link_persons.py, vision-reviewed;
+  few links, conservative); same_person_group is motion.py's map re-link (not reviewed, about half are wrong). The camera operator and people pictured on
   signs/posters are excluded from people (pictured ones are in pictured_people).
-- gender_est (man / woman / uncertain) and age_group_est are CLIP zero-shot ESTIMATES from body crops, not validated:
+- gender_est (man / woman / uncertain) and age_group_est are CLIP zero-shot ESTIMATES from body crops, smoothed over the
+  linked person (gender_track_est / age_group_track_est = the track's own estimate), not validated:
   always call them "perceived/estimated" and mention the uncertain share. Never claim to know anyone's real gender or age.
 - Motion: speed and state (walking / standing) from the foot point and camera height, camera motion removed; only for
   people within ~12 m; speed noise ~0.3 m/s.
@@ -317,9 +325,9 @@ How to work - DATA FIRST, video second:
   covers the most people and mention how much the other one differs (that difference is a measure of uncertainty).
 - Numbers come from run_sql. view_people / view_scene to look; classify_people to answer one visual question for many
   people, then run_sql on its table to count and join.
-- Count people WHERE in_viewer_count (seen >= 1 s, confidence >= 0.6), the same rule as the viewer's totals, unless
-  the user asks otherwise. For counts over "people", say it is tracked people (a person split into two tracks counts twice) unless you use
-  same_person_group. Give the method and its main uncertainty in one short line.
+- Count people as COUNT(DISTINCT linked_person) WHERE in_viewer_count (seen >= 1 s, confidence >= 0.6), the same rule as
+  the viewer's totals, unless the user asks otherwise. Say that a person split into tracks the linking did not join can
+  still count twice. Give the method and its main uncertainty in one short line.
 - Refer to people and moments with these tokens; the viewer turns them into jump buttons:
   {{{{p:WALK:TRACK}}}} for a person (e.g. {{{{p:walk1:310}}}}), {{{{t:WALK:SECONDS}}}} or {{{{t:WALK:SECONDS:YAW}}}} for a moment.
   Add the YAW to a moment whenever you know where to look (crowds.view_yaw, stores.seen_view_yaw, people_frames.yaw),

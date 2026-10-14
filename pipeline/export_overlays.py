@@ -28,6 +28,9 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
         l2 = pd.read_parquet(tdir / f"{level2}.parquet")
     attr_p = INTERIM / walk / f"attributes{variant}" / "attributes.parquet"
     attrs = pd.read_parquet(attr_p).set_index("track") if attr_p.exists() else None
+    # linked persons (link_persons.py): one person id per track, sex/age smoothed over the person; per-track labels kept
+    link_p = INTERIM / walk / f"persons_linked{variant}" / "links.parquet"
+    links = pd.read_parquet(link_p).set_index("track") if link_p.exists() else None
     ocr_dir = INTERIM / walk / f"ocr_vlm{variant}"                      # vision-model readings if available ...
     if not (ocr_dir / "signs.parquet").exists():
         ocr_dir = INTERIM / walk / f"ocr{variant}"                      # ... else the Tesseract result
@@ -44,6 +47,13 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
         persons = persons[c == "person"]
     n_frames = json.loads((INTERIM / walk / ("frames" + variant) / "manifest.json").read_text(encoding="utf-8"))["n_frames"]
     summary = json.loads((tdir / "summary.json").read_text(encoding="utf-8"))
+
+    def person_cols(tid):
+        """sex, age (smoothed over the linked person), person id, then the track's own sex, age."""
+        own = [attrs.at[tid, "sex"], attrs.at[tid, "age"]] if attrs is not None and tid in attrs.index else ["uncertain", "uncertain"]
+        if links is not None and tid in links.index:
+            return [links.at[tid, "sex"], links.at[tid, "age"], int(links.at[tid, "person"]), *own]
+        return [*own, int(tid), *own]
 
     box = lambda r: [R(r.yaw), R(r.yaw_l), R(r.yaw_r), R(r.pitch_top), R(r.pitch_bot)]
     frames = [{"p": [], "o": [], "l2": [], "s": [], "dp": [], "fd": [], "w": []} for _ in range(n_frames)]
@@ -102,10 +112,9 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
         "dp_tracks": ({int(t): [int(g.frame.min()), int(g.frame.max()), int(len(g)),
                                  R(dep.set_index("track").at[t, "p_depicted"], 2), dep.set_index("track").at[t, "reason"]]
                        for t, g in depicted.groupby("track")} if dep is not None else {}),
-        "tracks_fields": ["first", "last", "n", "conf", "dist", "sex", "age"], "signs_fields": ["text", "lang", "conf", "readable", "raw"], "ocr_source": ocr_dir.name,
-        "tracks": {int(t.track): [int(t.first), int(t.last), int(t.n), R(t.conf, 2), R(t.dist),
-                                   *( [attrs.at[t.track, "sex"], attrs.at[t.track, "age"]] if attrs is not None and t.track in attrs.index else ["uncertain", "uncertain"])]
-                   for t in tracks.itertuples()},
+        "tracks_fields": ["first", "last", "n", "conf", "dist", "sex", "age", "person", "sex_track", "age_track"],
+        "signs_fields": ["text", "lang", "conf", "readable", "raw"], "ocr_source": ocr_dir.name,
+        "tracks": {int(t.track): [int(t.first), int(t.last), int(t.n), R(t.conf, 2), R(t.dist), *person_cols(t.track)] for t in tracks.itertuples()},
         "signs": ({int(r.track): [r.text if r.readable else "", r.lang, R(r.conf), bool(r.readable), r.raw] for r in signs.itertuples()} if signs is not None else {}),
         "frames": frames,
     }
@@ -121,7 +130,8 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
             "frame_start": int(t.first), "frame_end": int(t.last), "t_start": R(t.first / FPS_ANALYSIS),
             "t_end": R(t.last / FPS_ANALYSIS), "chainage_m": R(t.first / FPS_ANALYSIS * pace),
             "chainage_basis": f"assumed pace {pace} m/s (replace with anchors)", "confidence": R(t.conf, 2),
-            "median_distance_m": R(t.dist), "model": "YOLO11x + angular-IoU tracker", "walk_id": walk}})
+            "median_distance_m": R(t.dist), "model": "YOLO11x + angular-IoU tracker", "walk_id": walk,
+            "person_id": f"P-{person_cols(t.track)[2]:04d}"}})
     for t, g in depicted.groupby("track"):
         feats.append({"type": "Feature", "geometry": None, "properties": {
             "entity_id": f"P-{int(t):04d}", "entity_type": "possible_rabi_sign", "layer": "material", "class": "possible_rabi_sign",
@@ -140,7 +150,7 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
                 "model": "crowds.py heuristic (overlapping similar-size person boxes)", "walk_id": walk}})
     (pdir / f"observations{variant}.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}), encoding="utf-8")
     size = (pdir / f"overlays{variant}.json").stat().st_size
-    return {"walk": walk, "frames": n_frames, "tracks": len(tracks), "possible_rabi_sign": int(depicted.track.nunique()), "overlay_bytes": size}
+    return {"walk": walk, "frames": n_frames, "tracks": len(tracks), "persons": len({person_cols(t)[2] for t in tracks.track}), "possible_rabi_sign": int(depicted.track.nunique()), "overlay_bytes": size}
 
 
 def main() -> None:

@@ -586,7 +586,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     placed.push(r);
     octx.fillStyle = col; octx.fillRect(x, y - th, tw, th); octx.fillStyle = "#101515"; octx.fillText(t, x + pad, y - th * 0.27);
   }
-  // Totals for the whole walk = unique track IDs that pass the same filters as the view
+  // Totals for the whole walk = unique linked persons (link_persons.py; a person split into several tracks counts once)
+  // whose tracks pass the same filters as the view
   // (max confidence >= slider; level 2 uses max(0.15, slider - 0.2); length >= 1 s if "hide tracks < 1 s").
   let totKey = "", totVal = null;
   function totals(d, minLen) {
@@ -599,8 +600,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       for (const e of F.l2) { const b = best.l2.get(e[8]); best.l2.set(e[8], [e[0], Math.max(b ? b[1] : 0, e[1])]); }
     }
     const lenP = id => (d.tracks[id] || [])[2] || 0, lenO = id => (d.obj_len || {})[id] || 0;
-    let people = 0;
-    for (const [id, c] of best.p) if (c >= S.conf && lenP(id) >= minLen) people++;
+    const persons = new Set();                                              // linked person id (tracks_fields "person"), else the track
+    for (const [id, c] of best.p) if (c >= S.conf && lenP(id) >= minLen) persons.add((d.tracks[id] || [])[7] ?? id);
+    const people = persons.size;
     const byCls = (m, thr) => { const out = {}; for (const [id, [cls, c]] of m) if (c >= thr && lenO(id) >= minLen) out[cls] = (out[cls] || 0) + 1; return out; };
     const signs = Object.entries(d.signs || {}).filter(([id, x]) => x[3] && (((d.sign_len || {})[id] ?? 99) >= minLen)).length;
     totVal = { people, o: byCls(best.o, S.conf), l2: byCls(best.l2, Math.max(0.15, S.conf - 0.2)), signs };
@@ -657,7 +659,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [], clipAt = [];
     for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
       const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
-      if (al >= 0.5) { pAll++; S.seen.add(id); presentIds.push(id); }
+      if (al >= 0.5) { pAll++; S.seen.add((d.tracks[id] || [])[7] ?? id); presentIds.push(id); }
       if (!inFov(yw)) continue; if (al >= 0.5) { pView++; inViewIds.push(id); }
       if (!$("Lp").checked) continue;
       const r = boxRect(yw, yl, yr, pt, pb); if (!r) continue;

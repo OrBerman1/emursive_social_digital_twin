@@ -75,10 +75,12 @@ def plan(walks: list[str], C) -> list[dict]:
     sm_skip = no_map or novideo or (None if (api or legacy) else "needs a Claude key (stall materials are read by Claude)")
     add("stalls", "Stall-front photos" + (" + Claude review" if api and not legacy else ""), ["stall_materials.py", *v] + (["--api"] if api and not legacy else []), 2, sm_skip, cwd=MODELS, walks_=mapped)
     add("frontage", "Frontage materials on the map", ["frontage.py", *v], 0.1, sm_skip, walks_=mapped)
-    add("export", "Export overlays for the viewer", ["export_overlays.py", *have, *v], 0.3, novideo)
+    # motion -> person linking -> crowds -> export: the overlays and observations carry the person ids, smoothed labels and crowds
     add("flow", "Optical flow of people", ["person_flow.py", *have, *v], 2, novideo)
     add("motion", "People on the map + motion", ["motion.py", *mapped, *v], 0.3, no_map or novideo, walks_=mapped)
+    add("link_persons", "Link broken tracks into persons", ["link_persons.py", *have, *v], 0.2, novideo)
     add("crowds", "Crowds", ["crowds.py", *mapped, *v], 0.2, no_map or novideo, walks_=mapped)
+    add("export", "Export overlays for the viewer", ["export_overlays.py", *have, *v], 0.3, novideo)
     if legacy:
         add("validation", "Hand-count sample", ["make_validation.py"], 0.1, novideo)
     for s in S:

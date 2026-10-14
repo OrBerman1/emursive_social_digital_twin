@@ -1,0 +1,13 @@
+{
+  "_note": "Vision review (Claude, 14 Oct 2026) of candidate person links proposed by pipeline/link_persons.py (motion.py map re-links + image gap bridges), from contact sheets with 4 isolated crops of the last 2 s of track A and 4 of the first 2 s of track B (link_persons.py --review-sheet). same = the person at the end of A is the person at the start of B; different = another person or the camera operator; unclear = cannot tell (partial legs, far crowd, or the track itself switches between people). Only 'same' is linked. Candidates not listed are linked only with --auto (automatic gates).",
+  "walk1": {
+    "same": [[454, 682], [1615, 1651]],
+    "different": [[971, 1055], [1052, 1099], [1235, 1300], [1429, 1470]],
+    "unclear": [[862, 919], [1091, 1120], [1272, 1362], [1349, 1378], [74, 105]]
+  },
+  "walk2": {
+    "same": [[252, 317], [523, 534]],
+    "different": [[36, 70]],
+    "unclear": [[49, 99]]
+  }
+}

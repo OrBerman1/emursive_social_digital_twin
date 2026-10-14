@@ -20,7 +20,8 @@ Method : 1. per analysis frame, people = tracked persons that pass the viewer de
          5. per crowd: size (median / most at once / unique people over its life), map position (members' map
             positions from motion.py, else camera position + ground distance along the bearing), speed mean and
             std over members (motion.py: camera motion removed, optical flow + geometry), age group and
-            perceived gender (attributes.py), time span, route position, view yaw for "go to video".
+            perceived gender (attributes.py; smoothed per linked person by link_persons.py when present; a person split
+            into several tracks counts once in people_unique and the label tallies), time span, route position, view yaw.
 Output : data/processed/<walk>/crowds<_stab>.json (each crowd has a persistent crowd_id "C<walk>-<nn>", numbered in
          time order), and the crowds are appended to observations<_stab>.geojson by export_overlays.py
 
@@ -128,6 +129,10 @@ def run(walk: str, variant: str, min_people: int) -> dict:
     tr = tr[tr.track.isin(keep) & (tr.dist_m <= MAX_DIST_M)]
     attr_p = INTERIM / walk / f"attributes{sfx}" / "attributes.parquet"
     attr = pd.read_parquet(attr_p).set_index("track") if attr_p.exists() else None
+    link_p = INTERIM / walk / f"persons_linked{sfx}" / "links.parquet"           # linked persons: smoothed labels, person ids
+    if link_p.exists():
+        attr = pd.read_parquet(link_p).set_index("track")
+    person = (lambda t: int(attr.at[t, "person"])) if attr is not None and "person" in attr.columns else (lambda t: t)
     mo_p = PROCESSED / walk / f"motion{sfx}.json"
     mo = json.loads(mo_p.read_text(encoding="utf-8")) if mo_p.exists() else {"tracks": {}, "id2g": {}}
     g = json.loads((PROCESSED / walk / "georef.json").read_text(encoding="utf-8"))
@@ -245,15 +250,16 @@ def run(walk: str, variant: str, min_people: int) -> dict:
             v = [m[2] for f, mem in c["frames"] if t in mem for m in [motion_at(t, f)] if m and m[2] is not None]
             if v:
                 spd.append(float(np.median(v)))
-        ages = pd.Series([attr.at[t, "age"] if attr is not None and t in attr.index else "uncertain" for t in members]).value_counts().to_dict()
-        sexes = pd.Series([attr.at[t, "sex"] if attr is not None and t in attr.index else "uncertain" for t in members]).value_counts().to_dict()
+        pm1 = list({person(t) if attr is not None and t in attr.index else t: t for t in members}.values())   # one member per linked person
+        ages = pd.Series([attr.at[t, "age"] if attr is not None and t in attr.index else "uncertain" for t in pm1]).value_counts().to_dict()
+        sexes = pd.Series([attr.at[t, "sex"] if attr is not None and t in attr.index else "uncertain" for t in pm1]).value_counts().to_dict()
         yaws = [rows[(t, fm)].yaw for t in mm if (t, fm) in rows]
         view_yaw = float(np.degrees(np.arctan2(np.mean(np.sin(np.radians(yaws))), np.mean(np.cos(np.radians(yaws)))))) if yaws else 0.0
         crowds.append({
             "id": len(crowds) + 1, "walk": walk, "lat": round(clat, 7), "lon": round(clon, 7), "radius_m": round(float(radius), 1),
             "frame_start": f0, "frame_end": f1, "t_start_s": round(f0 / 5, 1), "t_end_s": round(f1 / 5, 1),
             "duration_s": round((f1 - f0 + 1) / 5, 1), "chainage_m": round(float(chain[min(fm, len(chain) - 1)]), 1),
-            "people_median": int(np.median(sizes)), "people_max_at_once": int(max(sizes)), "people_unique": len(members),
+            "people_median": int(np.median(sizes)), "people_max_at_once": int(max(sizes)), "people_unique": len(pm1),
             "speed_mean_m_s": round(float(np.mean(spd)), 2) if spd else None, "speed_std_m_s": round(float(np.std(spd)), 2) if spd else None,
             "speed_n": len(spd), "walking": int(sum(v >= 0.5 for v in spd)), "standing": int(sum(v <= 0.3 for v in spd)),
             "age_group": ages, "perceived_gender": sexes, "members": [f"P-{t:04d}" for t in members],
