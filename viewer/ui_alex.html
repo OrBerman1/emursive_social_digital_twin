@@ -143,28 +143,37 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 #statsNote { font-size: 13px; text-align: center; }
 /* statistics panel: People / Objects / Places, donuts that follow the walk + a trend along the whole walk */
 .pop.stats { width: 380px; max-height: calc(100% - 150px); overflow: hidden; padding: 14px 18px 12px; }   /* donuts are sized to fit: never scrolls */
-.seg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; margin-bottom: 6px; }
-.seg button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 4px; font-weight: 600; font-size: 14.5px; color: var(--soft); cursor: pointer; display: flex; gap: 6px; align-items: center; justify-content: center; }
-.seg button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg { position: relative; display: flex; border-radius: 999px; padding: 4px; margin-bottom: 8px;   /* frosted-glass segmented toggle */
+       background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(226,231,240,.38));
+       border: 1px solid rgba(255,255,255,.75); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
+       box-shadow: inset 0 1px 3px rgba(20,30,55,.10), 0 1px 0 rgba(255,255,255,.7); }
+.seg .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; border-radius: 999px; pointer-events: none;
+            background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.72));
+            border: 1px solid rgba(255,255,255,.95);
+            box-shadow: 0 4px 14px rgba(20,30,55,.14), 0 1px 2px rgba(20,30,55,.10), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(20,30,55,.05);
+            transition: transform .32s cubic-bezier(.3,.7,.2,1), width .32s cubic-bezier(.3,.7,.2,1); }
+.seg button { position: relative; z-index: 1; flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 4px; font-weight: 600; font-size: 14.5px;
+              color: #7b8394; cursor: pointer; display: flex; gap: 7px; align-items: center; justify-content: center; transition: color .2s; }
+.seg button:hover { color: #3a4152; }
+.seg button[aria-selected="true"] { color: var(--ink); }
+.seg button svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
 .donut { display: block; width: 100%; overflow: visible; }
 .donut .ctr { font: 700 40px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
 .donut .ctr2 { font: 500 14px var(--sans); fill: var(--soft); }
-.donut .lb { font: 700 17px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
-.donut .lb tspan.n { font-weight: 700; }
-.donut .lb tspan.k { fill: #52514e; font-weight: 500; }
 .donut path { cursor: default; transition: opacity .15s; }
 .donut path:hover { opacity: .8; }
-.dt { font-weight: 700; font-size: 16px; margin: 4px 0 0; display: flex; justify-content: space-between; align-items: baseline; }
-.dt small { font-weight: 500; font-size: 13px; color: var(--soft); }
+.dt { font-weight: 600; font-size: 13px; letter-spacing: .02em; color: #8a91a0; margin: 6px 0 0; text-align: center; }
+.dt small { font-weight: 500; color: #a3a9b5; }
 .leg { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 15px; color: #3b3a37; margin: 2px 0 8px; }
 .leg i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.pair .dt2 { font-weight: 700; font-size: 14.5px; text-align: center; margin-top: 4px; }
+.pair .dt2 { font-weight: 600; font-size: 13px; letter-spacing: .02em; color: #8a91a0; text-align: center; margin-top: 6px; }
 .pair .leg { font-size: 13.5px; gap: 2px 10px; }
 .pair .donut { width: 100%; }
 .trend { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
-.trend .tlbl { font-size: 13.5px; color: var(--soft); margin-bottom: 6px; }
-.trend svg { width: 100%; height: 64px; display: block; cursor: crosshair; }
+.trend .tlbl { font-size: 13px; color: #8a91a0; display: flex; justify-content: space-between; margin: 4px 0 2px; }
+.trend .tlbl b { color: var(--ink); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.trend svg.ts { width: 100%; height: 44px; display: block; cursor: crosshair; }
 .tip2 { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 13px; padding: 2px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
 /* one passed place at a time, cross-fading */
 .signrot { text-align: center; padding: 4px 0 10px; }
@@ -246,14 +255,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="searchHint">Jumps to when they first appear and opens their card.</div>
   </div>
   <div class="pop glass stats" id="statsPop" data-no-drag hidden>
-    <div class="seg" role="tablist" aria-label="Statistics for">
+    <div class="seg" role="tablist" aria-label="Statistics for"><span class="ind" id="segInd"></span>
       <button role="tab" data-tab="person" aria-selected="true"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(--person)"/></svg>People</button>
       <button role="tab" data-tab="object" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="var(--object)"/></svg>Objects</button>
       <button role="tab" data-tab="space" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5z" fill="var(--space)"/></svg>Places</button>
     </div>
     <div id="statsBody"></div>
     <div class="signrot" id="signRot" hidden><small>Passed on the walk</small><div id="signTxt" dir="auto"></div></div>
-    <div class="trend"><div class="tlbl" id="trendLbl"></div><svg id="trend" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Count along the walk"></svg><div class="tip2" id="trendTip" hidden></div></div>
+    <div class="trend"><div class="tlbl"><span>In view</span><b id="tvNow"></b></div><svg class="ts" id="tsView" viewBox="0 0 300 48" preserveAspectRatio="none" aria-label="In view, along the walk so far"></svg><div class="tlbl"><span>Cumulative</span><b id="tcNow"></b></div><svg class="ts" id="tsCum" viewBox="0 0 300 48" preserveAspectRatio="none" aria-label="Cumulative, along the walk so far"></svg><div class="tip2" id="trendTip" hidden></div></div>
     <div class="hint" id="statsNote"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
@@ -610,21 +619,26 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1;   // donutH (+ side-by-side people) fitted so the panel never scrolls
   const tween = {};                                   // displayed (eased) segment values, so the donuts glide
   function buildTrends(d) {
-    const len = d.n_frames, people = new Array(len).fill(0), objects = new Array(len).fill(0), places = new Array(len).fill(0), cls = new Map(), seen = new Set();
-    let read = 0;
+    const len = d.n_frames, mk = () => ({ view: new Array(len).fill(0), cum: new Array(len).fill(0) });
+    const T = { person: mk(), object: mk(), space: mk() }, cls = new Map(), seenP = new Set(), seenO = new Set(), seenS = new Set();
+    // "in view" = inside the default view (90 deg, looking along the walking direction), so it matches the donut centre
     d.frames.forEach((F, f) => {
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) people[f]++;
-      for (const e of F.o) if (e[1] >= E.conf && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3] && !seen.has(e[0])) { seen.add(e[0]); read++; }
-      places[f] = read;
+      const ahead = yw => Math.abs(wrap(yw - fwdAt(f))) < 45;
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(e[0]); }
+      for (const e of F.o) if (e[1] >= E.conf && !DECOR.has(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { if (ahead(e[2])) T.space.view[f]++; seenS.add(e[0]); }
+      T.person.cum[f] = seenP.size; T.object.cum[f] = seenO.size; T.space.cum[f] = seenS.size;
     });
     TOPOBJ = [...cls.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c], i) => [c, cap(c), SL[i]]);
-    TREND = { person: people, object: objects, space: places };
+    // 1 s bins: the in-view signal is averaged, the cumulative one takes the value at the end of the second
+    const bin = Math.round(d.fps), bins = a => { const o = []; for (let i = 0; i < a.length; i += bin) { const sl = a.slice(i, i + bin); o.push(sl.reduce((x, y) => x + y, 0) / sl.length); } return o; };
+    const last = a => { const o = []; for (let i = 0; i < a.length; i += bin) o.push(a[Math.min(a.length - 1, i + bin - 1)]); return o; };
+    TREND = {}; for (const k in T) TREND[k] = { view: bins(T[k].view), cum: last(T[k].cum) };
     for (const k in tween) delete tween[k];
     drawTrend();
   }
-  // donut with a 2px surface gap between segments, centre number, direct labels around
+  // donut with a 2px surface gap between segments and the count in the centre; names in the legend, values on hover
   function donut(id, segs, centre, sub) {
     const W = 230, H = 200, cx = W / 2, cy = H / 2, R = 74, r = 50, tot = segs.reduce((a, s) => a + s.v, 0);
     const arc = (a0, a1, rr) => [cx + rr * Math.sin(a0), cy - rr * Math.cos(a0), cx + rr * Math.sin(a1), cy - rr * Math.cos(a1)];
@@ -636,10 +650,6 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const span = sg.v / tot * Math.PI * 2, a0 = a, a1 = a + Math.min(span, Math.PI * 2 - 1e-4); a += span;
       const large = a1 - a0 > Math.PI ? 1 : 0, [x0, y0, x1, y1] = arc(a0, a1, R), [x2, y2, x3, y3] = arc(a1, a0, r);
       out += `<path d="M${x0} ${y0}A${R} ${R} 0 ${large} 1 ${x1} ${y1}L${x2} ${y2}A${r} ${r} 0 ${large} 0 ${x3} ${y3}Z" fill="${sg.col}" stroke="#fcfcfb" stroke-width="2" stroke-linejoin="round" data-tip="${esc(sg.label)}: ${Math.round(sg.n)} (${Math.round(sg.v / tot * 100)}%)"/>`;
-      if (span > 0.16 && Math.round(sg.n) > 0) {        // its number outside the segment; names are in the legend below
-        const m = (a0 + a1) / 2, lx = cx + (R + 14) * Math.sin(m), ly = cy - (R + 14) * Math.cos(m), anchor = Math.sin(m) > 0.15 ? "start" : Math.sin(m) < -0.15 ? "end" : "middle";
-        out += `<text class="lb" x="${lx}" y="${ly + 6}" text-anchor="${anchor}">${Math.round(sg.n)}</text>`;
-      }
     }
     out += `<text class="ctr" x="${cx}" y="${cy + 6}" text-anchor="middle">${centre}</text><text class="ctr2" x="${cx}" y="${cy + 22}" text-anchor="middle">${esc(sub)}</text></svg>`;
     return out;
@@ -655,24 +665,22 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const sx = st.counts.sex, ag = st.counts.age, n = st.counts.people.view;
       const g = segsOf("g", GENDER, sx), a = segsOf("a", AGEC, ag);
       html = twoCol
-        ? `<div class="dt">People in view <small>perceived · ${st.uniqueSoFar} unique so far</small></div><div class="pair">` +
-          `<div><div class="dt2">Gender</div>${donut("g", g, n, "in view")}${legend(g)}</div><div><div class="dt2">Age group</div>${donut("a", a, n, "in view")}${legend(a)}</div></div>`
-        : `<div class="dt">Gender <small>perceived · ${st.uniqueSoFar} unique so far</small></div>${donut("g", g, n, "in view")}${legend(g)}` +
-          `<div class="dt">Age group <small>perceived</small></div>${donut("a", a, n, "in view")}${legend(a)}`;
+        ? `<div class="pair"><div><div class="dt2">Gender</div>${donut("g", g, n, "in view")}${legend(g)}</div><div><div class="dt2">Age group</div>${donut("a", a, n, "in view")}${legend(a)}</div></div>`
+        : `<div class="dt">Gender</div>${donut("g", g, n, "in view")}${legend(g)}<div class="dt">Age group</div>${donut("a", a, n, "in view")}${legend(a)}`;
       note = "Perceived estimates, aggregates only.";
     } else if (tab === "object") {
       const byCls = {}; let n = 0;
       for (const e of st.entities) if (e.alpha >= 0.5 && groupOf(e) === "object") { n++; byCls[e.cls] = (byCls[e.cls] || 0) + 1; }
       const top = new Set(TOPOBJ.map(t => t[0])), counts = { ...byCls, __other: Object.entries(byCls).filter(([c]) => !top.has(c)).reduce((a, [, v]) => a + v, 0) };
       const segs = segsOf("o", [...TOPOBJ, ["__other", "Other", GREY]], counts);
-      html = `<div class="dt">Objects in view <small>top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
+      html = `<div class="dt">Types <small>· top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
       note = "Decor (lamps, flags) excluded.";
     } else {
       const d = st.data, read = [], counts = {};
       const fi = st.fi; for (let f = 0; f <= fi; f++) for (const e of d.frames[f].s || []) { const info = d.signs[e[0]]; if (info && info[3] && !read.some(x => x.id === e[0])) read.push({ id: e[0], text: info[0], lang: info[1] }); }
       for (const r of read) { const k = ["he", "en", "ar"].includes(r.lang) ? r.lang : "other"; counts[k] = (counts[k] || 0) + 1; }
       const segs = segsOf("l", LANG, counts);
-      html = `<div class="dt">Signs read so far <small>${st.counts.signsRead.length} in view now</small></div>${donut("l", segs, read.length, "read")}${legend(segs)}`;
+      html = `<div class="dt">Language</div>${donut("l", segs, read.length, "read")}${legend(segs)}`;
       PASSED = read.filter(r => (r.text.match(/[\p{L}]/gu) || []).length >= 3);   // only places already passed; skip 1-2 letter OCR fragments
       note = "Readable signs (OCR), counted as the walk goes.";
     }
@@ -683,30 +691,44 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (tab === "person" && !twoCol && donutH < 135) { twoCol = true; donutH = 200; statsAt = 0; }       // stacked donuts too small: put them side by side
     drawTrend(st);
   }
-  // trend along the whole walk (1 s bins), playhead at the current moment; hover = value, click = jump there
+  // two time series in the same style, drawn only up to the current moment (they grow as the walk goes on):
+  // in view (1 s average) and cumulative (unique so far). x = the whole walk, y = 0..walk maximum, so scales never jump.
   function drawTrend(st) {
     if (!TREND || !E.data) return;
-    const ser = TREND[tab], d = E.data, bin = d.fps, pts = [];
-    for (let i = 0; i < ser.length; i += bin) pts.push(Math.max(...ser.slice(i, i + bin)));
-    const mx = Math.max(1, ...pts), W = 300, H = 56, X = i => i / Math.max(1, pts.length - 1) * W, Y = v => H - 4 - v / mx * (H - 10);
-    const col = COL[tab], fi = st ? st.fi : 0, px = fi / Math.max(1, d.n_frames - 1) * W;
-    const line = pts.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
-    $("trend").innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` +
-      `<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="#1d2433" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
-    $("trendLbl").textContent = { person: "Along the walk", object: "Along the walk", space: "Along the walk" }[tab] + ` · max ${mx}`;
-    $("trend").dataset.pts = JSON.stringify(pts);
+    const d = E.data, col = COL[tab], fi = st ? st.fi : 0, upto = Math.floor(fi / d.fps), W = 300, H = 48;
+    const draw = (svg, pts, fmtV) => {
+      const mx = Math.max(1, ...pts), X = i => i / Math.max(1, pts.length - 1) * W, Y = v => H - 4 - v / mx * (H - 10), n = Math.min(pts.length - 1, upto);
+      const line = pts.slice(0, n + 1).map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+      svg.innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef" vector-effect="non-scaling-stroke"/>` +
+        `<path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>`;
+      svg.dataset.pts = JSON.stringify(pts.slice(0, n + 1).map(v => Math.round(v * 10) / 10)); svg.dataset.n = pts.length;
+      return fmtV(pts[n] || 0);
+    };
+    $("tvNow").textContent = draw($("tsView"), TREND[tab].view, v => v.toFixed(v < 10 ? 1 : 0));
+    $("tcNow").textContent = draw($("tsCum"), TREND[tab].cum, v => `${Math.round(v)} so far`);
   }
-  $("trend").addEventListener("mousemove", ev => {
-    const r = $("trend").getBoundingClientRect(), pts = JSON.parse($("trend").dataset.pts || "[]"); if (!pts.length) return;
-    const i = Math.round((ev.clientX - r.left) / r.width * (pts.length - 1)), tip = $("trendTip");
-    tip.hidden = false; tip.style.left = `${ev.clientX - r.left}px`; tip.textContent = `${fmt(i)} · ${pts[i]}`;
-  });
-  $("trend").addEventListener("mouseleave", () => { $("trendTip").hidden = true; });
-  $("trend").addEventListener("click", ev => { const r = $("trend").getBoundingClientRect(); E.seek((ev.clientX - r.left) / r.width * E.duration()); });
+  for (const id of ["tsView", "tsCum"]) {
+    const svg = $(id);
+    svg.addEventListener("mousemove", ev => {
+      const r = svg.getBoundingClientRect(), pts = JSON.parse(svg.dataset.pts || "[]"), N = +svg.dataset.n || 1; if (!pts.length) return;
+      const i = Math.round((ev.clientX - r.left) / r.width * (N - 1)), tip = $("trendTip"), box = $("trendTip").parentElement.getBoundingClientRect();
+      if (i >= pts.length) { tip.hidden = true; return; }      // not walked yet
+      tip.hidden = false; tip.style.left = `${ev.clientX - box.left}px`; tip.style.top = `${r.top - box.top - 22}px`; tip.textContent = `${fmt(i)} · ${pts[i]}`;
+    });
+    svg.addEventListener("mouseleave", () => { $("trendTip").hidden = true; });
+    svg.addEventListener("click", ev => { const r = svg.getBoundingClientRect(); E.seek((ev.clientX - r.left) / r.width * E.duration()); });
+  }
   document.querySelectorAll("#statsPop .seg button").forEach(b => b.addEventListener("click", () => {
-    tab = b.dataset.tab; donutH = 200; twoCol = false; document.querySelectorAll("#statsPop .seg button").forEach(x => x.setAttribute("aria-selected", String(x === b))); statsAt = 0; updateStats(E.state || {});
+    tab = b.dataset.tab; donutH = 200; twoCol = false; document.querySelectorAll("#statsPop .seg button").forEach(x => x.setAttribute("aria-selected", String(x === b))); moveInd(); statsAt = 0; updateStats(E.state || {});
   }));
   window.addEventListener("resize", () => { donutH = 200; twoCol = false; statsAt = 0; });
+  // the glass pill slides under the selected tab
+  function moveInd() {
+    const b = document.querySelector('#statsPop .seg button[aria-selected="true"]'), ind = $("segInd"); if (!b || !b.offsetWidth) return;
+    ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft - 4}px)`;
+  }
+  $("tStats").addEventListener("click", () => requestAnimationFrame(moveInd));
+  window.addEventListener("resize", moveInd);
   // Places: loop through the signs already passed, one at a time, fading out and in (no upcoming places)
   setInterval(() => {
     const el = $("signTxt"); if ($("statsPop").hidden || $("signRot").hidden) return;
