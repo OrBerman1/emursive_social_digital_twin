@@ -52,6 +52,13 @@ h1 span { color: var(--muted); font-weight: 500; font-family: var(--body); font-
 .flag { position: absolute; bottom: -4px; transform: translateX(-2px); width: 22px; height: 26px; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; }
 .flag svg { display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
 .flag:hover svg, .flag:focus-visible svg { transform: scale(1.2); transform-origin: 2px 24px; }
+.flag.clip { box-sizing: border-box; width: 20px; height: 20px; font-size: 12px; line-height: 20px; text-align: center; bottom: 0; transform: translateX(-10px); border-radius: 50%; background: #E69F00; border: 1.5px solid #121819; box-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.flag.clip:hover, .flag.clip:focus-visible { transform: translateX(-10px) scale(1.2); }
+.vcard .vatt { display: grid; gap: 3px; border-top: 1px solid var(--line); padding-top: 5px; }
+.vcard .vfile { display: flex; gap: 4px; align-items: center; }
+.vcard .vfile a { flex: 1; min-width: 0; color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vcard .vfile a:hover { text-decoration: underline; }
+.vcard .vatt .vattach { text-align: center; font: 600 12px var(--body); border: 1px dashed var(--line); color: var(--ink); padding: 4px 6px; }
 .flagtip { position: absolute; bottom: 34px; transform: translateX(-50%); max-width: 280px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; white-space: pre-wrap; pointer-events: none; z-index: 30; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 .tl .addc { font: 600 12.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
 .composer { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; z-index: 40; box-shadow: 0 10px 28px rgba(0,0,0,.5); font-size: 12.5px; }
@@ -210,6 +217,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="hud" id="hud"></div>
         <div class="counters" id="ctr"></div>
         <div class="vcard" id="vcard" hidden></div>
+        <input type="file" id="atFile" multiple hidden>
         <div class="minispeed" id="miniSpeed" hidden><span>🌡 mean walking speed (m/s)</span><div class="ramp" id="miniSpeedRamp"></div><div class="ticks"><span>0</span><span>0.75</span><span>≥ 1.5</span></div></div>
         <div class="minimap" id="minimap" title="Open the full map" hidden>
           <div class="rot" id="mmrot"><div class="mm" id="mm"></div></div>
@@ -620,7 +628,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const trLen = id => (d.tracks[id] || [])[2], objLen = id => (d.obj_len || {})[id];
     const k = ov.width / vp.clientWidth;
     // people
-    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [];
+    let pView = 0, pAll = 0, anchor = null; const inViewIds = [], presentIds = [], clipAt = [];
     for (const [p, al] of blend(A.p, B.p, 0, trLen).sort((u, v) => (v[0][5] - v[0][6]) - (u[0][5] - u[0][6]))) {
       const [id, cf, yw, yl, yr, pt, pb, dist] = p; if (cf < S.conf) continue;
       if (al >= 0.5) { pAll++; S.seen.add(id); presentIds.push(id); }
@@ -634,11 +642,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       const fol = MO.follow.get(gidOf(id));
       if (fol) { const o = 3.5 * k; octx.strokeStyle = fol; octx.lineWidth = 2.5 * k; octx.setLineDash([7 * k, 4 * k]); octx.strokeRect(r[0] - o, r[1] - o, r[2] - r[0] + 2 * o, r[3] - r[1] + 2 * o); octx.setLineDash([]); }
       const bb = badge(byAge ? AGE_EMOJI[ag] || "👤" : emojiOf("person"), r, pc, $("Lsex").checked ? sexBg(id) : null);
+      if (atOf(S.walk, id)) clipAt.push([r[2], r[1], al]);                  // files attached: drawn after all people (on top)
       const mNow = moAt(id, fi);
       if (mNow && moShown(id, mNow)) drawMotionArrow(r, yw, pb, mNow, fi, fol || "#f4f4f4", al);
       octx.globalAlpha = 1;
       S.hits.push({ kind: "p", id, r, b: bb, info: p });
       if (sel) anchor = r;
+    }
+    for (const [cx, cy, al] of clipAt) {                                   // orange disc with a paperclip at the box's top-right corner
+      octx.globalAlpha = al; octx.beginPath(); octx.arc(cx, cy, 11 * k, 0, 2 * Math.PI); octx.fillStyle = "#E69F00"; octx.fill();
+      octx.lineWidth = 1.5 * k; octx.strokeStyle = "#121819"; octx.stroke();
+      octx.font = `${13 * k}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`; octx.textAlign = "center"; octx.textBaseline = "middle";
+      octx.fillText("📎", cx, cy + 1 * k); octx.textAlign = "start"; octx.textBaseline = "alphabetic"; octx.globalAlpha = 1;
     }
     // selected crowd: outline its members and draw one frame around the group, with its ID and count
     if (SELCROWD && SELCROWD.walk === S.walk) {
@@ -845,6 +860,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
                 row("Path on map", mt ? `${mt.len_m} m in ${mt.dur_s} s${mt.members.length > 1 ? ` · ${mt.members.length} pieces re-linked` : ""}` : "no reliable position (> 12 m)");
         foot = mt ? `<button class="vfollow" data-id="${S.sel.id}" style="--c:${fc || "var(--accent)"}">${fc ? "● Following · click to stop" : "📍 Follow: path on map + motion arrow"}</button>`
                   : `<button class="vfollow" disabled>Too far away for a map path</button>`;
+        foot += atCardHtml(S.sel.id, esc2);
         note = "Age, gender: CLIP estimates, not validated. Speed, path: from foot point + camera height, camera motion removed.";
       } else if (S.sel.kind === "o" || S.sel.kind === "l2") {
         const lvl = S.sel.kind === "o" ? "Level 1 (YOLO11, COCO)" : "Level 2 (YOLO-World, text prompt)";
@@ -1738,6 +1754,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   // close on press (pointerdown), so a card refresh between press and release cannot swallow the click
   $("vcard").addEventListener("pointerdown", e => {
     const fb = e.target.closest(".vfollow"); if (fb) { if (!fb.disabled) toggleFollow(+fb.dataset.id); e.preventDefault(); e.stopPropagation(); return; }
+    const ab = e.target.closest(".vattach"); if (ab) { if (!AT.busy) { AT.track = +ab.dataset.id; $("atFile").click(); } e.preventDefault(); e.stopPropagation(); return; }
+    const rb = e.target.closest(".vrm"); if (rb) { atRemove(+rb.dataset.id, rb.dataset.name); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.target.closest(".vfile a")) { e.stopPropagation(); return; }
     if (e.target.closest(".vclose")) { S.sel = null; $("vcard").hidden = true; $("vcard").dataset.html = ""; e.preventDefault(); e.stopPropagation(); } });
   vp.addEventListener("wheel", e => { e.preventDefault(); S.fov = Math.max(40, Math.min(120, S.fov + e.deltaY * 0.05)); }, { passive: false });
   vp.addEventListener("keydown", e => {
@@ -1769,7 +1788,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   function cmRender() {
     const dur = duration(), box = $("flags");
     const mine = CM.list.filter(c => c.walk === S.walk).sort((a, b) => a.t - b.t);
-    box.innerHTML = dur ? mine.map(c => `<button class="flag" data-id="${cmEsc(c.id)}" style="left:${(c.t / dur * 100).toFixed(3)}%" aria-label="Comment at ${fmt(c.t)}: ${cmEsc(c.text.slice(0, 60))}">${flagSvg(c.color)}</button>`).join("") : "";
+    box.innerHTML = dur ? mine.map(c => `<button class="flag" data-id="${cmEsc(c.id)}" style="left:${(c.t / dur * 100).toFixed(3)}%" aria-label="Comment at ${fmt(c.t)}: ${cmEsc(c.text.slice(0, 60))}">${flagSvg(c.color)}</button>`).join("") +
+      atHere().map(a => `<button class="flag clip" data-track="${a.track}" style="left:${(atTime(a) / dur * 100).toFixed(3)}%" aria-label="Person P-${String(a.track).padStart(4, "0")}: ${a.files.length} attached file(s)">📎</button>`).join("") : "";
   }
   function cmSwatches() {
     $("cmSwatches").innerHTML = `<span class="status">Flag colour</span>` + FLAG_COLS.map(c => `<button data-col="${c}" style="background:${c}" aria-label="Colour ${c}" aria-pressed="${c.toLowerCase() === CM.color.toLowerCase()}"></button>`).join("") +
@@ -1817,6 +1837,69 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     const tip = $("flagTip"); tip.textContent = `${fmt(c.t)} · ${c.text}`; tip.style.left = b.style.left; tip.hidden = false;
   });
   $("flags").addEventListener("mouseout", e => { if (e.target.closest(".flag")) $("flagTip").hidden = true; });
+  // ---------- files attached to specific people (interviews, notes, photos): pipeline/attach_api.py via serve.py ----------
+  const AT = { list: [], busy: "", track: null, confirm: "" };
+  const atVar = () => ($("Lvar").checked ? "stab" : "");                 // track ids differ between the two overlay variants
+  const atOf = (walk, id) => AT.list.find(a => a.walk === walk && a.variant === atVar() && a.track === id);
+  const atHere = () => AT.list.filter(a => a.walk === S.walk && a.variant === atVar());
+  const atTime = a => (a.frame != null ? a.frame : ((S.data && S.data.tracks[a.track]) || [0])[0]) / ((S.data && S.data.fps) || 5);
+  async function atLoad() {
+    try { const r = await fetch(`/api/attachments?project=${encodeURIComponent(PROJ.id)}`, { cache: "no-store" }); if (r.ok) AT.list = (await r.json()).people || []; }
+    catch (e) {}
+    cmRender(); $("vcard").dataset.html = "";
+  }
+  function atCardHtml(id, esc2) {
+    const a = atOf(S.walk, id), files = a ? a.files : [];
+    return `<div class="vatt">` + files.map(f => `<div class="vfile"><a href="${a.dir}/${encodeURIComponent(f.name)}" target="_blank" rel="noopener" title="${esc2(f.name)} · ${f.added}">📄 ${esc2(f.name)}</a>` +
+      `<button class="vrm" data-id="${id}" data-name="${esc2(f.name)}" aria-label="Remove ${esc2(f.name)}">${AT.confirm === f.name ? "remove?" : "✕"}</button></div>`).join("") +
+      `<button class="vattach" data-id="${id}">${AT.busy ? esc2(AT.busy) : "📎 Attach file"}</button></div>`;
+  }
+  async function atRemove(id, name) {
+    if (AT.confirm !== name) { AT.confirm = name; return; }               // second click removes
+    AT.confirm = "";
+    try {
+      const r = await fetch(`/api/attach/delete?project=${encodeURIComponent(PROJ.id)}`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walk: S.walk, variant: atVar(), track: id, name }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+    } catch (e) { AT.busy = `Could not remove: ${e.message}`; setTimeout(() => { AT.busy = ""; }, 4000); }
+    await atLoad();
+  }
+  function atUpload(file, id, where) {
+    return new Promise((ok, bad) => {
+      const q = new URLSearchParams({ project: PROJ.id, walk: S.walk, variant: atVar(), track: id, filename: file.name, ...where });
+      const x = new XMLHttpRequest(); x.open("PUT", `/api/attach?${q}`);
+      x.upload.onprogress = e => { if (e.lengthComputable) AT.busy = `Uploading ${file.name} · ${Math.round(100 * e.loaded / e.total)}%`; };
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} x.status === 200 ? ok(j) : bad(new Error(j.error || x.status)); };
+      x.onerror = () => bad(new Error("server not reachable"));
+      x.send(file);
+    });
+  }
+  $("atFile").addEventListener("change", async () => {
+    const files = [...$("atFile").files], id = AT.track ?? (S.sel && S.sel.kind === "p" ? S.sel.id : null); $("atFile").value = "";
+    if (!files.length || id == null) return;
+    const h = S.hits.find(x => x.kind === "p" && x.id === id), p = h && h.info;     // where the person is now (to find them again)
+    const where = { frame: String(Math.round(curTime() * ((S.data && S.data.fps) || 5))) };
+    if (p) Object.assign(where, { yaw: p[2].toFixed(2), pitch: ((p[5] + p[6]) / 2).toFixed(2) });
+    let err = "";
+    for (const f of files) { try { await atUpload(f, id, where); } catch (e) { err = `${f.name}: ${e.message}`; } }
+    AT.busy = err ? `Not attached: ${err}` : ""; await atLoad();
+    if (err) setTimeout(() => { AT.busy = ""; $("vcard").dataset.html = ""; }, 5000);
+  });
+  $("flags").addEventListener("click", e => {
+    const b = e.target.closest(".clip"); if (!b) return;
+    const a = atHere().find(x => x.track === +b.dataset.track); if (!a) return;
+    if (playing) togglePlay();
+    vt = atTime(a); if (videoOk()) video.currentTime = vt;
+    if (a.yaw != null) S.yaw = a.yaw;
+    if (a.pitch != null) S.pitch = a.pitch;
+    S.sel = { kind: "p", id: a.track }; $("flagTip").hidden = true;
+  });
+  $("flags").addEventListener("mouseover", e => {
+    const b = e.target.closest(".clip"); if (!b) return;
+    const a = atHere().find(x => x.track === +b.dataset.track); if (!a) return;
+    const tip = $("flagTip"); tip.textContent = `📎 P-${String(a.track).padStart(4, "0")} · ${fmt(atTime(a))}\n${a.files.map(f => f.name).join("\n")}`;
+    tip.style.left = b.style.left; tip.hidden = false;
+  });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("composer").hidden) $("composer").hidden = true; });
   video.addEventListener("loadedmetadata", cmRender);
   function togglePlay() { playing = !playing; if (playing) { video.play().catch(() => {}); } else { video.pause(); } $("play").textContent = playing ? "Pause" : "Play"; }
@@ -1839,7 +1922,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   initProject().then(() => {
     const first = Object.keys(PROJ.walks)[0];
     if (!first) { $("loading").textContent = "This project has no analysed walk yet — open Projects to add a video and run the analysis."; return; }
-    loadGeo(); cmLoad(); load(first);
+    loadGeo(); cmLoad(); atLoad(); load(first);
   });
 })();
 </script>

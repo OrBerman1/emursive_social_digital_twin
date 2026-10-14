@@ -112,6 +112,9 @@ The viewer must be opened through this server; opening `viewer\index.html` direc
 - Look around: drag the image or arrow keys; mouse wheel zooms.
 - Walk 1 / Walk 2 buttons (top right).
 - Click a person's box for an information card (track ID, time seen, distance).
+- **📎 Attach file** in a person's card: attach an interview, note or photo to that person. People with files get an
+  orange 📎 on their box and on the timeline; click the timeline 📎 to jump to them. Files stay on this computer
+  (`data/processed/attachments/`, not in git).
 - **Layers:** people, IDs & distance, level-1 objects, level-2 objects, text on signs (OCR), hide tracks < 1 s,
   **Stabilised video (offline)** on/off (off = original video and detections).
 - **Min. confidence** slider (default 0.60).

@@ -9,6 +9,9 @@ Also (local only, all validated):
   PUT  /api/upload?project=&kind=video|store|anchors&filename=[&label=][&walk=]   streamed upload
   POST /api/run?project=<id>           start the analysis (one at a time);  GET /api/job?project=<id> = progress
   GET  /api/settings; POST /api/settings/apikey {key}; POST /api/settings/apikey/check
+  GET  /api/attachments?project=       files attached to people (attach_api.py)
+  PUT  /api/attach?project=&walk=&variant=&track=&frame=&yaw=&pitch=&filename=   attach a file to a person
+  POST /api/attach/delete?project= {walk, variant, track, name}
 """
 from __future__ import annotations
 
@@ -20,6 +23,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
+import attach_api as ATT
 import projects_api as API
 from common import DEFAULT_PROJECT, ROOT
 
@@ -49,10 +53,14 @@ class RangeHandler(SimpleHTTPRequestHandler):
     # HTTP/1.1 keep-alive: on Windows, closing the socket right after a large write (HTTP/1.0)
     # intermittently truncates the response; with Content-Length + keep-alive the client reads it all.
     protocol_version = "HTTP/1.1"
+    # notes attached to people are often Hebrew text: say it is UTF-8
+    extensions_map = {**SimpleHTTPRequestHandler.extensions_map, ".txt": "text/plain; charset=utf-8",
+                      ".md": "text/plain; charset=utf-8", ".csv": "text/csv; charset=utf-8"}
 
     def end_headers(self):
         # the viewer and its data change often during development: always revalidate, never serve stale copies
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")         # attached files are shown as what they are
         super().end_headers()
 
     def _json(self, obj, status: int = 200):
@@ -95,6 +103,13 @@ class RangeHandler(SimpleHTTPRequestHandler):
             if method == "PUT" and u.path == "/api/upload":
                 n = int(self.headers.get("Content-Length") or 0)
                 return self._json(API.upload(q.get("project", ""), q.get("kind", ""), q, self.rfile, n)) or True
+            if method == "GET" and u.path == "/api/attachments":
+                return self._json(ATT.listing(q.get("project", DEFAULT_PROJECT))) or True
+            if method == "PUT" and u.path == "/api/attach":
+                n = int(self.headers.get("Content-Length") or 0)
+                return self._json(ATT.add(q.get("project", DEFAULT_PROJECT), q, self.rfile, n)) or True
+            if method == "POST" and u.path == "/api/attach/delete":
+                return self._json(ATT.remove(q.get("project", DEFAULT_PROJECT), self._body_json())) or True
             if method == "POST" and u.path == "/api/comments":
                 proj = API.get_project(q.get("project", DEFAULT_PROJECT))
                 comments = clean_comments(self._body_json())

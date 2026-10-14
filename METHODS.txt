@@ -446,3 +446,16 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Tested 14 Oct: original project re-run fully cached (outputs identical); progress parsing (a/b and ffmpeg
      time=); API paths against a local mock of the Messages API (requests, schemas, caching, no resend).
      Not yet run against the real API (no key on this machine).
+
+28. FILES ATTACHED TO PEOPLE  (viewer/index.html person card; pipeline/attach_api.py via serve.py)
+   - For the few people we know more about (name, interview, photos): the person card has "📎 Attach file";
+     attached files are listed in the card (click = open, ✕ twice = remove).
+   - Quick access: people with files get an orange 📎 disc at their box's top-right corner, and an orange 📎
+     marker on the timeline (at the moment the file was attached); clicking it jumps there, turns the view to
+     the person and opens the card. Most people have no files, so nothing else changes.
+   - A person = one track of one walk in one overlay variant (stabilised and original detections have different
+     track ids). The frame and view direction at attach time are stored too, so the person can be found again if
+     tracking is recomputed and the ids change (re-linking is manual for now).
+   - Storage per project: <processed>/attachments/<walk>_<variant>/T<track>/<file> + attachments.json (under
+     data/ = not in git: interviews are personal data). Allowed: documents, images, audio, video (no HTML/scripts,
+     served with nosniff); same name -> "name (2).ext"; up to 2 GB per file; .txt/.md/.csv served as UTF-8.
