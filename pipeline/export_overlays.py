@@ -75,7 +75,8 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
             for f in fs:
                 if f < n_frames:
                     frames[f]["s"].append([int(r.track), 1, *box(r)])                 # [sign, conf, yaw, yaw_l, yaw_r, pitch_top, pitch_bot]
-        sign_len = {int(k): int(v) for k, v in sign_boxes.groupby("track").size().items()}
+        per_row = 1 if smoothed else 2                   # Tesseract rows stand for 2 frames each (see above)
+        sign_len = {int(k): int(v) * per_row for k, v in sign_boxes.groupby("track").size().items()}
     tracks = (persons.groupby("track")
               .agg(first=("frame", "min"), last=("frame", "max"), n=("frame", "count"), conf=("conf", "max"),
                    dist=("dist_m", "median"))

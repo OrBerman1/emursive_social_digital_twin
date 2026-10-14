@@ -80,7 +80,10 @@ def add(pid: str, q: dict, rfile, length: int) -> dict:
         stem, ext, i = dest.stem, dest.suffix, 2
         while dest.exists():
             dest = dest.with_name(f"{stem} ({i}){ext}"); i += 1
-    receive(rfile, length, dest, MAX_FILE)
+    if length == 0:                                                    # an empty note is still a note
+        dest.parent.mkdir(parents=True, exist_ok=True); dest.touch()
+    else:
+        receive(rfile, length, dest, MAX_FILE)
     num = lambda k: round(float(q[k]), 2) if re.fullmatch(r"-?\d+(\.\d+)?", q.get(k, "")) else None
     with _lock:
         data = _load(index)

@@ -446,6 +446,10 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Tested 14 Oct: original project re-run fully cached (outputs identical); progress parsing (a/b and ffmpeg
      time=); API paths against a local mock of the Messages API (requests, schemas, caching, no resend).
      Not yet run against the real API (no key on this machine).
+     New project end to end (14 Oct): first 27 s of walk 1 (trailer re-attached) + store table + 2 anchors, no key,
+     started from the projects page: all steps done in 20 min (stall materials / frontage skipped: no key); viewer
+     shows the project (68 people, map from 2 anchors). Fix found: Tesseract sign boxes are every 2nd frame, so their
+     track length is now counted x2 (they were all hidden by the "< 1 s" filter).
 
 28. FILES ATTACHED TO PEOPLE  (viewer/index.html person card; pipeline/attach_api.py via serve.py)
    - For the few people we know more about (name, interview, photos): the person card has "📎 Attach file";
@@ -458,4 +462,4 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      tracking is recomputed and the ids change (re-linking is manual for now).
    - Storage per project: <processed>/attachments/<walk>_<variant>/T<track>/<file> + attachments.json (under
      data/ = not in git: interviews are personal data). Allowed: documents, images, audio, video (no HTML/scripts,
-     served with nosniff); same name -> "name (2).ext"; up to 2 GB per file; .txt/.md/.csv served as UTF-8.
+     served with nosniff); same name -> "name (2).ext"; empty files allowed; up to 2 GB per file; .txt/.md/.csv served as UTF-8.
