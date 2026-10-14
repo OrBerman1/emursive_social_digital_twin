@@ -71,29 +71,35 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .chip[data-k="object"] .lbl { color: var(--object); } .chip[data-k="space"] .lbl { color: var(--space); }
 
 /* ---- info windows (dark, colour-coded border; positioned every frame, leader lines on the overlay canvas) ---- */
-.card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--win); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        border: 2px solid; box-shadow: 0 10px 28px rgba(0,0,0,.35); z-index: 8; will-change: transform; }
-.card.person { border-color: var(--person); } .card.object { border-color: var(--object); } .card.space { border-color: var(--space); } .card.food { border-color: var(--food); }
+/* glass info windows: 50% transparent, frosted, no coloured border (the badge + leader line carry the kind) */
+.card { position: absolute; left: 0; top: 0; border-radius: 14px; color: #fff; z-index: 8; will-change: transform;
+        background: linear-gradient(180deg, rgba(34,38,50,.5), rgba(12,14,20,.5));
+        backdrop-filter: blur(12px) saturate(1.35); -webkit-backdrop-filter: blur(12px) saturate(1.35);
+        border: 1px solid rgba(255,255,255,.16); text-shadow: 0 1px 2px rgba(0,0,0,.45);
+        box-shadow: 0 10px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.25); }
+/* glossy dividers: bright in the middle, fading to dark at the edges */
+.card .r, .who, .card.full .rows, .signtext { position: relative; }
+.card .r + .r::before, .who::before, .card.full .rows::before, .signtext::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+        background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.55) 50%, rgba(0,0,0,.35)); }
 .card .r { display: flex; align-items: center; gap: 12px; padding: 3px 0; font-size: 14px; white-space: nowrap; }
 .card .r .k { min-width: 40px; display: flex; justify-content: center; flex: none; color: #e9ecf2; }
 .card .r .v { overflow: hidden; text-overflow: ellipsis; }
 .card .r .v.soft { color: var(--win-soft); }
-.card .r + .r { border-top: 1px solid rgba(255,255,255,.08); }
 .badge { font: 700 13px var(--sans); padding: 3px 7px; border-radius: 6px; min-width: 34px; text-align: center; }
 .food .badge { background: var(--food); color: #fff; } .food .conf .meter i { background: var(--food); }
 .person .badge { background: var(--person); color: #1a1a1a; } .object .badge { background: var(--object); color: #fff; } .space .badge { background: var(--space); color: #fff; }
 .card.compact { padding: 8px 14px 8px 10px; min-width: 200px; max-width: 260px; cursor: pointer; }
-.card.compact:hover { box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+.card.compact:hover { background: linear-gradient(180deg, rgba(40,44,58,.62), rgba(14,16,22,.6)); }
 .card.full { width: 300px; padding: 10px 12px 12px; max-height: calc(100vh - 210px); overflow-y: auto; scrollbar-width: thin; }
 .card.full .hd { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; font-weight: 600; font-size: 14.5px; }
 .card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--win-soft); }
 .card.full .hd button + button { margin-left: 0; }
 .card.full .hd button:hover { background: rgba(255,255,255,.1); color: #fff; }
-.who { display: flex; gap: 12px; align-items: center; padding: 8px 0 10px; border-top: 1px solid rgba(255,255,255,.1); }
+.who { display: flex; gap: 12px; align-items: center; padding: 8px 0 10px; }
 .who canvas { width: 64px; height: 64px; border-radius: 10px; background: #2a2f3a; flex: none; }
 .who b { display: block; font-size: 15px; }
 .who small { color: var(--win-soft); font-size: 12.5px; }
-.card.full .rows { border-top: 1px solid rgba(255,255,255,.1); padding-top: 4px; }
+.card.full .rows { padding-top: 4px; }
 .card.full .r small { display: block; color: var(--win-soft); font-size: 11px; }
 .conf { display: flex; align-items: center; gap: 10px; padding-top: 10px; font-size: 12.5px; color: var(--win-soft); }
 .conf .meter { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
@@ -101,7 +107,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .person .conf .meter i { background: var(--person); } .object .conf .meter i { background: var(--object); } .space .conf .meter i { background: var(--space); }
 .conf b { color: #fff; font-variant-numeric: tabular-nums; }
 .note { color: var(--win-soft); font-size: 11px; padding-top: 8px; }
-.files { border-top: 1px solid rgba(255,255,255,.1); padding-top: 6px; margin-top: 6px; display: grid; gap: 2px; }
+.files { position: relative; padding-top: 6px; margin-top: 6px; display: grid; gap: 2px; }
 .files .fh { font-size: 11px; color: var(--win-soft); padding: 2px 0; }
 .files .f { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .files .f a { flex: 1; min-width: 0; color: #fff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 0; }
@@ -111,7 +117,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .files .add { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; border: 1px dashed rgba(255,255,255,.25); border-radius: 10px; background: none; color: #fff; padding: 7px 10px; cursor: pointer; font-size: 13px; }
 .files .add:hover { border-color: var(--person); color: var(--person); }
 .card img.fm { width: 100%; max-height: 170px; object-fit: cover; border-radius: 10px; display: block; margin: 2px 0 8px; }
-.signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
+.files::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.55) 50%, rgba(0,0,0,.35)); }
+.signtext { font-size: 17px; font-weight: 600; padding: 8px 0; unicode-bidi: plaintext; direction: auto; }
 
 /* ---- round mini map (Lens look) ---- */
 .mini { position: absolute; right: 18px; bottom: 130px; width: 230px; height: 230px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: var(--shadow); background: #e5e9ee; z-index: 9; }
@@ -258,28 +265,37 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 #statsNote { font-size: 13px; text-align: center; }
 /* statistics panel: People / Objects / Places, donuts that follow the walk + a trend along the whole walk */
 .pop.stats { width: 380px; max-height: calc(100% - 150px); overflow: hidden; padding: 14px 18px 12px; }   /* donuts are sized to fit: never scrolls */
-.seg { display: flex; background: #eef0f4; border-radius: 999px; padding: 3px; margin-bottom: 6px; }
-.seg button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 4px; font-weight: 600; font-size: 14.5px; color: var(--soft); cursor: pointer; display: flex; gap: 6px; align-items: center; justify-content: center; }
-.seg button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg { position: relative; display: flex; border-radius: 999px; padding: 4px; margin-bottom: 8px;   /* frosted-glass segmented toggle */
+       background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(226,231,240,.38));
+       border: 1px solid rgba(255,255,255,.75); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
+       box-shadow: inset 0 1px 3px rgba(20,30,55,.10), 0 1px 0 rgba(255,255,255,.7); }
+.seg .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; border-radius: 999px; pointer-events: none;
+            background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.72));
+            border: 1px solid rgba(255,255,255,.95);
+            box-shadow: 0 4px 14px rgba(20,30,55,.14), 0 1px 2px rgba(20,30,55,.10), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(20,30,55,.05);
+            transition: transform .32s cubic-bezier(.3,.7,.2,1), width .32s cubic-bezier(.3,.7,.2,1); }
+.seg button { position: relative; z-index: 1; flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 4px; font-weight: 600; font-size: 14.5px;
+              color: #7b8394; cursor: pointer; display: flex; gap: 7px; align-items: center; justify-content: center; transition: color .2s; }
+.seg button:hover { color: #3a4152; }
+.seg button[aria-selected="true"] { color: var(--ink); }
+.seg button svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
 .donut { display: block; width: 100%; overflow: visible; }
 .donut .ctr { font: 700 40px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
 .donut .ctr2 { font: 500 14px var(--sans); fill: var(--soft); }
-.donut .lb { font: 700 17px var(--sans); fill: var(--ink); font-variant-numeric: tabular-nums; }
-.donut .lb tspan.n { font-weight: 700; }
-.donut .lb tspan.k { fill: #52514e; font-weight: 500; }
 .donut path { cursor: default; transition: opacity .15s; }
 .donut path:hover { opacity: .8; }
-.dt { font-weight: 700; font-size: 16px; margin: 4px 0 0; display: flex; justify-content: space-between; align-items: baseline; }
-.dt small { font-weight: 500; font-size: 13px; color: var(--soft); }
+.dt { font-weight: 600; font-size: 13px; letter-spacing: .02em; color: #8a91a0; margin: 6px 0 0; text-align: center; }
+.dt small { font-weight: 500; color: #a3a9b5; }
 .leg { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 15px; color: #3b3a37; margin: 2px 0 8px; }
 .leg i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.pair .dt2 { font-weight: 700; font-size: 14.5px; text-align: center; margin-top: 4px; }
+.pair .dt2 { font-weight: 600; font-size: 13px; letter-spacing: .02em; color: #8a91a0; text-align: center; margin-top: 6px; }
 .pair .leg { font-size: 13.5px; gap: 2px 10px; }
 .pair .donut { width: 100%; }
 .trend { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
-.trend .tlbl { font-size: 13.5px; color: var(--soft); margin-bottom: 6px; }
-.trend svg { width: 100%; height: 64px; display: block; cursor: crosshair; }
+.trend .tlbl { font-size: 13px; color: #8a91a0; display: flex; justify-content: space-between; margin: 4px 0 2px; }
+.trend .tlbl b { color: var(--ink); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.trend svg.ts { width: 100%; height: 44px; display: block; cursor: crosshair; }
 .tip2 { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 13px; padding: 2px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
 /* one passed place at a time, cross-fading */
 .signrot { text-align: center; padding: 4px 0 10px; }
@@ -289,6 +305,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 14.5px; padding-top: 8px; }
 .stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .dtip { position: fixed; background: var(--ink); color: #fff; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
+.uipop { position: absolute; right: 16px; top: 10px; width: 280px; border-radius: 16px; padding: 14px 16px 10px; z-index: 45; }
+.uipop label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+.uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; direction: rtl; }   /* flipped: solid (0%) on the right */
+.uipop .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 </style>
 </head>
@@ -307,7 +327,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <button class="askbtn" id="jvOpen" aria-pressed="false" title="Ask questions about this project, or give it a data task"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</button>
   <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-  <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
+  <button class="hbtn" id="setBtn" aria-label="Display settings: overlay transparency" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
   <div class="avatar" title="Alex Alvisi">AA</div>
 </header>
 <div class="menu" id="walkMenu" role="menu" hidden>
@@ -373,14 +393,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="searchHint">Jumps to when they first appear and opens their card.</div>
   </div>
   <div class="pop glass stats" id="statsPop" data-no-drag hidden>
-    <div class="seg" role="tablist" aria-label="Statistics for">
+    <div class="seg" role="tablist" aria-label="Statistics for"><span class="ind" id="segInd"></span>
       <button role="tab" data-tab="person" aria-selected="true"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="var(--person)"/></svg>People</button>
       <button role="tab" data-tab="object" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="var(--object)"/></svg>Objects</button>
       <button role="tab" data-tab="space" aria-selected="false"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5z" fill="var(--space)"/></svg>Places</button>
     </div>
     <div id="statsBody"></div>
     <div class="signrot" id="signRot" hidden><small>Passed on the walk</small><div id="signTxt" dir="auto"></div></div>
-    <div class="trend"><div class="tlbl" id="trendLbl"></div><svg id="trend" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Count along the walk"></svg><div class="tip2" id="trendTip" hidden></div></div>
+    <div class="trend"><div class="tlbl"><span>In view</span><b id="tvNow"></b></div><svg class="ts" id="tsView" viewBox="0 0 300 48" preserveAspectRatio="none" aria-label="In view, along the walk so far"></svg><div class="tlbl"><span>Cumulative</span><b id="tcNow"></b></div><svg class="ts" id="tsCum" viewBox="0 0 300 48" preserveAspectRatio="none" aria-label="Cumulative, along the walk so far"></svg><div class="tip2" id="trendTip" hidden></div></div>
     <div class="hint" id="statsNote"></div>
   </div>
   <div class="pop glass mark" id="markPop" data-no-drag hidden>
@@ -411,6 +431,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="mleg glass" id="mxLegend"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
+  <div class="uipop glass" id="uiPop" data-no-drag hidden>
+    <label for="uiAlpha">Transparency of the overlays <b id="uiAlphaLbl">0%</b></label>
+    <input type="range" id="uiAlpha" min="0" max="80" step="5" value="0" aria-label="Transparency of everything over the video">
+    <div class="ends"><span>see-through</span><span>solid</span></div>
+  </div>
   <input type="file" id="atFile" multiple hidden>
   <aside class="jv glass" id="jv" data-no-drag hidden aria-label="Ask Jeeves">
     <div class="jvh"><b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 14V9.5C7 7 9 5.5 12 5.5S17 7 17 9.5V14"/><path d="M3 15.5c2.5 1.6 5.5 2.3 9 2.3s6.5-.7 9-2.3"/><path d="M7 12.2c1.5.6 3.2.9 5 .9s3.5-.3 5-.9"/></svg>Ask Jeeves</b><select id="jvChats" aria-label="Earlier chats"></select>
@@ -438,6 +463,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const INFO_CHIPS = [["age", "Age group"], ["gender", "Gender"], ["speed", "Speed"], ["visible", "Time visible"], ["direction", "Direction"], ["distance", "Distance"],
                       ["files", "Attached files"], ["objects", "Objects"], ["food", "Food"], ["places", "Signs & places"]];
   const DECOR = new Set(["hanging lamp", "flag", "awning"]);
+  const hidden = c => DECOR.has(c) && !show.decor;          // decor counts only when the "Decor" layer is on
   const CARRY = new Set(["handbag", "backpack", "suitcase", "umbrella", "plastic bag", "wheeled shopping trolley", "trolley cart", "hand truck"]);
   const pinned = [];                 // [{kind, id}] expanded cards, newest last (max 3)
   let auto = [], autoAt = 0, hover = null;
@@ -498,6 +524,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`${E.project.processed}/${w}/forward.json`); } catch (e) { FW = null; }
+    try { NAMES = await J(`${E.project.processed}/${w}/sign_names.json`); } catch (e) { NAMES = null; }   // pipeline/sign_names.py
     buildMotion(d); buildMarks(d); buildTrends(d); atLoad(); cmLoad(); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
@@ -685,8 +712,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       if (!full && placed.some(q => overlap(q, best))) { card.el.style.opacity = 0; continue; }
       placed.push(best); card.el.style.transform = `translate(${best[0]}px, ${best[1]}px)`; card.el.style.opacity = full ? 1 : Math.min(1, e.alpha * 1.4);
       const tx = Math.max(best[0], Math.min(best[2], ax)), ty = Math.max(best[1], Math.min(best[3], ay));
-      c.strokeStyle = COL[g]; c.lineWidth = 2 * k; c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke();
-      c.fillStyle = COL[g]; c.beginPath(); c.arc(tx * k, ty * k, 3 * k, 0, 7); c.fill();
+      // leader line: marker colour at the item, fading to transparent as it reaches the window (as if it goes behind it)
+      const lg = c.createLinearGradient(ax * k, ay * k, tx * k, ty * k);
+      lg.addColorStop(0, COL[g]); lg.addColorStop(0.35, COL[g] + "cc"); lg.addColorStop(1, COL[g] + "00");
+      c.strokeStyle = lg; c.lineWidth = 2 * k; c.lineCap = "round"; c.beginPath(); c.moveTo(ax * k, ay * k); c.lineTo(tx * k, ty * k); c.stroke();
     }
     for (const [key, card] of pool) if (!used.has(key)) { card.el.remove(); pool.delete(key); }
   }
@@ -784,7 +813,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     };
     d.frames.forEach((F, f) => {
       for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7]);
-      for (const e of F.l2) if (!DECOR.has(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
+      for (const e of F.l2) if (!hidden(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
       for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { const pm = (e[5] + e[6]) / 2; note(`sign:${e[0]}`, "space", f, e[2], pm > 2 ? Math.max(2, Math.min(12, (2.8 - h) / Math.tan(pm * D2R))) : 6); }
     });
@@ -834,24 +863,29 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const GENDER = [["man", "Men", SL[0]], ["woman", "Women", SL[1]], ["uncertain", "Uncertain", GREY]];
   const AGEC = [["child", "Child", "#86b6ef"], ["young adult 18-35", "Young adult", "#3987e5"], ["middle adult 36-60", "Adult", "#1c5cab"], ["older adult 61+", "Older adult", "#0d366b"], ["uncertain", "Uncertain", GREY]];
   const LANG = [["he", "Hebrew", SL[0]], ["en", "English", SL[1]], ["ar", "Arabic", SL[2]], ["other", "Other", GREY]];
-  let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1;   // donutH (+ side-by-side people) fitted so the panel never scrolls
+  let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1, NAMES = null;   // donutH (+ side-by-side people) fitted so the panel never scrolls
   const tween = {};                                   // displayed (eased) segment values, so the donuts glide
   function buildTrends(d) {
-    const len = d.n_frames, people = new Array(len).fill(0), objects = new Array(len).fill(0), places = new Array(len).fill(0), cls = new Map(), seen = new Set();
-    let read = 0;
+    const len = d.n_frames, mk = () => ({ view: new Array(len).fill(0), cum: new Array(len).fill(0) });
+    const T = { person: mk(), object: mk(), space: mk() }, cls = new Map(), seenP = new Set(), seenO = new Set(), seenS = new Set();
+    // "in view" = inside the default view (90 deg, looking along the walking direction), so it matches the donut centre
     d.frames.forEach((F, f) => {
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) people[f]++;
-      for (const e of F.o) if (e[1] >= E.conf && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !DECOR.has(e[0])) { objects[f]++; cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3] && !seen.has(e[0])) { seen.add(e[0]); read++; }
-      places[f] = read;
+      const ahead = yw => Math.abs(wrap(yw - fwdAt(f))) < 45;
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(e[0]); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { if (ahead(e[2])) T.space.view[f]++; seenS.add(e[0]); }
+      T.person.cum[f] = seenP.size; T.object.cum[f] = seenO.size; T.space.cum[f] = seenS.size;
     });
     TOPOBJ = [...cls.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c], i) => [c, cap(c), SL[i]]);
-    TREND = { person: people, object: objects, space: places };
+    // 1 s bins: the in-view signal is averaged, the cumulative one takes the value at the end of the second
+    const bin = Math.round(d.fps), bins = a => { const o = []; for (let i = 0; i < a.length; i += bin) { const sl = a.slice(i, i + bin); o.push(sl.reduce((x, y) => x + y, 0) / sl.length); } return o; };
+    const last = a => { const o = []; for (let i = 0; i < a.length; i += bin) o.push(a[Math.min(a.length - 1, i + bin - 1)]); return o; };
+    TREND = {}; for (const k in T) TREND[k] = { view: bins(T[k].view), cum: last(T[k].cum) };
     for (const k in tween) delete tween[k];
     drawTrend();
   }
-  // donut with a 2px surface gap between segments, centre number, direct labels around
+  // donut with a 2px surface gap between segments and the count in the centre; names in the legend, values on hover
   function donut(id, segs, centre, sub) {
     const W = 230, H = 200, cx = W / 2, cy = H / 2, R = 74, r = 50, tot = segs.reduce((a, s) => a + s.v, 0);
     const arc = (a0, a1, rr) => [cx + rr * Math.sin(a0), cy - rr * Math.cos(a0), cx + rr * Math.sin(a1), cy - rr * Math.cos(a1)];
@@ -863,10 +897,6 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const span = sg.v / tot * Math.PI * 2, a0 = a, a1 = a + Math.min(span, Math.PI * 2 - 1e-4); a += span;
       const large = a1 - a0 > Math.PI ? 1 : 0, [x0, y0, x1, y1] = arc(a0, a1, R), [x2, y2, x3, y3] = arc(a1, a0, r);
       out += `<path d="M${x0} ${y0}A${R} ${R} 0 ${large} 1 ${x1} ${y1}L${x2} ${y2}A${r} ${r} 0 ${large} 0 ${x3} ${y3}Z" fill="${sg.col}" stroke="#fcfcfb" stroke-width="2" stroke-linejoin="round" data-tip="${esc(sg.label)}: ${Math.round(sg.n)} (${Math.round(sg.v / tot * 100)}%)"/>`;
-      if (span > 0.16 && Math.round(sg.n) > 0) {        // its number outside the segment; names are in the legend below
-        const m = (a0 + a1) / 2, lx = cx + (R + 14) * Math.sin(m), ly = cy - (R + 14) * Math.cos(m), anchor = Math.sin(m) > 0.15 ? "start" : Math.sin(m) < -0.15 ? "end" : "middle";
-        out += `<text class="lb" x="${lx}" y="${ly + 6}" text-anchor="${anchor}">${Math.round(sg.n)}</text>`;
-      }
     }
     out += `<text class="ctr" x="${cx}" y="${cy + 6}" text-anchor="middle">${centre}</text><text class="ctr2" x="${cx}" y="${cy + 22}" text-anchor="middle">${esc(sub)}</text></svg>`;
     return out;
@@ -882,25 +912,25 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       const sx = st.counts.sex, ag = st.counts.age, n = st.counts.people.view;
       const g = segsOf("g", GENDER, sx), a = segsOf("a", AGEC, ag);
       html = twoCol
-        ? `<div class="dt">People in view <small>perceived · ${st.uniqueSoFar} unique so far</small></div><div class="pair">` +
-          `<div><div class="dt2">Gender</div>${donut("g", g, n, "in view")}${legend(g)}</div><div><div class="dt2">Age group</div>${donut("a", a, n, "in view")}${legend(a)}</div></div>`
-        : `<div class="dt">Gender <small>perceived · ${st.uniqueSoFar} unique so far</small></div>${donut("g", g, n, "in view")}${legend(g)}` +
-          `<div class="dt">Age group <small>perceived</small></div>${donut("a", a, n, "in view")}${legend(a)}`;
+        ? `<div class="pair"><div><div class="dt2">Gender</div>${donut("g", g, n, "in view")}${legend(g)}</div><div><div class="dt2">Age group</div>${donut("a", a, n, "in view")}${legend(a)}</div></div>`
+        : `<div class="dt">Gender</div>${donut("g", g, n, "in view")}${legend(g)}<div class="dt">Age group</div>${donut("a", a, n, "in view")}${legend(a)}`;
       note = "Perceived estimates, aggregates only.";
     } else if (tab === "object") {
       const byCls = {}; let n = 0;
       for (const e of st.entities) if (e.alpha >= 0.5 && groupOf(e) === "object") { n++; byCls[e.cls] = (byCls[e.cls] || 0) + 1; }
       const top = new Set(TOPOBJ.map(t => t[0])), counts = { ...byCls, __other: Object.entries(byCls).filter(([c]) => !top.has(c)).reduce((a, [, v]) => a + v, 0) };
       const segs = segsOf("o", [...TOPOBJ, ["__other", "Other", GREY]], counts);
-      html = `<div class="dt">Objects in view <small>top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
-      note = "Decor (lamps, flags) excluded.";
+      html = `<div class="dt">Types <small>· top 5 + other</small></div>${donut("o", segs, n, "in view")}${legend(segs)}`;
+      note = show.decor ? "" : "Decor (lamps, flags) excluded.";
     } else {
       const d = st.data, read = [], counts = {};
       const fi = st.fi; for (let f = 0; f <= fi; f++) for (const e of d.frames[f].s || []) { const info = d.signs[e[0]]; if (info && info[3] && !read.some(x => x.id === e[0])) read.push({ id: e[0], text: info[0], lang: info[1] }); }
       for (const r of read) { const k = ["he", "en", "ar"].includes(r.lang) ? r.lang : "other"; counts[k] = (counts[k] || 0) + 1; }
       const segs = segsOf("l", LANG, counts);
-      html = `<div class="dt">Signs read so far <small>${st.counts.signsRead.length} in view now</small></div>${donut("l", segs, read.length, "read")}${legend(segs)}`;
-      PASSED = read.filter(r => (r.text.match(/[\p{L}]/gu) || []).length >= 3);   // only places already passed; skip 1-2 letter OCR fragments
+      html = `<div class="dt">Language</div>${donut("l", segs, read.length, "read")}${legend(segs)}`;
+      // only places already passed, and only names that pass the quality filter (pipeline/sign_names.py)
+      PASSED = NAMES ? read.filter(r => NAMES[r.id]).map(r => ({ ...r, text: NAMES[r.id] }))
+                     : read.filter(r => (d.signs[r.id] || [])[2] >= 85 && (r.text.match(/[\p{L}]/gu) || []).length >= 4);
       note = "Readable signs (OCR), counted as the walk goes.";
     }
     $("statsBody").innerHTML = html; $("statsNote").textContent = note; $("signRot").hidden = tab !== "space";
@@ -910,34 +940,49 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     if (tab === "person" && !twoCol && donutH < 135) { twoCol = true; donutH = 200; statsAt = 0; }       // stacked donuts too small: put them side by side
     drawTrend(st);
   }
-  // trend along the whole walk (1 s bins), playhead at the current moment; hover = value, click = jump there
+  // two time series in the same style, drawn only up to the current moment (they grow as the walk goes on):
+  // in view (1 s average) and cumulative (unique so far). x = the whole walk, y = 0..walk maximum, so scales never jump.
   function drawTrend(st) {
     if (!TREND || !E.data) return;
-    const ser = TREND[tab], d = E.data, bin = d.fps, pts = [];
-    for (let i = 0; i < ser.length; i += bin) pts.push(Math.max(...ser.slice(i, i + bin)));
-    const mx = Math.max(1, ...pts), W = 300, H = 56, X = i => i / Math.max(1, pts.length - 1) * W, Y = v => H - 4 - v / mx * (H - 10);
-    const col = COL[tab], fi = st ? st.fi : 0, px = fi / Math.max(1, d.n_frames - 1) * W;
-    const line = pts.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
-    $("trend").innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` +
-      `<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="#1d2433" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
-    $("trendLbl").textContent = { person: "Along the walk", object: "Along the walk", space: "Along the walk" }[tab] + ` · max ${mx}`;
-    $("trend").dataset.pts = JSON.stringify(pts);
+    const d = E.data, col = COL[tab], fi = st ? st.fi : 0, upto = Math.floor(fi / d.fps), W = 300, H = 48;
+    const draw = (svg, pts, fmtV) => {
+      const mx = Math.max(1, ...pts), X = i => i / Math.max(1, pts.length - 1) * W, Y = v => H - 4 - v / mx * (H - 10), n = Math.min(pts.length - 1, upto);
+      const line = pts.slice(0, n + 1).map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+      svg.innerHTML = `<line x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}" stroke="#e7e9ef" vector-effect="non-scaling-stroke"/>` +
+        `<path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>`;
+      svg.dataset.pts = JSON.stringify(pts.slice(0, n + 1).map(v => Math.round(v * 10) / 10)); svg.dataset.n = pts.length;
+      return fmtV(pts[n] || 0);
+    };
+    $("tvNow").textContent = draw($("tsView"), TREND[tab].view, v => v.toFixed(v < 10 ? 1 : 0));
+    $("tcNow").textContent = draw($("tsCum"), TREND[tab].cum, v => `${Math.round(v)} so far`);
   }
-  $("trend").addEventListener("mousemove", ev => {
-    const r = $("trend").getBoundingClientRect(), pts = JSON.parse($("trend").dataset.pts || "[]"); if (!pts.length) return;
-    const i = Math.round((ev.clientX - r.left) / r.width * (pts.length - 1)), tip = $("trendTip");
-    tip.hidden = false; tip.style.left = `${ev.clientX - r.left}px`; tip.textContent = `${fmt(i)} · ${pts[i]}`;
-  });
-  $("trend").addEventListener("mouseleave", () => { $("trendTip").hidden = true; });
-  $("trend").addEventListener("click", ev => { const r = $("trend").getBoundingClientRect(); E.seek((ev.clientX - r.left) / r.width * E.duration()); });
+  for (const id of ["tsView", "tsCum"]) {
+    const svg = $(id);
+    svg.addEventListener("mousemove", ev => {
+      const r = svg.getBoundingClientRect(), pts = JSON.parse(svg.dataset.pts || "[]"), N = +svg.dataset.n || 1; if (!pts.length) return;
+      const i = Math.round((ev.clientX - r.left) / r.width * (N - 1)), tip = $("trendTip"), box = $("trendTip").parentElement.getBoundingClientRect();
+      if (i >= pts.length) { tip.hidden = true; return; }      // not walked yet
+      tip.hidden = false; tip.style.left = `${ev.clientX - box.left}px`; tip.style.top = `${r.top - box.top - 22}px`; tip.textContent = `${fmt(i)} · ${pts[i]}`;
+    });
+    svg.addEventListener("mouseleave", () => { $("trendTip").hidden = true; });
+    svg.addEventListener("click", ev => { const r = svg.getBoundingClientRect(); E.seek((ev.clientX - r.left) / r.width * E.duration()); });
+  }
   document.querySelectorAll("#statsPop .seg button").forEach(b => b.addEventListener("click", () => {
-    tab = b.dataset.tab; donutH = 200; twoCol = false; document.querySelectorAll("#statsPop .seg button").forEach(x => x.setAttribute("aria-selected", String(x === b))); statsAt = 0; updateStats(E.state || {});
+    tab = b.dataset.tab; donutH = 200; twoCol = false; document.querySelectorAll("#statsPop .seg button").forEach(x => x.setAttribute("aria-selected", String(x === b))); moveInd(); statsAt = 0; updateStats(E.state || {});
   }));
   window.addEventListener("resize", () => { donutH = 200; twoCol = false; statsAt = 0; });
+  // the glass pill slides under the selected tab
+  function moveInd() {
+    const b = document.querySelector('#statsPop .seg button[aria-selected="true"]'), ind = $("segInd"); if (!b || !b.offsetWidth) return;
+    ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft - 4}px)`;
+  }
+  $("tStats").addEventListener("click", () => requestAnimationFrame(moveInd));
+  window.addEventListener("resize", moveInd);
   // Places: loop through the signs already passed, one at a time, fading out and in (no upcoming places)
   setInterval(() => {
     const el = $("signTxt"); if ($("statsPop").hidden || $("signRot").hidden) return;
-    if (!PASSED.length) { el.textContent = "—"; el.classList.remove("out"); return; }
+    if (!PASSED.length) { el.textContent = "no clear sign name yet"; el.style.fontSize = "15px"; el.style.color = "var(--soft)"; el.classList.remove("out"); return; }
+    el.style.fontSize = ""; el.style.color = "";
     el.classList.add("out");
     setTimeout(() => { rotI = (rotI + 1) % PASSED.length; el.textContent = PASSED[PASSED.length - 1 - rotI].text; el.classList.remove("out"); }, 700);
   }, 3200);
@@ -958,7 +1003,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   }
   function buildMarks(d) {
     const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf).length);
-    const obj = d.frames.map(F => F.l2.filter(x => !DECOR.has(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
+    const obj = d.frames.map(F => F.l2.filter(x => !hidden(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
     const firstSign = new Map(); d.frames.forEach((F, i) => { for (const s of F.s || []) if ((d.signs[s[0]] || [])[3] && !firstSign.has(s[0])) firstSign.set(s[0], i); });
     const signs = [...firstSign.values()].sort((a, b) => a - b).filter((f, i, a) => i === 0 || f - a[i - 1] > d.fps * 8).slice(0, 10);
     marks = [...peaks(ppl, 8, d.fps * 12).map(f => ({ f, k: "person", t: `Crowd peak · ${ppl[f]} people` })),
@@ -1014,7 +1059,17 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop", tMark: "markPop" };
   const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
   for (const [b, p] of Object.entries(pops)) if (b !== "tMark") $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
-  $("setBtn").addEventListener("click", () => $("tLayers").click());
+  // display settings (sun icon): one transparency for everything drawn over the video; remembered between visits
+  const OVERLAYS = ".rail, .chips, .transport, .pop, #cards, .mini, .mini-cap";
+  const setAlpha = v => {
+    $("uiAlpha").value = v; $("uiAlphaLbl").textContent = `${v}%`;
+    document.querySelectorAll(OVERLAYS).forEach(el => { el.style.opacity = String(1 - v / 100); });
+    try { localStorage.setItem("ui_alex.alpha", String(v)); } catch (e) {}
+  };
+  $("setBtn").addEventListener("click", () => { const p = $("uiPop"); p.hidden = !p.hidden; $("setBtn").setAttribute("aria-expanded", String(!p.hidden)); });
+  $("uiAlpha").addEventListener("input", () => setAlpha(+$("uiAlpha").value));
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest("#uiPop, #setBtn")) { $("uiPop").hidden = true; $("setBtn").setAttribute("aria-expanded", "false"); } });
+  setAlpha(+(localStorage.getItem("ui_alex.alpha") || 0));
   // outside clicks close Layers/Search; the statistics panel stays open while you watch
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn, .transport")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
@@ -1069,6 +1124,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   });
   document.querySelectorAll("[data-show]").forEach(i => i.addEventListener("change", () => {
     show[i.dataset.show] = i.checked; const chip = document.querySelector(`.chip[data-k="${i.dataset.show}"]`); if (chip) chip.setAttribute("aria-pressed", String(i.checked)); autoAt = 0;
+    if (i.dataset.show === "decor" && E.data) { buildTrends(E.data); buildMarks(E.data); buildMet(E.data, E.geo.walks[E.walk]); statsAt = 0; }
   }));
   document.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;

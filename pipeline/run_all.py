@@ -78,6 +78,7 @@ def plan(walks: list[str], C) -> list[dict]:
     add("stalls", "Stall-front photos" + (" + Claude review" if api and not legacy else ""), ["stall_materials.py", *v] + (["--api"] if api and not legacy else []), 2, sm_skip, cwd=MODELS, walks_=mapped)
     add("frontage", "Frontage materials on the map", ["frontage.py", *v], 0.1, sm_skip, walks_=mapped)
     add("export", "Export overlays for the viewer", ["export_overlays.py", *have, *v], 0.3, novideo)
+    add("sign_names", "Clean place names for the viewer", ["sign_names.py", *have], 0.05, novideo)      # ui_alex "Passed on the walk"
     add("flow", "Optical flow of people", ["person_flow.py", *have, *v], 2, novideo)
     add("motion", "People on the map + motion", ["motion.py", *mapped, *v], 0.3, no_map or novideo, walks_=mapped)
     add("crowds", "Crowds", ["crowds.py", *mapped, *v], 0.2, no_map or novideo, walks_=mapped)
