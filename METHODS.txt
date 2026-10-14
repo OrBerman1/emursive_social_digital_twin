@@ -320,3 +320,17 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - The five pages were written in parallel by sub-agents from one brief each, with v1 as the reference;
      each was checked in the browser (HTTP 200, console free of errors, busy scene at walk 1 0:49).
 
+22. SEGMENT SUMMARY BETWEEN TWO STORES  (viewer/index.html, full map: "Select segment")
+   - The user picks a start and an end store on the full map. Each store is projected onto every walk
+     (closest route point); the walk with the smallest worst-case distance (<= 30 m) is used, and the
+     segment = the analysis frames between the two closest points.
+   - Summary (same filters as the viewer: min confidence, hide tracks < 1 s): length (route metres),
+     video time; people = unique track IDs in the frames, per 100 m, most at once, age group, perceived
+     gender, movement (motion.py state); stores whose closest approach lies in the segment (<= 22 m),
+     by trade; food displays by item (menu/sign pictures counted apart); signs read (text); objects and
+     market items (unique tracks by class); pictured people on signs; frontage-material points in the
+     segment. Waste excluded (hidden layer).
+   - Export: JSON (full structure) and Excel (SheetJS xlsx 0.18.5, loaded on demand) with sheets
+     Summary, Stores, People, Food, Signs, Objects, Frontage. Checked: walk 1 Melech Haavatiach -> next
+     stall south, 97 m, 223 people, 41 stores, counts cross-checked against the overlay JSON in Python.
+

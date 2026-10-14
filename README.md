@@ -163,6 +163,10 @@ and under them is walkway floor (SegFormer, downloaded by `setup.bat` into `mode
 each item with CLIP, and writes items with map position and waste per 10 m of route
 (`data\processed\<walk>\waste_stab.json`). In the viewer: magenta boxes, a panel section, dots on both maps.
 
+**Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
+store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by
+trade, food, signs, objects, frontage materials), with **⬇ JSON** and **⬇ Excel** export. Esc cancels.
+
 **Map.** `pipeline\georef.py` places both walks on the map from the store anchors in `config\anchors.json`
 (frame + view yaw where the camera looks at a known store) and the gyro heading; it writes
 `data\processed\<walk>\georef.json` and `data\processed\shops.json`. It keeps the walker on real streets

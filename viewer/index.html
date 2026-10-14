@@ -80,6 +80,23 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .mapfull .bar { position: absolute; left: 10px; top: 10px; z-index: 1001; display: flex; gap: 8px; align-items: center; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); }
 .mapfull .bar button { font: 600 12px var(--body); background: var(--accent); color: var(--bg); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
 .mapfull .legend2 { position: absolute; right: 10px; bottom: 24px; z-index: 1001; background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink); display: grid; gap: 3px; max-height: 50%; overflow-y: auto; }
+.mapfull .segbtn { position: absolute; right: 10px; top: 10px; z-index: 1002; font: 600 12.5px var(--body); color: var(--ink); background: rgba(27,35,36,.92); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.mapfull .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.mapfull .seghint { position: absolute; right: 10px; top: 50px; z-index: 1002; background: rgba(27,35,36,.95); border: 1px solid var(--accent); border-radius: 6px; padding: 7px 12px; font-size: 12.5px; color: var(--ink); }
+.mapfull.selecting #fullmap { cursor: crosshair; }
+.mapfull .segpanel { position: absolute; right: 10px; top: 50px; bottom: 24px; width: 360px; z-index: 1002; background: rgba(27,35,36,.97); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+.segpanel header { display: flex; gap: 6px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.segpanel header b { font: 700 .95rem var(--display); flex: 1 1 100%; }
+.segpanel header button { font: 600 12px var(--body); background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; cursor: pointer; }
+.segpanel header button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.segpanel .body { overflow-y: auto; padding: 4px 12px 12px; display: grid; gap: 10px; align-content: start; }
+.segpanel h5 { margin: 6px 0 2px; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.segpanel .kv { font-size: 12.5px; }
+.segpanel .tags { display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px; }
+.segpanel .tags span { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 1px 8px; }
+.segpanel ul { margin: 0; padding-left: 16px; font-size: 12.5px; max-height: 140px; overflow-y: auto; }
+.segpanel li[dir] { unicode-bidi: plaintext; }
+.seg-ab { font: 700 12px var(--body); color: #121819; background: #fff; border: 2px solid #121819; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
 .mapfull .legend2 i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 .leaflet-popup-content { font: 13px var(--body); }
 .leaflet-popup-content b { font-family: var(--display); }
@@ -249,6 +266,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div id="fullmap"></div>
     <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
     <div class="legend2" id="maplegend"></div>
+    <button class="segbtn" id="segBtn" aria-pressed="false" title="Select a stretch of the walk between two stores">🖱 Select segment</button>
+    <div class="seghint" id="segHint" hidden></div>
+    <div class="segpanel" id="segPanel" hidden>
+      <header><b id="segTitle">Segment</b>
+        <button class="primary" id="segJson">⬇ JSON</button><button class="primary" id="segXlsx">⬇ Excel</button><button id="segClose" aria-label="Close summary">✕ Close</button></header>
+      <div class="body" id="segBody"></div>
+    </div>
   </div>
 </div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -935,6 +959,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         const where = sh.seen ? `<button class="go" data-oid="${sh.OBJECTID}">▶ Go to video (${sh.seen.walk === "walk1" ? "walk 1" : "walk 2"}, ${(sh.seen.frame / 5).toFixed(0)} s)</button>`
                               : `<div class="muted">Not passed on the recorded walks.</div>`;
         m.bindPopup(`<b>${esc3(sh.name)}</b><br>${info}<br>${where}`);
+        m.off("click", m._openPopup, m);                                // we decide on click: popup, or segment anchor
+        m.on("click", () => { if (SEG.on) segPick(sh); else m.openPopup(); });
         m.bindTooltip(esc3(sh.name));
       }
       full.on("popupopen", e => {
@@ -949,9 +975,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       for (const [w, wj] of Object.entries(WASTE)) for (const it of wj.items_list || [])
         L.circleMarker([it.lat, it.lon], { radius: 5, weight: 1.5, color: "#fff", fillColor: C.waste, fillOpacity: 1 })
           .bindTooltip(`${it.emoji} ${it.type} · ${w === "walk1" ? "walk 1" : "walk 2"} · ${it.chainage_m} m`).addTo(full);
+      FM_LAYER = L.layerGroup().addTo(full);
       for (const p of FRONT)
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "me-icon", html: `<div style="font-size:16px;line-height:16px;filter:drop-shadow(0 0 2px #000)">🧱</div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
-          .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(full);
+          .bindPopup(fmHtml(p, true)).bindTooltip(`🧱 ${p.materials.slice(0, 3).join(", ") || p.facade}`).addTo(FM_LAYER);
       MO.fullPaths = L.layerGroup().addTo(full); MO.fullNow = L.layerGroup().addTo(full); MO.pathSig = ""; MO.lastKey = "";
       // "you are here": current camera position + view cone, kept live by updateMini()
       fullMe = L.marker([0, 0], { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: "me-icon", iconSize: [96, 96], iconAnchor: [48, 48],
@@ -969,6 +996,189 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     };
     centre(); requestAnimationFrame(() => setTimeout(centre, 60));         // again once the overlay has its final size
   }
+  // ---------------- segment summary: pick a start and an end store, summarise everything in between ----------------
+  let FM_LAYER = null;                                                  // frontage markers (hidden while picking stores)
+  const SEG = { on: false, a: null, b: null, layer: null, cache: {}, result: null };
+  const segEsc = t => String(t ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  function segSetMode(on) {
+    SEG.on = on; SEG.a = SEG.b = null;
+    $("segBtn").setAttribute("aria-pressed", String(on));
+    $("mapfull").classList.toggle("selecting", on);
+    if (FM_LAYER && full) { if (on) FM_LAYER.remove(); else FM_LAYER.addTo(full); }
+    if (on) { $("segPanel").hidden = true; $("maplegend").hidden = true; segClearLayer(); full && full.closePopup(); }
+    else if ($("segPanel").hidden) $("maplegend").hidden = false;
+    segHint();
+  }
+  function segHint() {
+    const h = $("segHint");
+    if (!SEG.on) { h.hidden = true; return; }
+    h.hidden = false;
+    h.innerHTML = SEG.a ? `② Click the <b>end</b> store &nbsp;·&nbsp; start: ${segEsc(SEG.a.name)} &nbsp;·&nbsp; Esc to cancel`
+                        : `① Click the <b>start</b> store on the map &nbsp;·&nbsp; Esc to cancel`;
+  }
+  function segClearLayer() { if (SEG.layer) { SEG.layer.remove(); SEG.layer = null; } }
+  // closest point of a walk to a store
+  function segNearest(walk, sh) {
+    const g = GEO.walks[walk]; if (!g) return null;
+    const kx = 111320 * Math.cos(sh.lat * deg), ky = 110574;
+    let best = null;
+    for (let i = 0; i < g.lat.length; i++) {
+      if (g.lat[i] == null) continue;
+      const d = Math.hypot((g.lon[i] - sh.lon) * kx, (g.lat[i] - sh.lat) * ky);
+      if (!best || d < best.d) best = { f: i, d };
+    }
+    return best;
+  }
+  async function segData(walk) {
+    if (walk === S.walk && S.data) return { d: S.data, mo: MO.data };
+    if (!SEG.cache[walk]) {
+      const v = $("Lvar").checked ? "_stab" : "";
+      const d = await (await fetch(`../data/processed/${walk}/overlays${v}.json`)).json();
+      let mo = null; try { const r = await fetch(`../data/processed/${walk}/motion${v}.json`); if (r.ok) mo = await r.json(); } catch (e) {}
+      SEG.cache[walk] = { d, mo };
+    }
+    return SEG.cache[walk];
+  }
+  async function segPick(sh) {
+    if (!SEG.a) { SEG.a = sh; segHint(); return; }
+    if (sh.OBJECTID === SEG.a.OBJECTID) return;
+    SEG.b = sh;
+    // the walk that passes both stores (smallest worst distance, <= 30 m)
+    let pick = null;
+    for (const w of Object.keys(GEO.walks)) {
+      const na = segNearest(w, SEG.a), nb = segNearest(w, SEG.b); if (!na || !nb) continue;
+      const worst = Math.max(na.d, nb.d);
+      if (!pick || worst < pick.worst) pick = { walk: w, na, nb, worst };
+    }
+    if (!pick || pick.worst > 30) {
+      $("segHint").innerHTML = `No recorded walk passes both stores (nearest is ${pick ? Math.round(pick.worst) : "?"} m away). Pick another <b>end</b> store, or Esc.`;
+      SEG.b = null; return;
+    }
+    const { d, mo } = await segData(pick.walk);
+    const res = segSummary(pick, d, mo);
+    SEG.result = res;
+    const a = SEG.a, b = SEG.b;
+    segSetMode(false);
+    SEG.a = a; SEG.b = b;
+    segDraw(pick); segShow(res);
+  }
+  function segDraw(pick) {
+    segClearLayer();
+    const g = GEO.walks[pick.walk], f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f);
+    const pts = []; for (let i = f0; i <= f1; i++) if (g.lat[i] != null) pts.push([g.lat[i], g.lon[i]]);
+    SEG.layer = L.layerGroup().addTo(full);
+    L.polyline(pts, { color: "#fff", weight: 12, opacity: .9, interactive: false }).addTo(SEG.layer);
+    L.polyline(pts, { color: "#ff4f8b", weight: 6, opacity: 1, interactive: false }).addTo(SEG.layer);
+    const ab = (sh, t) => L.marker([sh.lat, sh.lon], { interactive: false, icon: L.divIcon({ className: "me-icon", html: `<div class="seg-ab">${t}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(SEG.layer);
+    ab(SEG.a, "A"); ab(SEG.b, "B");
+    full.fitBounds(L.latLngBounds(pts.concat([[SEG.a.lat, SEG.a.lon], [SEG.b.lat, SEG.b.lon]])).pad(0.3), { maxZoom: 20 });
+  }
+  function segSummary(pick, d, mo) {
+    const walk = pick.walk, g = GEO.walks[walk], fps = d.fps || 5;
+    const f0 = Math.min(pick.na.f, pick.nb.f), f1 = Math.max(pick.na.f, pick.nb.f);
+    const [startSh, endSh] = pick.na.f <= pick.nb.f ? [SEG.a, SEG.b] : [SEG.b, SEG.a];
+    let len = 0; for (let i = f0 + 1; i <= f1; i++) len += Math.hypot((g.lon[i] - g.lon[i - 1]) * 111320 * Math.cos(g.lat[i] * deg), (g.lat[i] - g.lat[i - 1]) * 110574);
+    const minLen = $("Lmin").checked ? 5 : 0, conf = S.conf, l2conf = Math.max(0.15, conf - 0.2);
+    const people = new Map(), food = new Map(), foodPics = new Set(), signs = new Map(), objs = new Map(), l2 = new Map(), pictured = new Set();
+    let peak = 0, peakF = f0;
+    for (let f = f0; f <= f1; f++) {
+      const F = d.frames[f]; if (!F) continue;
+      let n = 0;
+      for (const e of F.p) {
+        if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue;
+        n++;
+        if (!people.has(e[0])) people.set(e[0], { first: f, last: f }); else people.get(e[0]).last = f;
+      }
+      if (n > peak) { peak = n; peakF = f; }
+      for (const e of (F.fd || [])) {
+        if (((d.food_len || {})[e[7]] || 0) < minLen) continue;
+        if (e[0] === "Food picture (menu/sign)") foodPics.add(e[7]); else if (!food.has(e[7])) food.set(e[7], e[0]);
+      }
+      for (const e of (F.s || [])) { const info = (d.signs || {})[e[0]]; if (info && info[3] && !signs.has(e[0])) signs.set(e[0], { text: info[0], lang: info[1], frame: f }); }
+      for (const e of F.o) if (e[1] >= conf && ((d.obj_len || {})[e[7]] || 0) >= minLen && !objs.has(e[7])) objs.set(e[7], e[0]);
+      for (const e of F.l2) if (e[1] >= l2conf && ((d.obj_len || {})[e[8]] || 0) >= minLen && !l2.has(e[8])) l2.set(e[8], e[0]);
+      for (const e of (F.dp || [])) pictured.add(e[0]);
+    }
+    const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); };
+    const plist = [...people].map(([id, r]) => {
+      const t = d.tracks[id] || [], gid = mo && mo.id2g ? (mo.id2g[id] ?? id) : id, m = mo && mo.tracks ? mo.tracks[gid] : null;
+      return { id: `P-${String(id).padStart(4, "0")}`, age_group: t[6] || "uncertain", perceived_gender: t[5] || "uncertain",
+               movement: m ? m.state : "unknown", median_speed_m_s: m ? m.med_spd : null, first_frame: r.first, last_frame: r.last };
+    });
+    // stores along the stretch: closest approach of this walk within the frame range, <= 22 m
+    const stores = [];
+    for (const sh of GEO.shops) {
+      const n = segNearest(walk, sh); if (!n || n.d > 22 || n.f < f0 || n.f > f1) continue;
+      stores.push({ name: sh.name, trade: sh.Main_Trade, sub_category: sh.Sub_Category, shop_type: sh.Shop_Type, ownership: sh.Ownership,
+                    facade: sh.Facade_Mat, skeleton: sh.Skeleton_Mat, distance_m: +n.d.toFixed(1), frame: n.f, global_id: sh.GlobalID });
+    }
+    stores.sort((a, b) => a.frame - b.frame);
+    const fronts = FRONT.filter(p => p.walk === walk && p.frame >= f0 && p.frame <= f1);
+    const mat = {}; for (const p of fronts) for (const m of p.materials) mat[m] = (mat[m] || 0) + 1;
+    return {
+      segment: { walk, street: walk === "walk1" ? "Hatikvah St" : "Hamevasser St", from_store: startSh.name, to_store: endSh.name,
+                 frame_start: f0, frame_end: f1, t_start_s: +(f0 / fps).toFixed(1), t_end_s: +(f1 / fps).toFixed(1),
+                 duration_s: +((f1 - f0) / fps).toFixed(1), length_m: +len.toFixed(1), min_confidence: conf, hide_tracks_shorter_than_1s: minLen > 0,
+                 exported: new Date().toISOString() },
+      stores: { count: stores.length, by_trade: tally(stores.map(x => x.trade || "unknown")), list: stores },
+      people: { unique: plist.length, per_100m: len > 0 ? +(plist.length / len * 100).toFixed(1) : null, peak_in_frame: peak, peak_frame: peakF,
+                age_group: tally(plist.map(x => x.age_group)), perceived_gender: tally(plist.map(x => x.perceived_gender)),
+                movement: tally(plist.map(x => x.movement)), list: plist },
+      food: { displays: food.size, by_item: tally([...food.values()]), food_pictures_menu_or_sign: foodPics.size },
+      signs: { read: signs.size, list: [...signs.values()] },
+      objects: { by_class: tally([...objs.values()]) },
+      market_items: { by_class: tally([...l2.values()]) },
+      pictured_people_on_signs: pictured.size,
+      frontage_materials: { points: fronts.length, materials: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])),
+                            list: fronts.map(p => ({ id: p.id, facade: p.facade, structure: p.structure, materials: p.materials.join("; "), chainage_m: p.chainage_m, side: p.side })) },
+      notes: ["People are unique tracked IDs (one person can still be split into two IDs).", "Age group and perceived gender are CLIP estimates, not validated.",
+              "Food = tracked displays/stacks, not single items. Frontage materials are location-based (experimental).", "Waste on the floor is not included (hidden: not reliable yet)."],
+    };
+  }
+  function segShow(r) {
+    const s = r.segment, kv = o => Object.entries(o).map(([a, b]) => `<dt>${segEsc(a)}</dt><dd>${b}</dd>`).join("") || `<dt class="muted">none</dt><dd></dd>`;
+    $("segTitle").textContent = `${s.from_store} → ${s.to_store}`;
+    $("segBody").innerHTML = `
+      <dl class="kv"><dt>Street</dt><dd>${s.street}</dd><dt>Length</dt><dd>${s.length_m} m</dd><dt>Video</dt><dd>${fmt(s.t_start_s)}–${fmt(s.t_end_s)} (${s.duration_s} s)</dd></dl>
+      <div><h5>People</h5><dl class="kv"><dt>Unique people</dt><dd>${r.people.unique}</dd><dt>Per 100 m</dt><dd>${r.people.per_100m ?? "—"}</dd><dt>Most at once</dt><dd>${r.people.peak_in_frame}</dd></dl>
+        <h5>Age group</h5><dl class="kv">${kv(r.people.age_group)}</dl><h5>Perceived gender</h5><dl class="kv">${kv(r.people.perceived_gender)}</dl><h5>Movement</h5><dl class="kv">${kv(r.people.movement)}</dl></div>
+      <div><h5>Stores (${r.stores.count})</h5><div class="tags">${Object.entries(r.stores.by_trade).map(([t, n]) => `<span>${segEsc(t)} · ${n}</span>`).join("") || '<span class="muted">none</span>'}</div>
+        <ul>${r.stores.list.map(x => `<li>${segEsc(x.name)} <span class="muted">· ${segEsc(x.trade || "")}</span></li>`).join("")}</ul></div>
+      <div><h5>Food on display (${r.food.displays})</h5><div class="tags">${Object.entries(r.food.by_item).map(([t, n]) => `<span>${emojiOf(t)} ${segEsc(t)} · ${n}</span>`).join("") || '<span class="muted">none</span>'}</div>
+        ${r.food.food_pictures_menu_or_sign ? `<div class="muted" style="font-size:12px;margin-top:4px">+ ${r.food.food_pictures_menu_or_sign} food pictures on menus/signs (not counted)</div>` : ""}</div>
+      <div><h5>Signs read (${r.signs.read})</h5><ul>${r.signs.list.slice(0, 40).map(x => `<li dir="auto">${segEsc(x.text)}</li>`).join("") || '<li class="muted">none</li>'}</ul></div>
+      <div><h5>Objects</h5><dl class="kv">${kv(r.objects.by_class)}</dl><h5>Market items</h5><dl class="kv">${kv(r.market_items.by_class)}</dl></div>
+      <div><h5>Frontage materials (${r.frontage_materials.points} points)</h5><dl class="kv">${kv(r.frontage_materials.materials)}</dl></div>
+      <dl class="kv"><dt>Pictured people on signs (not counted)</dt><dd>${r.pictured_people_on_signs}</dd></dl>
+      <div class="note">${r.notes.join(" ")}</div>`;
+    $("segPanel").hidden = false; $("maplegend").hidden = true;
+  }
+  const segName = () => { const s = SEG.result.segment; return `shuk_segment_${s.walk}_${s.frame_start}-${s.frame_end}`.replace(/[^\w.-]+/g, "_"); };
+  function segDownload(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve();
+    return new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"; sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc); });
+  }
+  $("segJson").addEventListener("click", () => { if (SEG.result) segDownload(new Blob([JSON.stringify(SEG.result, null, 2)], { type: "application/json" }), segName() + ".json"); });
+  $("segXlsx").addEventListener("click", async () => {
+    if (!SEG.result) return;
+    try { await loadXlsx(); } catch (e) { $("segXlsx").textContent = "Excel library unavailable (offline?)"; return; }
+    const r = SEG.result, wb = XLSX.utils.book_new(), add = (rows, name) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ "": "none" }]), name);
+    const flat = (o, pre = "") => Object.entries(o).flatMap(([k, v]) => v && typeof v === "object" && !Array.isArray(v) ? flat(v, `${pre}${k} · `) : Array.isArray(v) ? [] : [{ field: pre + k, value: v }]);
+    add([...flat(r.segment, "segment · "), ...flat({ stores: { count: r.stores.count, by_trade: r.stores.by_trade } }), ...flat({ people: { unique: r.people.unique, per_100m: r.people.per_100m, peak_in_frame: r.people.peak_in_frame, age_group: r.people.age_group, perceived_gender: r.people.perceived_gender, movement: r.people.movement } }),
+         ...flat({ food: { displays: r.food.displays, by_item: r.food.by_item, food_pictures_menu_or_sign: r.food.food_pictures_menu_or_sign } }), { field: "signs · read", value: r.signs.read },
+         ...flat({ objects: r.objects.by_class, market_items: r.market_items.by_class, frontage_materials: r.frontage_materials.materials }), { field: "pictured people on signs", value: r.pictured_people_on_signs },
+         ...r.notes.map(n => ({ field: "note", value: n }))], "Summary");
+    add(r.stores.list, "Stores"); add(r.people.list, "People");
+    add(Object.entries(r.food.by_item).map(([item, n]) => ({ item, displays: n })), "Food");
+    add(r.signs.list, "Signs");
+    add([...Object.entries(r.objects.by_class).map(([c, n]) => ({ level: "object", class: c, count: n })), ...Object.entries(r.market_items.by_class).map(([c, n]) => ({ level: "market item", class: c, count: n }))], "Objects");
+    add(r.frontage_materials.list, "Frontage");
+    XLSX.writeFile(wb, segName() + ".xlsx");
+  });
+  $("segBtn").addEventListener("click", () => segSetMode(!SEG.on));
+  $("segClose").addEventListener("click", () => { $("segPanel").hidden = true; $("maplegend").hidden = false; segClearLayer(); SEG.result = null; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && SEG.on) segSetMode(false); });
   $("mapclose").addEventListener("click", () => { $("mapfull").hidden = true; });
   $("mapfull").addEventListener("click", e => { if (e.target.id === "mapfull") $("mapfull").hidden = true; });
   const fmHtml = (p, withBtn) => `<b>🧱 Frontage materials</b> <span class="muted">· experimental</span><br>` +
