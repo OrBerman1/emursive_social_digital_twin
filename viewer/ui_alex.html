@@ -189,6 +189,10 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .stats .grid { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 14.5px; padding-top: 8px; }
 .stats .grid span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .dtip { position: fixed; background: var(--ink); color: #fff; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; pointer-events: none; z-index: 60; white-space: nowrap; }
+.uipop { position: absolute; right: 16px; top: 10px; width: 280px; border-radius: 16px; padding: 14px 16px 10px; z-index: 45; }
+.uipop label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+.uipop input { width: 100%; accent-color: var(--space); margin: 10px 0 2px; }
+.uipop .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
 .toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; z-index: 50; pointer-events: none; transition: opacity .4s; }
 </style>
 </head>
@@ -205,7 +209,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   <div class="grow"></div>
   <div class="meta" title="Recording date">Aug 25, 2025</div>
   <button class="hbtn" id="fsTop" aria-label="Full screen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-  <button class="hbtn" id="setBtn" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
+  <button class="hbtn" id="setBtn" aria-label="Display settings: overlay transparency" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
   <div class="avatar" title="Alex Alvisi">AA</div>
 </header>
 <div class="menu" id="walkMenu" role="menu" hidden>
@@ -272,6 +276,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     <div class="hint" id="statsNote"></div>
   </div>
   <div class="toast" id="toast" hidden></div>
+  <div class="uipop glass" id="uiPop" data-no-drag hidden>
+    <label for="uiAlpha">Transparency of the overlays <b id="uiAlphaLbl">0%</b></label>
+    <input type="range" id="uiAlpha" min="0" max="80" step="5" value="0" aria-label="Transparency of everything over the video">
+    <div class="ends"><span>solid</span><span>see-through</span></div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -814,7 +823,17 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const pops = { tLayers: "layersPop", tSearch: "searchPop", tStats: "statsPop" };
   const closePops = except => { for (const [b, p] of Object.entries(pops)) if (p !== except) { $(p).hidden = true; $(b).setAttribute("aria-pressed", "false"); } };
   for (const [b, p] of Object.entries(pops)) $(b).addEventListener("click", () => { const open = $(p).hidden; closePops(p); $(p).hidden = !open; $(b).setAttribute("aria-pressed", String(open)); if (open && p === "searchPop") $("searchIn").focus(); });
-  $("setBtn").addEventListener("click", () => $("tLayers").click());
+  // display settings (sun icon): one transparency for everything drawn over the video; remembered between visits
+  const OVERLAYS = ".rail, .chips, .transport, .pop, #cards, .mini, .mini-cap";
+  const setAlpha = v => {
+    $("uiAlpha").value = v; $("uiAlphaLbl").textContent = `${v}%`;
+    document.querySelectorAll(OVERLAYS).forEach(el => { el.style.opacity = String(1 - v / 100); });
+    try { localStorage.setItem("ui_alex.alpha", String(v)); } catch (e) {}
+  };
+  $("setBtn").addEventListener("click", () => { const p = $("uiPop"); p.hidden = !p.hidden; $("setBtn").setAttribute("aria-expanded", String(!p.hidden)); });
+  $("uiAlpha").addEventListener("input", () => setAlpha(+$("uiAlpha").value));
+  document.addEventListener("pointerdown", ev => { if (!ev.target.closest("#uiPop, #setBtn")) { $("uiPop").hidden = true; $("setBtn").setAttribute("aria-expanded", "false"); } });
+  setAlpha(+(localStorage.getItem("ui_alex.alpha") || 0));
   // outside clicks close Layers/Search; the statistics panel stays open while you watch
   document.addEventListener("pointerdown", ev => { if (!ev.target.closest(".pop, .rail, #setBtn")) closePops("statsPop"); if (!ev.target.closest("#walkMenu, #placeBtn")) $("walkMenu").hidden = true; });
   $("tCenter").addEventListener("click", () => { spinning = false; $("spin").setAttribute("aria-pressed", "false"); setFollow(true); E.fov = 90; E.look(E.yaw, -5); });
