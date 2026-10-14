@@ -20,7 +20,7 @@
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
-- **Open issues:** ~35 operator tracks (arm / T-shirt) still counted as people on walk 1; match stall
+- **Open issues:** (operator tracks: fixed 14 Oct, category "operator" via depicted.py) match stall
   crops to stores via shop names read on signs; ask Boaz what survey `Facade_Mat` / `Skeleton_Mat` mean;
   anchor outliers (Melech Haavatiach, the GlobalID stall); no hand-labelled ground truth yet for food,
   waste or motion.

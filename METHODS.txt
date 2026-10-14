@@ -351,4 +351,10 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - Visual check (contact sheets): v1 had operator-driven and far-tiny-box "crowds"; after the filters the
      largest crowds are real dense groups at stalls and walkers in a cluster. Result: walk 1 37 crowds
      (median 4 people at once, max 11), walk 2 3 crowds.
+   - 14 Oct (user): crowd = 4 people or more (was 3) -> walk 1: 9 crowds (4-11 people at once), walk 2: none
+     (most 3-person groups never held 4 people for 1 s).
+   - 14 Oct (user): the operator filter now applies EVERYWHERE: depicted.py marks those tracks as category
+     "operator" (vision-review labels take precedence), so people counts, age/gender statistics, motion,
+     crowds and segment summaries all exclude them. Walk 1: 655 -> 619 person tracks, viewer total
+     561 -> 528 people; walk 2: 248 -> 236 tracks, total 187.
 

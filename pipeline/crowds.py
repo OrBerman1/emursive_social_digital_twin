@@ -11,7 +11,7 @@ Method : 1. per analysis frame, people = tracked persons that pass the viewer de
             duplicate boxes of one person (IoU > DUP_IOU, or a box >= 75% inside another) count once.
          2. link two people if their boxes touch or overlap (yaw gap <= GAP_FRAC x mean box width, pitch ranges
             overlap) AND their box heights are similar (smaller / larger >= SIZE_RATIO).
-         3. crowd in a frame = connected group of >= MIN_PEOPLE people.
+         3. crowd in a frame = connected group of >= min_people people (default 4, user decision 14 Oct).
          4. crowds are followed over time: a group continues an existing crowd if they share >= 1 person (best
             Jaccard); gaps <= 1 s allowed; crowds seen < MIN_DUR_F frames are dropped.
          5. per crowd: size (median / most at once / unique people over its life), map position (members' map
@@ -233,7 +233,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("walks", nargs="*", default=list(WALKS))
     ap.add_argument("--variant", default="stab")
-    ap.add_argument("--min-people", type=int, default=3)
+    ap.add_argument("--min-people", type=int, default=4)               # user, 14 Oct: a crowd is 4 people or more
     a = ap.parse_args()
     for w in a.walks:
         print(json.dumps(run(w, a.variant, a.min_people)))

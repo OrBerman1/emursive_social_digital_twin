@@ -13,6 +13,8 @@ Automatic cues alone were not reliable enough (CLIP >= 0.75 also fires on people
 operator's printed T-shirt; the size rule fires on far real people). So the cues PROPOSE candidates
 (p_depicted >= 0.3) and a vision review decides (config/depicted_review.json: depicted / operator / real),
 like the sign reading. Unreviewed tracks fall back to p_depicted >= 0.9.
+Operator heuristic (crowds.operator_tracks: median box height >= 58 deg, or >= 48 deg near the operator direction)
+marks the remaining camera-operator tracks as category "operator"; every downstream stage keeps only "person".
 Output : data/interim/<walk>/depicted<_variant>/depicted.parquet
          (track, p_depicted, height_m, feet_up, near_sign, med_spd, is_depicted, reason)
 
@@ -121,6 +123,8 @@ def run(walk: str, variant: str, force: bool) -> dict:
         spd = {int(t): mo["tracks"][str(g)]["med_spd"] for t, g in mo["id2g"].items()}
 
     review = json.loads(REVIEW.read_text(encoding="utf-8")).get(walk, {}) if REVIEW.exists() else {}
+    from crowds import operator_tracks                                   # camera operator (arm / T-shirt) heuristic
+    ops = operator_tracks(tr)
     label_of = {int(t): lab for lab in ("depicted", "operator", "real") for t in review.get(lab, [])}
     rows = []
     for tid, t in tr.groupby("track"):
@@ -133,6 +137,8 @@ def run(walk: str, variant: str, force: bool) -> dict:
         lab = label_of.get(int(tid))
         if lab:
             category, reason = {"depicted": CATEGORY, "operator": "operator", "real": "person"}[lab], f"vision review: {lab}"
+        elif int(tid) in ops:
+            category, reason = "operator", "operator heuristic (huge box in the operator direction)"
         elif np.isfinite(p) and p >= P_FALLBACK:
             category, reason = CATEGORY, f"CLIP p={p:.2f} (not reviewed)"
         else:
