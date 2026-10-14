@@ -2005,7 +2005,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       }, 1000);
     } catch (e) {
       $("jvSend").disabled = false;
-      jvRender(prev.concat([{ q, a: null, error: /404/.test(e.message) ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : e.message }]));
+      jvRender(prev.concat([{ q, a: null, error: /404|not found/i.test(e.message) ? "the server is older than this page - close the black server window, run start_viewer.bat again, then Ctrl+F5" : e.message }]));
     }
   }
   $("jvOpen").addEventListener("click", () => { const v = $("jv"); v.hidden = !v.hidden; if (!v.hidden) { jvChats(JV.chat); if (!JV.job) jvOpenChat(JV.chat); $("jvQ").focus(); } });
