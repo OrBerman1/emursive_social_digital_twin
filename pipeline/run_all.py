@@ -27,7 +27,9 @@ def main() -> None:
     step(str(HERE / "encode_video.py"), *walks)                                            # cached
     step(str(HERE / "detect.py"), *walks, "--model", "yolo11x.pt", cwd=MODELS)             # cached, GPU
     step(str(HERE / "detect.py"), *walks, "--model", "yolov8x-worldv2.pt", "--prompts", "level2", cwd=MODELS)
-    imu_py = HERE.parent / ".venv-imu" / "Scripts" / "python.exe"                          # telemetry-parser needs py3.9
+    imu_py = HERE.parent / ".venv-imu" / "Scripts" / "python.exe"                          # Windows: telemetry-parser needs py3.9
+    if not imu_py.exists():
+        imu_py = Path(sys.executable)                                                      # macOS/Linux: built into the main venv
     print(f"\n=== imu_extract.py {' '.join(walks)}")
     subprocess.run([str(imu_py), str(HERE / "imu_extract.py"), *walks], check=True)         # cached
     step(str(HERE / "stabilize.py"), *walks)                                               # visual rotations cached

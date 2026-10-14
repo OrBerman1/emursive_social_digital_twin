@@ -83,7 +83,7 @@ def run(walk: str, variant: str, n_crops: int, sure: float, force: bool) -> dict
     else:
         st.start()
         import clip
-        dev = "cuda" if torch.cuda.is_available() else "cpu"
+        dev = "cuda" if torch.cuda.is_available() else "cpu"   # CLIP fp16 is unreliable on MPS
         model, preprocess = clip.load(MODEL, device=dev)
         sex_names, sex_f = text_features(model, clip, SEX_PROMPTS, dev)
         age_names, age_f = text_features(model, clip, AGE_PROMPTS, dev)

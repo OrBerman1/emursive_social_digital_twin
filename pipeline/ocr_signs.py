@@ -17,6 +17,7 @@ import concurrent.futures as cf
 import hashlib
 import json
 import re
+import shutil
 
 import cv2
 import numpy as np
@@ -26,7 +27,7 @@ from common import INTERIM, WALKS, Stage
 from spherical import Tile, TileSampler, box_to_sphere
 
 VERSION_DET, VERSION_OCR = 1, 1
-TESS = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+TESS = shutil.which("tesseract") or r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 HEB = re.compile(r"[\u0590-\u05FF]")
 ARA = re.compile(r"[\u0600-\u06FF]")
 LAT = re.compile(r"[A-Za-z]")

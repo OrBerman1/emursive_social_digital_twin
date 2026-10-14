@@ -14,6 +14,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 import time
 
 import cv2
@@ -25,6 +26,15 @@ from common import INTERIM, PROCESSED, WALKS, Stage
 
 VERSION = 1
 PAD = 16  # columns of horizontal wrap padding
+
+
+DEV = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+if DEV == "cuda":     # NVIDIA hardware encoder (original Windows setup)
+    ENC_ARGS = ["-c:v", "h264_nvenc", "-preset", "p5", "-rc", "vbr", "-cq", "24", "-b:v", "12M", "-maxrate", "20M"]
+elif sys.platform == "darwin":   # Apple hardware encoder
+    ENC_ARGS = ["-c:v", "h264_videotoolbox", "-b:v", "12M", "-maxrate", "20M"]
+else:
+    ENC_ARGS = ["-c:v", "libx264", "-preset", "medium", "-crf", "23"]
 
 
 def directions(w: int, h: int, dev) -> torch.Tensor:
@@ -62,14 +72,14 @@ def bake_video(walk: str, seconds: float | None, force: bool) -> None:
         print(f"[bake] {walk} video: cached"); return
     st.start()
     w, h = vm["params"]["width"], vm["params"]["height"]
-    q = torch.tensor(np.array(st_json["q_video"]).reshape(-1, 3, 3), dtype=torch.float32, device="cuda")
-    dirs = directions(w, h, "cuda")
+    q = torch.tensor(np.array(st_json["q_video"]).reshape(-1, 3, 3), dtype=torch.float32, device=DEV)
+    dirs = directions(w, h, DEV)
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", str(src), *(["-t", str(seconds)] if seconds else []),
                             "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     out = out_dir / "equirect.mp4"
     enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}",
                             "-r", "30000/1001", "-i", "-", "-i", str(src), "-map", "0:v", "-map", "1:a?",
-                            "-c:v", "h264_nvenc", "-preset", "p5", "-rc", "vbr", "-cq", "24", "-b:v", "12M", "-maxrate", "20M",
+                            *ENC_ARGS,
                             "-pix_fmt", "yuv420p", "-c:a", "copy", "-shortest", "-movflags", "+faststart", str(out)],
                            stdin=subprocess.PIPE)
     n, t0, nbytes = 0, time.time(), w * h * 3
@@ -77,7 +87,7 @@ def bake_video(walk: str, seconds: float | None, force: bool) -> None:
         buf = dec.stdout.read(nbytes)
         if len(buf) < nbytes:
             break
-        img = torch.frombuffer(bytearray(buf), dtype=torch.uint8).to("cuda").view(h, w, 3).permute(2, 0, 1).float()
+        img = torch.frombuffer(bytearray(buf), dtype=torch.uint8).to(DEV).view(h, w, 3).permute(2, 0, 1).float()
         res = remap(img, q[min(n, len(q) - 1)], dirs)
         enc.stdin.write(res.round().clamp(0, 255).byte().permute(1, 2, 0).contiguous().cpu().numpy().tobytes())
         n += 1
@@ -97,14 +107,14 @@ def bake_frames(walk: str, force: bool) -> None:
     if st.done() and not force:
         print(f"[bake] {walk} frames: cached"); return
     st.start()
-    q = torch.tensor(np.array(st_json["q_analysis"]).reshape(-1, 3, 3), dtype=torch.float32, device="cuda")
+    q = torch.tensor(np.array(st_json["q_analysis"]).reshape(-1, 3, 3), dtype=torch.float32, device=DEV)
     index = json.loads((src_dir / "index.json").read_text(encoding="utf-8"))
     dirs, t0 = None, time.time()
     for fr in index:
         bgr = cv2.imread(str(src_dir / fr["file"]))
-        img = torch.from_numpy(bgr).to("cuda").permute(2, 0, 1).float()
+        img = torch.from_numpy(bgr).to(DEV).permute(2, 0, 1).float()
         if dirs is None:
-            dirs = directions(img.shape[2], img.shape[1], "cuda")
+            dirs = directions(img.shape[2], img.shape[1], DEV)
         res = remap(img, q[fr["frame"]], dirs).round().clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
         cv2.imwrite(str(out_dir / fr["file"]), res, [cv2.IMWRITE_JPEG_QUALITY, 95])
         if fr["frame"] % 100 == 0:

@@ -13,6 +13,13 @@ immersive 360° viewer with the observations anchored in the scene, plus GIS-rea
 
 ---
 
+> **macOS (Apple Silicon):** use `setup_mac.command` and `start_viewer_mac.command` instead of the `.bat`
+> files (double-click in Finder, or run them in Terminal). Install first: `brew install python@3.13 ffmpeg
+> tesseract tesseract-lang rust`. The GPU stages use Apple MPS, video is encoded with VideoToolbox, and the
+> gyro reader is built from source into `.venv` (no `.venv-imu` needed). If the LABAI files sit in the folder
+> above the repo, `setup_mac.command` links them into `data/raw/LABAI/`. Run the pipeline with
+> `.venv/bin/python pipeline/run_all.py`.
+
 ## 1. Requirements
 
 - **Windows 10/11** with an **NVIDIA GPU** (tested on an RTX 4060 Laptop, 8 GB). A CPU works but detection is many times slower.

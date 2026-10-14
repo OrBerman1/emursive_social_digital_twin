@@ -11,3 +11,6 @@ models/
 .venv-imu/
 __pycache__/
 *.pyc
+
+# macOS Finder metadata
+.DS_Store
