@@ -67,28 +67,34 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .chip[data-k="object"] .lbl { color: var(--object); } .chip[data-k="space"] .lbl { color: var(--space); }
 
 /* ---- info windows (dark, colour-coded border; positioned every frame, leader lines on the overlay canvas) ---- */
-.card { position: absolute; left: 0; top: 0; border-radius: 14px; background: var(--win); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        border: 2px solid; box-shadow: 0 10px 28px rgba(0,0,0,.35); z-index: 8; will-change: transform; }
-.card.person { border-color: var(--person); } .card.object { border-color: var(--object); } .card.space { border-color: var(--space); }
+/* glass info windows: 50% transparent, frosted, no coloured border (the badge + leader line carry the kind) */
+.card { position: absolute; left: 0; top: 0; border-radius: 14px; color: #fff; z-index: 8; will-change: transform;
+        background: linear-gradient(180deg, rgba(34,38,50,.5), rgba(12,14,20,.5));
+        backdrop-filter: blur(12px) saturate(1.35); -webkit-backdrop-filter: blur(12px) saturate(1.35);
+        border: 1px solid rgba(255,255,255,.16); text-shadow: 0 1px 2px rgba(0,0,0,.45);
+        box-shadow: 0 10px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.25); }
+/* glossy dividers: bright in the middle, fading to dark at the edges */
+.card .r, .who, .card.full .rows, .signtext { position: relative; }
+.card .r + .r::before, .who::before, .card.full .rows::before, .signtext::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+        background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.55) 50%, rgba(0,0,0,.35)); }
 .card .r { display: flex; align-items: center; gap: 12px; padding: 3px 0; font-size: 14px; white-space: nowrap; }
 .card .r .k { min-width: 40px; display: flex; justify-content: center; flex: none; color: #e9ecf2; }
 .card .r .v { overflow: hidden; text-overflow: ellipsis; }
 .card .r .v.soft { color: var(--win-soft); }
-.card .r + .r { border-top: 1px solid rgba(255,255,255,.08); }
 .badge { font: 700 13px var(--sans); padding: 3px 7px; border-radius: 6px; min-width: 34px; text-align: center; }
 .person .badge { background: var(--person); color: #1a1a1a; } .object .badge { background: var(--object); color: #fff; } .space .badge { background: var(--space); color: #fff; }
 .card.compact { padding: 8px 14px 8px 10px; min-width: 200px; max-width: 260px; cursor: pointer; }
-.card.compact:hover { box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+.card.compact:hover { background: linear-gradient(180deg, rgba(40,44,58,.62), rgba(14,16,22,.6)); }
 .card.full { width: 300px; padding: 10px 12px 12px; }
 .card.full .hd { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; font-weight: 600; font-size: 14.5px; }
 .card.full .hd button { margin-left: auto; border: 0; background: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--win-soft); }
 .card.full .hd button + button { margin-left: 0; }
 .card.full .hd button:hover { background: rgba(255,255,255,.1); color: #fff; }
-.who { display: flex; gap: 12px; align-items: center; padding: 8px 0 10px; border-top: 1px solid rgba(255,255,255,.1); }
+.who { display: flex; gap: 12px; align-items: center; padding: 8px 0 10px; }
 .who canvas { width: 64px; height: 64px; border-radius: 10px; background: #2a2f3a; flex: none; }
 .who b { display: block; font-size: 15px; }
 .who small { color: var(--win-soft); font-size: 12.5px; }
-.card.full .rows { border-top: 1px solid rgba(255,255,255,.1); padding-top: 4px; }
+.card.full .rows { padding-top: 4px; }
 .card.full .r small { display: block; color: var(--win-soft); font-size: 11px; }
 .conf { display: flex; align-items: center; gap: 10px; padding-top: 10px; font-size: 12.5px; color: var(--win-soft); }
 .conf .meter { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
@@ -96,7 +102,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .person .conf .meter i { background: var(--person); } .object .conf .meter i { background: var(--object); } .space .conf .meter i { background: var(--space); }
 .conf b { color: #fff; font-variant-numeric: tabular-nums; }
 .note { color: var(--win-soft); font-size: 11px; padding-top: 8px; }
-.signtext { font-size: 17px; font-weight: 600; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.1); unicode-bidi: plaintext; direction: auto; }
+.signtext { font-size: 17px; font-weight: 600; padding: 8px 0; unicode-bidi: plaintext; direction: auto; }
 
 /* ---- round mini map (Lens look) ---- */
 .mini { position: absolute; right: 18px; bottom: 130px; width: 230px; height: 230px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: var(--shadow); background: #e5e9ee; z-index: 9; }
