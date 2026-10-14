@@ -339,6 +339,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
     const d = await E.load(w);
     if (d.fields && d.fields.s && d.fields.s[1] !== "conf") { for (const F of d.frames) for (const s of F.s || []) s.splice(1, 0, 1); d.fields.s.splice(1, 0, "conf"); }
     try { FW = await J(`../data/processed/${w}/forward.json`); } catch (e) { FW = null; }
+    try { NAMES = await J(`../data/processed/${w}/sign_names.json`); } catch (e) { NAMES = null; }   // pipeline/sign_names.py
     buildMotion(d); buildMarks(d); buildTrends(d); buildMet(d, await geoFor(w)); mapRoute(); setFollow(true); E.look(fwdAt(0), -5); E.fov = 90;
     return d;
   };
@@ -617,7 +618,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   const GENDER = [["man", "Men", SL[0]], ["woman", "Women", SL[1]], ["uncertain", "Uncertain", GREY]];
   const AGEC = [["child", "Child", "#86b6ef"], ["young adult 18-35", "Young adult", "#3987e5"], ["middle adult 36-60", "Adult", "#1c5cab"], ["older adult 61+", "Older adult", "#0d366b"], ["uncertain", "Uncertain", GREY]];
   const LANG = [["he", "Hebrew", SL[0]], ["en", "English", SL[1]], ["ar", "Arabic", SL[2]], ["other", "Other", GREY]];
-  let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1;   // donutH (+ side-by-side people) fitted so the panel never scrolls
+  let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1, NAMES = null;   // donutH (+ side-by-side people) fitted so the panel never scrolls
   const tween = {};                                   // displayed (eased) segment values, so the donuts glide
   function buildTrends(d) {
     const len = d.n_frames, mk = () => ({ view: new Array(len).fill(0), cum: new Array(len).fill(0) });
@@ -682,7 +683,9 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
       for (const r of read) { const k = ["he", "en", "ar"].includes(r.lang) ? r.lang : "other"; counts[k] = (counts[k] || 0) + 1; }
       const segs = segsOf("l", LANG, counts);
       html = `<div class="dt">Language</div>${donut("l", segs, read.length, "read")}${legend(segs)}`;
-      PASSED = read.filter(r => (r.text.match(/[\p{L}]/gu) || []).length >= 3);   // only places already passed; skip 1-2 letter OCR fragments
+      // only places already passed, and only names that pass the quality filter (pipeline/sign_names.py)
+      PASSED = NAMES ? read.filter(r => NAMES[r.id]).map(r => ({ ...r, text: NAMES[r.id] }))
+                     : read.filter(r => (d.signs[r.id] || [])[2] >= 85 && (r.text.match(/[\p{L}]/gu) || []).length >= 4);
       note = "Readable signs (OCR), counted as the walk goes.";
     }
     $("statsBody").innerHTML = html; $("statsNote").textContent = note; $("signRot").hidden = tab !== "space";
@@ -733,7 +736,8 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
   // Places: loop through the signs already passed, one at a time, fading out and in (no upcoming places)
   setInterval(() => {
     const el = $("signTxt"); if ($("statsPop").hidden || $("signRot").hidden) return;
-    if (!PASSED.length) { el.textContent = "—"; el.classList.remove("out"); return; }
+    if (!PASSED.length) { el.textContent = "no clear sign name yet"; el.style.fontSize = "15px"; el.style.color = "var(--soft)"; el.classList.remove("out"); return; }
+    el.style.fontSize = ""; el.style.color = "";
     el.classList.add("out");
     setTimeout(() => { rotI = (rotI + 1) % PASSED.length; el.textContent = PASSED[PASSED.length - 1 - rotI].text; el.classList.remove("out"); }, 700);
   }, 3200);
