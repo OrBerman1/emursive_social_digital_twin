@@ -171,8 +171,8 @@ thresholds are adjustable live under **👥 Crowd settings** on the full map.
 **Map layers and filters.** In the full map, **🗂 Layers & filters** chooses what is shown (default: stores and
 crowds; optional: walk routes, frontage materials, everyone's paths), filters stores by any field of the store
 table (trade, shop type, ownership, patronage, facade, structure, informal vendor, generation, seen on a walk),
-and colours stores by one of them. The **🌡 Speed map** layer paints the mean walking speed per area (5 m cells;
-cell size and minimum people adjustable in the same panel).
+and colours stores by one of them. The **🌡 Speed map** layer paints the mean walking speed per area as a smooth
+colour surface with its own legend (smoothing radius and minimum people adjustable in the same panel).
 
 **Segment summary.** In the full map, press **🖱 Select segment** (top right), click a start store and an end
 store: the stretch of the walk between them is highlighted and summarised (people, ages, movement, stores by

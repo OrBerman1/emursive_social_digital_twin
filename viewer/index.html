@@ -73,6 +73,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .minimap .me svg { position: absolute; left: -40px; top: -40px; }
 .minimap .north { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 501; }
 .minimap .north span { position: absolute; left: -9px; top: -100px; font: 700 12px var(--mono); color: #fff; background: #c0392b; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; }
+.speedleg { position: absolute; left: 10px; bottom: 24px; z-index: 1002; width: 250px; background: rgba(27,35,36,.94); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; color: var(--ink); font-size: 12px; display: grid; gap: 4px; }
+.speedleg .ramp, .minispeed .ramp { height: 10px; border-radius: 3px; }
+.speedleg .ticks { display: flex; justify-content: space-between; font: 11px var(--mono); }
+.minispeed { position: absolute; right: 12px; bottom: 218px; width: 200px; z-index: 4; background: rgba(18,24,25,.85); border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font: 10.5px var(--mono); color: var(--ink); pointer-events: none; display: grid; gap: 2px; }
+.minispeed .ticks { display: flex; justify-content: space-between; }
 .minimap .hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 10px var(--mono); color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; z-index: 502; }
 .mapfull { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; }
 .mapfull .box { position: relative; width: min(1200px, 100%); height: min(85vh, 900px); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
@@ -187,6 +192,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         <div class="hud" id="hud"></div>
         <div class="counters" id="ctr"></div>
         <div class="vcard" id="vcard" hidden></div>
+        <div class="minispeed" id="miniSpeed" hidden><span>🌡 mean walking speed (m/s)</span><div class="ramp" id="miniSpeedRamp"></div><div class="ticks"><span>0</span><span>0.75</span><span>≥ 1.5</span></div></div>
         <div class="minimap" id="minimap" title="Open the full map" hidden>
           <div class="rot" id="mmrot"><div class="mm" id="mm"></div></div>
           <div class="me"><svg width="80" height="80" viewBox="-40 -40 80 80"><path id="mmcone" d="" fill="rgba(79,179,187,.35)" stroke="rgba(79,179,187,.9)" stroke-width="1"/><circle r="6" fill="#4fb3bb" stroke="#fff" stroke-width="2"/></svg></div>
@@ -299,13 +305,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div id="fullmap"></div>
     <div class="bar"><b>Shuk HaTikvah · stores</b><span id="mapinfo"></span><button id="mapclose">Close map</button></div>
     <div class="legend2" id="maplegend"></div>
+    <div class="speedleg" id="speedLeg" hidden><b>🌡 Mean walking speed</b><div class="ramp" id="speedRamp"></div>
+      <div class="ticks"><span>0</span><span>0.5</span><span>1.0</span><span>≥ 1.5 m/s</span></div><span class="muted" id="speedInfo"></span></div>
     <button class="layersbtn" id="layersBtn" aria-expanded="false" title="Choose what the map shows">🗂 Layers &amp; filters</button>
     <div class="layerpanel" id="layerPanel" hidden>
       <header><b>🗂 What the map shows</b><span><button id="lpReset">Reset</button></span></header>
       <div class="body">
         <div><h5>Layers</h5><div class="lyr" id="lpLayers"></div></div>
         <div id="lpSpeedRow"><h5>Speed map</h5><div style="display:flex;gap:8px;align-items:center;margin-top:3px">
-          <span>cell</span><select id="spCell" style="width:auto"><option value="2">2 m</option><option value="3">3 m</option><option value="5" selected>5 m</option><option value="8">8 m</option></select>
+          <span>smoothing</span><select id="spCell" style="width:auto"><option value="2">2 m</option><option value="3" selected>3 m</option><option value="5">5 m</option><option value="8">8 m</option></select>
           <span>min people</span><select id="spMin" style="width:auto"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>8</option></select></div></div>
         <div><h5>Colour stores by</h5><select id="lpColour" aria-label="Colour stores by"></select></div>
         <div><h5>Filter stores <span id="lpShown"></span></h5><div id="lpFilters" style="display:grid;gap:9px"></div></div>
@@ -1131,6 +1139,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       }
       if (ML.on.paths) mlPaths();
       if (ML.on.speed) mlSpeed();
+      $("miniSpeed").hidden = !ML.on.speed;
     }
     if (!full) { mlSave(); return; }
     for (const [k] of ML_LAYERS) { const lay = ML.layers[k]; if (!lay) continue; if (ML.on[k] && !(k === "frontage" && SEG.on)) lay.addTo(full); else lay.remove(); }
@@ -1160,52 +1169,81 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     if (ML.on.routes) parts.push(`<span><i style="background:#4fb3bb"></i>walk 1 route</span><span><i style="background:#e0a948"></i>walk 2 route</span>`);
     if (ML.on.frontage) parts.push(`<span>🧱 frontage materials (experimental)</span>`);
     if (ML.on.paths) parts.push(`<span><i style="background:#0072B2"></i>people's paths (whole walk)</span>`);
-    if (ML.on.speed) parts.push(`<span class="muted">🌡 mean walking speed (m/s) · cells ${SP.cell} m · ≥ ${SP.minPeople} people</span>`,
-      `<span style="display:block"><span style="display:block;height:10px;border-radius:3px;background:linear-gradient(90deg,${SPEED_RAMP.join(",")})"></span>` +
-      `<span style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px"><span>0</span><span>0.5</span><span>1.0</span><span>≥ ${SP.max}</span></span></span>`,
-      `<span class="muted">${mlSpeedInfo}</span>`);
+    $("speedLeg").hidden = !ML.on.speed; $("miniSpeed").hidden = !ML.on.speed || !mini;
+    if (ML.on.speed) $("speedInfo").textContent = mlSpeedInfo;
     $("maplegend").innerHTML = parts.join("") || `<span class="muted">Nothing selected — open 🗂 Layers &amp; filters</span>`;
+    $("maplegend").style.display = (!parts.length && ML.on.speed) ? "none" : "";   // the speed map has its own legend
   }
   // ---- speed map: mean walking speed (magnitude) per grid cell, people-weighted ----
   const SPEED_RAMP = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];      // viridis: slow -> fast
-  const SP = { cell: 5, minPeople: 3, max: 1.5 };
+  const SP = { cell: 3, minPeople: 3, max: 1.5 };                       // cell = smoothing radius (Gaussian sigma, m)
   let mlSpeedKey = "", mlSpeedInfo = "";
   const rampCol = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
     const a = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
     return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`; };
+  // smooth surface: each person's speed is spread around their path (Gaussian, sigma = SP.cell m); per pixel the
+  // value is the people-weighted mean (each person counts once: their strongest weight there), and the
+  // opacity fades out where fewer than SP.minPeople people contribute.
   async function mlSpeed() {
     const key = `${SP.cell}|${SP.minPeople}`, lays = [ML.layers.speed, MINI.layers.speed].filter(Boolean);
     if (key === mlSpeedKey && lays.every(l => l.getLayers().length)) return;
     mlSpeedKey = key;
-    const lat0 = 32.0527, lon0 = 34.7903, kx = 111320 * Math.cos(lat0 * deg), ky = 110574, c = SP.cell;
-    const cells = new Map();                                            // "ix,iy" -> Map(person -> [speeds])
+    for (const r of ["speedRamp", "miniSpeedRamp"]) $(r).style.background = `linear-gradient(90deg,${SPEED_RAMP.join(",")})`;
+    const lat0 = 32.0527, lon0 = 34.7903, kx = 111320 * Math.cos(lat0 * deg), ky = 110574;
+    const people = [];                                                  // [[x, y, speed], ...] per person (thinned to 1 point / m)
     for (const w of Object.keys(GEO.walks)) {
       const { mo } = await segData(w); if (!mo || !mo.tracks) continue;
-      for (const [gid, m] of Object.entries(mo.tracks)) {
-        m.lat.forEach((la, i) => {
-          const v = m.spd[i]; if (la == null || v == null) return;
-          const k = `${Math.floor((m.lon[i] - lon0) * kx / c)},${Math.floor((la - lat0) * ky / c)}`;
-          if (!cells.has(k)) cells.set(k, new Map());
-          const per = cells.get(k), pid = `${w}:${gid}`; if (!per.has(pid)) per.set(pid, []); per.get(pid).push(v);
-        });
+      for (const m of Object.values(mo.tracks)) {
+        const pts = []; let lx = 1e9, ly = 1e9;
+        m.lat.forEach((la, i) => { const v = m.spd[i]; if (la == null || v == null) return;
+          const x = (m.lon[i] - lon0) * kx, y = (la - lat0) * ky; if (Math.hypot(x - lx, y - ly) < 1) return; lx = x; ly = y; pts.push([x, y, v]); });
+        if (pts.length) people.push(pts);
       }
     }
     for (const l of lays) l.clearLayers();
-    let n = 0, all = [];
-    for (const [k, per] of cells) {
-      if (per.size < SP.minPeople) continue;
-      const vals = [...per.values()].map(median), meanV = mean(vals);
-      const [ix, iy] = k.split(",").map(Number);
-      const b = [[lat0 + iy * c / ky, lon0 + ix * c / kx], [lat0 + (iy + 1) * c / ky, lon0 + (ix + 1) * c / kx]];
-      const col = rampCol(meanV / SP.max);
-      for (const l of lays) {
-        const r = L.rectangle(b, { stroke: false, fillColor: col, fillOpacity: .62, interactive: l === ML.layers.speed });
-        if (l === ML.layers.speed) r.bindTooltip(`🌡 ${meanV.toFixed(2)} m/s mean · ${per.size} people`, { sticky: true });
-        r.addTo(l);
+    if (!people.length) { mlSpeedInfo = "no motion data"; return; }
+    const sig = SP.cell, R = Math.ceil(3 * sig), res = 0.5;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const pts of people) for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    x0 -= R; y0 -= R; x1 += R; y1 += R;
+    const W = Math.ceil((x1 - x0) / res), H = Math.ceil((y1 - y0) / res);
+    const num = new Float32Array(W * H), den = new Float32Array(W * H);
+    const pw = new Float32Array(W * H), pv = new Float32Array(W * H), touched = [];
+    const r = Math.ceil(R / res), k2 = -0.5 / (sig * sig);
+    for (const pts of people) {
+      touched.length = 0;
+      for (const [x, y, v] of pts) {
+        const cx = Math.floor((x - x0) / res), cy = Math.floor((y - y0) / res);
+        for (let j = Math.max(0, cy - r); j <= Math.min(H - 1, cy + r); j++) for (let i = Math.max(0, cx - r); i <= Math.min(W - 1, cx + r); i++) {
+          const dx = x0 + (i + .5) * res - x, dy = y0 + (j + .5) * res - y, w = Math.exp((dx * dx + dy * dy) * k2);
+          if (w < 0.01) continue;
+          const q = j * W + i;
+          if (pw[q] === 0) touched.push(q);
+          if (w > pw[q]) { pw[q] = w; pv[q] = v; }                       // this person's strongest (= nearest) sample here
+        }
       }
-      n++; all.push(meanV);
+      for (const q of touched) { num[q] += pw[q] * pv[q]; den[q] += pw[q]; pw[q] = 0; }
     }
-    mlSpeedInfo = n ? `${n} cells · overall ${mean(all).toFixed(2)} m/s · noise floor ≈ 0.3 m/s` : "no cell has enough people";
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const cx2 = cv.getContext("2d"), img = cx2.createImageData(W, H);
+    const lo = Math.max(0.5, SP.minPeople - 1.5), hi = SP.minPeople;      // fade-in of the support (people-equivalents)
+    let painted = 0, sum = 0;
+    const rgb = t => { t = Math.max(0, Math.min(1, t)) * (SPEED_RAMP.length - 1); const i = Math.min(SPEED_RAMP.length - 2, Math.floor(t)), f = t - i;
+      const a1 = SPEED_RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b1 = SPEED_RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
+      return a1.map((v, k) => Math.round(v + (b1[k] - v) * f)); };
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const q = j * W + i, d = den[q]; if (d < lo) continue;
+      const v = num[q] / d, c = rgb(v / SP.max), al = Math.min(1, (d - lo) / Math.max(0.01, hi - lo));
+      const o = ((H - 1 - j) * W + i) * 4;                              // canvas y grows downward (north up)
+      img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = Math.round(200 * al);
+      if (al >= 1) { painted++; sum += v; }
+    }
+    cx2.putImageData(img, 0, 0);
+    const url = cv.toDataURL("image/png");
+    const bounds = [[lat0 + y0 / ky, lon0 + x0 / kx], [lat0 + (y0 + H * res) / ky, lon0 + (x0 + W * res) / kx]];
+    for (const l of lays) L.imageOverlay(url, bounds, { opacity: .85, interactive: false, className: "speed-img" }).addTo(l);
+    mlSpeedInfo = painted ? `${people.length} people · smoothing ${SP.cell} m · shown where ≥ ${SP.minPeople} people · area mean ${(sum / painted).toFixed(2)} m/s · below ~0.3 m/s = standing / noise`
+                          : "not enough people for this setting";
     if (full) mlLegend(mlColourMap());
   }
   $("spCell").addEventListener("change", () => { SP.cell = +$("spCell").value; mlSpeedKey = ""; if (ML.on.speed) mlSpeed(); });
