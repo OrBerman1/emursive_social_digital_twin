@@ -563,7 +563,7 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
 
 33. DISTANCE LIMIT IN THE VIEWER  (viewer/engine.js E.maxDist / E.distOf / E.near; ui_alex Layers & filters "Show up to ... m")
    - Far detections are the least reliable (small boxes). The user can limit what is shown and counted to 3-30 m ("any
-     distance" = no limit, the default; not remembered between visits).
+     distance" = no limit). Default 12 m (user, 15 Oct); not remembered between visits.
    - Distance: people = their ground distance (feet + camera height, as in tracks.py); objects standing on the ground =
      camera height / tan(-bottom pitch), market items use their stored distance if present. A box whose bottom is at or
      above the horizon has no ground contact -> treated as far. Signs, food displays and pictured people sit above the
