@@ -1200,7 +1200,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
   $("statsBody").addEventListener("mousemove", ev => { const t = ev.target.closest("path[data-tip]"); if (!t) { dtip.hidden = true; return; } dtip.hidden = false; dtip.textContent = t.dataset.tip; dtip.style.left = `${ev.clientX + 12}px`; dtip.style.top = `${ev.clientY + 12}px`; });
   $("statsBody").addEventListener("mouseleave", () => { dtip.hidden = true; });
 
-  // ---- timeline markers: crowd peaks (people) and readable signs (one marker per 6 s stretch with readable text) ----
+  // ---- timeline markers: crowd peaks (people), the 5 moments with the most objects in view (objects, >= 20 s apart)
+  //      and readable signs (one marker per 6 s stretch with readable text) ----
   // bookmarks = notes on the timeline, shared with the base viewer (<processed>/comments.json; localStorage if the server is old)
   const CM = { list: [], edit: null, color: "#E69F00" };
   const CM_COLS = ["#E69F00", "#D55E00", "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#1d2433"];
@@ -1212,6 +1213,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
   }
   function buildMarks(d) {
     const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf).length);
+    const obj = d.frames.map(F => F.l2.filter(x => !hidden(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
     // each readable sign at its biggest view (frame, direction); a stretch's marker points at its biggest sign
     const best = new Map();
     d.frames.forEach((F, f) => { for (const e of F.s || []) { if (!(d.signs[e[0]] || [])[3]) continue;
@@ -1220,7 +1222,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
     for (const b of best.values()) { const k = Math.floor(b.f / W); (bins.get(k) || bins.set(k, []).get(k)).push(b); }
     const signs = [...bins.values()].map(g => { g.sort((x, y) => y.a - x.a); const top = g[0], txt = String(d.signs[top.id][0] || "").slice(0, 40);
       return { ...top, k: "space", sign: top.id, t: `${g.length} readable sign${g.length > 1 ? "s" : ""} · “${txt}”` }; });
-    marks = [...peaks(ppl, 8, d.fps * 12).map(f => ({ f, k: "person", t: `Crowd peak · ${ppl[f]} people` })), ...signs];
+    marks = [...peaks(ppl, 8, d.fps * 12).map(f => ({ f, k: "person", t: `Crowd peak · ${ppl[f]} people` })),
+             ...peaks(obj, 5, d.fps * 20).map(f => ({ f, k: "object", t: `Most objects · ${obj[f]} in the 360° view` })), ...signs];
     renderMarks();
   }
   function renderMarks() {
