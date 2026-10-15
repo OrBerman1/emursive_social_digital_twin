@@ -18,10 +18,10 @@
   Viewers open it by default (`config/viewer.json` → `/api/projects` "default"); the original stays at
   `?project=shuk_hatikvah`. Pipeline default (`run_all.py` without `--project`) is still the original project.
 - **Viewers (15 Oct: moved to `viewer/old_viewer/`, launchers there too; `/viewer/` and `start_viewer.bat` now open
-  ui_alex):** original `old_viewer/index.html` (`start_viewer_original.bat`, port 8000) + five design variants on the
+  ui_alex):** original `old_viewer/index.html` (`old_viewer.bat` in the main folder, port 8000) + five design variants on the
   shared `viewer/engine.js`: v1 Atelier, v2 Lens, v3 Analyst, v4 Story, v5 Map-first
   (`start_viewer_1..5_*.bat`, ports 8001–8005). **Chosen design language (user, 14 Oct): Alex's `ui_alex`**
-  (`viewer/ui_alex.html` on `engine.js`, branch `ui_alex`, `start_viewer_ui_alex.bat`, port 8006): light glass
+  (`viewer/ui_alex.html` on `engine.js`, branch `ui_alex`, `start_viewer.bat`, port 8006): light glass
   floating UI, Inter, three groups people (yellow circle) / objects (red square) / places (blue triangle), dark
   info cards with leader lines, tool rail, marker timeline, round map. All features are ported there (project
   awareness, Ask Jeeves, attached files, bookmarks = comments, full map with layers / filters / speed map / crowds /
