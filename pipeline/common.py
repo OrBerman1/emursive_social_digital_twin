@@ -73,9 +73,14 @@ OSM_DIR = _P.get("osm", INTERIM / "osm")
 WALKS = {w: RAW / v["file"] for w, v in PROJECT["walks"].items()}
 WALK_LABELS = {w: v.get("label", w) for w, v in PROJECT["walks"].items()}
 STORE_TABLE = (RAW / PROJECT["store_table"]) if PROJECT.get("store_table") else None
-# which person links crowds.py / export_overlays.py read: "persons_linked" (reviewed links, default) or
-# "persons_linked_reid" (link_persons.py --reid: appearance-decided links, METHODS.txt section 32)
-PERSON_LINKS = os.environ.get("SHUK_PERSON_LINKS", "persons_linked")
+# Person links used by crowds / export (user, 15 Oct: ReID is the default). SHUK_PERSON_LINKS=persons_linked forces the
+# geometry + review links; when the ReID links of a walk do not exist (stage skipped), those are used instead.
+PERSON_LINKS = os.environ.get("SHUK_PERSON_LINKS", "persons_linked_reid")
+
+
+def person_links_file(walk: str, sfx: str) -> Path:
+    p = INTERIM / walk / f"{PERSON_LINKS}{sfx}" / "links.parquet"
+    return p if p.exists() else INTERIM / walk / f"persons_linked{sfx}" / "links.parquet"
 
 
 def file_fingerprint(path: Path, chunk: int = 8 << 20) -> str:

@@ -561,7 +561,7 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - ui_alex counts persons, not tracks (engine.js E.personOf): walk totals, "unique so far", statistics cumulative,
      segment summary and Analysis zones.
 
-32. PEOPLE RE-IDENTIFICATION (APPEARANCE) FOR PERSON LINKING  (reid_embed.py; link_persons.py --reid)  - built, not shown yet
+32. PEOPLE RE-IDENTIFICATION (APPEARANCE) FOR PERSON LINKING  (reid_embed.py; link_persons.py --reid)  - the default (15 Oct)
    - Problem: link_persons.py (section 31) links broken tracks only where a vision review said "same"; every gated
      candidate within 2 s is already reviewed, so nothing new can be linked without another manual review.
    - Model: OSNet-AIN x1.0 trained on MSMT17 (torchreid model zoo; models/osnet_ain_x1_0_msmt17.pth, downloaded by
@@ -612,12 +612,11 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      rule (187 / 20 / 150 / 16 refused as "reid_low"); appearance on this footage (small, blurred people, crowds, track
      ends that switch person) separates same / different only moderately (AUC 0.81 against nearby people), so the
      thresholds are strict on purpose (wrong merges are worse than missed links).
-   - Not shown yet. Switch (overwrites the viewer's overlays; undo = the same commands without SHUK_PERSON_LINKS):
-       set SHUK_PROJECT=shuk_hatikvah_v2 & set SHUK_PERSON_LINKS=persons_linked_reid
-       .venv\Scripts\python pipeline\crowds.py walk1 walk2 --variant stab
-       .venv\Scripts\python pipeline\export_overlays.py walk1 walk2 --variant stab
-     (common.PERSON_LINKS; crowds.py and export_overlays.py read <interim>/<walk>/<PERSON_LINKS>_stab/links.parquet.)
-     Recompute: reid_embed.py walk1 walk2 (cached), link_persons.py --reid. Not in run_all.py yet.
+   - Default since 15 Oct (user approved after checking): run_all.py runs reid_embed.py and link_persons.py --reid after
+     link_persons.py; crowds.py and export_overlays.py read common.PERSON_LINKS = persons_linked_reid (falls back to
+     persons_linked for a walk without ReID links, e.g. OSNet weights missing). SHUK_PERSON_LINKS=persons_linked forces
+     the geometry + review links. Regular run: Shuk HaTikvah 633 / 229 persons, Legacy 611 / 233. Overlays before the
+     switch are backed up in <project>/data/backup/before_reid_switch_20261015 and data/backup/before_reid_default_20261015.
 
 33. DISTANCE LIMIT IN THE VIEWER  (viewer/engine.js E.maxDist / E.distOf / E.near; ui_alex Layers & filters "Show up to ... m")
    - Far detections are the least reliable (small boxes). The user can limit what is shown and counted to 3-30 m ("any
