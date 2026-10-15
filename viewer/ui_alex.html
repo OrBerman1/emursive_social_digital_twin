@@ -256,6 +256,7 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
 .pop.layers-pop { max-height: calc(100% - 150px); overflow-y: auto; }
+.layers-pop .dnote { font-size: 11.5px; color: var(--soft); margin: -2px 0 4px; line-height: 1.35; }
 /* statistics: whole-walk total above the donuts */
 .stats .wt { display: flex; flex-direction: column; align-items: center; gap: 1px; margin: 10px 0 2px; font-size: 13px; color: var(--soft); text-align: center; }
 .stats .wt b { font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -538,7 +539,10 @@ svg.pr { display: block; width: 100%; height: 30px; }
     <div class="row" style="padding-top:0">People at once <b id="infoNLbl"></b><input type="range" id="infoN" min="0" max="6" step="1"></div>
     <div class="ichips" id="infoChips"></div>
     <div id="folBox" hidden><h4 style="margin-top:14px">Followed people <button class="pbtn2" id="folClear">Clear</button></h4><div class="ichips" id="folChips"></div></div>
+        <h4 style="margin-top:14px">Filters</h4>
         <div class="row">Minimum confidence <b id="confLbl">0.60</b><input type="range" id="conf" min="0.3" max="0.9" step="0.05" value="0.6"></div>
+        <div class="row">Show up to <b id="distLbl">any distance</b><input type="range" id="maxDist" min="3" max="31" step="1" value="31" aria-label="Maximum distance from the camera"></div>
+        <div class="dnote">People and objects on the ground. Signs and food displays have no measured distance and are always shown.</div>
   </div>
   <div class="pop glass" id="searchPop" data-no-drag hidden>
     <h4>Find a person</h4>
@@ -1033,9 +1037,9 @@ svg.pr { display: block; width: 100%; height: 30px; }
       else if (dist < b.dist) Object.assign(b, { dist, f, yw });
     };
     d.frames.forEach((F, f) => {
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < 12) note(`person:${e[0]}`, "person", f, e[2], e[7], e[0]);
-      for (const e of F.l2) if (!hidden(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
-      for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && e[7] && e[7] < Math.min(12, E.maxDist)) note(`person:${e[0]}`, "person", f, e[2], e[7], e[0]);
+      for (const e of F.l2) if (!hidden(e[0]) && e[1] >= 0.3 && ((d.obj_len || {})[e[8]] || 0) >= 25 && E.near("l2", e, d)) note(`level2:${e[8]}`, "object", f, e[2], e[7], e[0]);
+      for (const e of F.o) if (e[1] >= E.conf && e[6] < -3 && ((d.obj_len || {})[e[7]] || 0) >= 25 && E.near("o", e, d)) note(`object:${e[7]}`, "object", f, e[2], h / Math.tan(-e[6] * D2R), e[0]);
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { const pm = (e[5] + e[6]) / 2; note(`sign:${e[0]}`, "space", f, e[2], pm > 2 ? Math.max(2, Math.min(12, (2.8 - h) / Math.tan(pm * D2R))) : 6); }
     });
     for (const b of best.values()) { const [la, lo] = offset(g.lat[b.f], g.lon[b.f], g.yaw0_bearing_deg[b.f] + b.yw, b.dist); MET.push({ ...b, lat: la, lon: lo }); }
@@ -1093,9 +1097,9 @@ svg.pr { display: block; width: 100%; height: 30px; }
   function wholeTotals(d) {
     const persons = new Map(), obj = new Map(), food = new Map();
     for (const F of d.frames) {
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { const pk = E.personOf(d, e[0]); if (!persons.has(pk)) persons.set(pk, e[0]); }
-      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) obj.set(`o${e[7]}`, e[0]);
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) obj.set(`l${e[8]}`, e[0]);
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && E.near("p", e, d)) { const pk = E.personOf(d, e[0]); if (!persons.has(pk)) persons.set(pk, e[0]); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0]) && E.near("o", e, d)) obj.set(`o${e[7]}`, e[0]);
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0]) && E.near("l2", e, d)) obj.set(`l${e[8]}`, e[0]);
       for (const e of F.fd || []) if (e[0] !== "Food picture (menu/sign)" && ((d.food_len || {})[e[7]] || 0) >= E.minLen) food.set(e[7], e[0]);
     }
     const tally = vals => { const o = {}; for (const v of vals) o[v] = (o[v] || 0) + 1; return Object.entries(o).sort((a, b) => b[1] - a[1]); };
@@ -1118,9 +1122,9 @@ svg.pr { display: block; width: 100%; height: 30px; }
     // "in view" = inside the default view (90 deg, looking along the walking direction), so it matches the donut centre
     d.frames.forEach((F, f) => {
       const ahead = yw => Math.abs(wrap(yw - fwdAt(f))) < 45;
-      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { if (ahead(e[2])) T.person.view[f]++; seenP.add(E.personOf(d, e[0])); }
-      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && E.near("p", e, d)) { if (ahead(e[2])) T.person.view[f]++; seenP.add(E.personOf(d, e[0])); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0]) && E.near("o", e, d)) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[7]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0]) && E.near("l2", e, d)) { if (ahead(e[2])) T.object.view[f]++; seenO.add(e[8]); cls.set(e[0], (cls.get(e[0]) || 0) + 1); }
       for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) { if (ahead(e[2])) T.space.view[f]++; seenS.add(e[0]); }
       T.person.cum[f] = seenP.size; T.object.cum[f] = seenO.size; T.space.cum[f] = seenS.size;
     });
@@ -1251,8 +1255,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
     return out;
   }
   function buildMarks(d) {
-    const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf).length);
-    const obj = d.frames.map(F => F.l2.filter(x => !hidden(x[0]) && x[1] >= .3).length + F.o.filter(x => x[1] >= E.conf).length);
+    const ppl = d.frames.map(F => F.p.filter(x => x[1] >= E.conf && E.near("p", x, d)).length);
+    const obj = d.frames.map(F => F.l2.filter(x => !hidden(x[0]) && x[1] >= .3 && E.near("l2", x, d)).length + F.o.filter(x => x[1] >= E.conf && E.near("o", x, d)).length);
     // each readable sign at its biggest view (frame, direction); a stretch's marker points at its biggest sign
     const best = new Map();
     d.frames.forEach((F, f) => { for (const e of F.s || []) { if (!(d.signs[e[0]] || [])[3]) continue;
@@ -1401,6 +1405,10 @@ svg.pr { display: block; width: 100%; height: 30px; }
     const k = ch.dataset.k; show[k] = !show[k]; ch.setAttribute("aria-pressed", String(show[k])); const i = document.querySelector(`[data-show="${k}"]`); if (i) i.checked = show[k]; autoAt = 0;
   }));
   $("conf").addEventListener("input", () => { E.conf = +$("conf").value; $("confLbl").textContent = E.conf.toFixed(2); if (E.data) buildTrends(E.data); });
+  // distance limit: the view and counters follow while dragging; markers, map and Analysis are rebuilt on release
+  const distLbl = () => { $("distLbl").textContent = isFinite(E.maxDist) ? `${E.maxDist} m` : "any distance"; };
+  $("maxDist").addEventListener("input", () => { const v = +$("maxDist").value; E.maxDist = v >= 31 ? Infinity : v; distLbl(); autoAt = 0; statsAt = 0; if (E.data) buildTrends(E.data); });
+  $("maxDist").addEventListener("change", () => { if (!E.data) return; buildMarks(E.data); buildMet(E.data, E.geo.walks[E.walk]); buildAnalysis(E.data); });
 
   // ---- full map (click the round map): stores from the team's GIS table, crowds, routes, people's paths, speed map,
   //      frontage materials, segment summary (ported from the base viewer; same data, same rules) ----
@@ -1766,12 +1774,12 @@ svg.pr { display: block; width: 100%; height: 30px; }
     const people = new Map(), food = new Map(), foodPics = new Set(), signs = new Map(), objs = new Map(), l2 = new Map(), pictured = new Set(); let peak = 0, peakF = f0;
     for (let f = f0; f <= f1; f++) {
       const F = d.frames[f]; if (!F) continue; let n = 0;
-      for (const e of F.p) { if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen) continue; n++; const pk = E.personOf(d, e[0]); if (!people.has(pk)) people.set(pk, { first: f, last: f, tr: e[0] }); else people.get(pk).last = f; }
+      for (const e of F.p) { if (e[1] < conf || ((d.tracks[e[0]] || [])[2] || 0) < minLen || !E.near("p", e, d)) continue; n++; const pk = E.personOf(d, e[0]); if (!people.has(pk)) people.set(pk, { first: f, last: f, tr: e[0] }); else people.get(pk).last = f; }
       if (n > peak) { peak = n; peakF = f; }
       for (const e of (F.fd || [])) { if (((d.food_len || {})[e[7]] || 0) < minLen) continue; if (e[0] === "Food picture (menu/sign)") foodPics.add(e[7]); else if (!food.has(e[7])) food.set(e[7], e[0]); }
       for (const e of (F.s || [])) { const info = (d.signs || {})[e[0]]; if (info && info[3] && !signs.has(e[0])) signs.set(e[0], { text: info[0], lang: info[1], frame: f }); }
-      for (const e of F.o) if (e[1] >= conf && ((d.obj_len || {})[e[7]] || 0) >= minLen && !objs.has(e[7])) objs.set(e[7], e[0]);
-      for (const e of F.l2) if (e[1] >= l2conf && ((d.obj_len || {})[e[8]] || 0) >= minLen && !l2.has(e[8])) l2.set(e[8], e[0]);
+      for (const e of F.o) if (e[1] >= conf && ((d.obj_len || {})[e[7]] || 0) >= minLen && E.near("o", e, d) && !objs.has(e[7])) objs.set(e[7], e[0]);
+      for (const e of F.l2) if (e[1] >= l2conf && ((d.obj_len || {})[e[8]] || 0) >= minLen && E.near("l2", e, d) && !l2.has(e[8])) l2.set(e[8], e[0]);
       for (const e of (F.dp || [])) pictured.add(e[0]);
     }
     const tally = arr => { const o = {}; for (const x of arr) o[x] = (o[x] || 0) + 1; return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); };
@@ -2035,7 +2043,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
   async function buildAnalysis(d) {
     const fps = d.fps, N = Math.ceil(d.n_frames / fps), g = E.geo.walks[E.walk];
     const TRK = new Map();                                  // id -> Map(frame -> [yaw, dist])
-    const okP = e => e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen;
+    const okP = e => e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen && E.near("p", e, d);
     d.frames.forEach((F, f) => { for (const e of F.p) if (okP(e) && e[7]) { let m = TRK.get(e[0]); if (!m) TRK.set(e[0], m = new Map()); m.set(f, [e[2], e[7]]); } });
     const count = new Array(N).fill(0), dens = new Array(N).fill(0), speed = new Array(N).fill(null), firsts = new Array(N).fill(0);
     for (const t of TRK.values()) { const f0 = Math.min(...t.keys()); firsts[Math.floor(f0 / fps)]++; }
@@ -2062,8 +2070,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
         if (!zones[z]) zones[z] = { z, f0: f, f1: f, people: new Set(), objects: new Set(), signs: new Set() };
         const Z = zones[z]; Z.f1 = f; const F = d.frames[f];
         for (const e of F.p) if (okP(e)) Z.people.add(E.personOf(d, e[0]));
-        for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) Z.objects.add(e[7]);
-        for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) Z.objects.add(e[8]);
+        for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0]) && E.near("o", e, d)) Z.objects.add(e[7]);
+        for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0]) && E.near("l2", e, d)) Z.objects.add(e[8]);
         for (const e of F.s || []) if ((d.signs[e[0]] || [])[3]) Z.signs.add(e[0]);
       }
     }
@@ -2092,8 +2100,8 @@ svg.pr { display: block; width: 100%; height: 30px; }
     const inPeople = [...A.TRK.keys()].filter(id => { const t = d.tracks[id]; return t && t[0] <= fi && t[1] >= fi - 20 * d.fps; });
     $("lnPeople").textContent = st.counts.people.view;
     const objs = new Map(); for (let f = Math.max(0, fi - 20 * d.fps); f <= fi; f++) { const F = d.frames[f];
-      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) objs.set(`object:${e[7]}`, { id: e[7], cls: e[0], conf: e[1], last: f, kind: "object" });
-      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) objs.set(`level2:${e[8]}`, { id: e[8], cls: e[0], conf: e[1], last: f, kind: "level2" }); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0]) && E.near("o", e, d)) objs.set(`object:${e[7]}`, { id: e[7], cls: e[0], conf: e[1], last: f, kind: "object" });
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0]) && E.near("l2", e, d)) objs.set(`level2:${e[8]}`, { id: e[8], cls: e[0], conf: e[1], last: f, kind: "level2" }); }
     $("lnObjects").textContent = st.entities.filter(e => e.alpha >= .5 && groupOf(e) === "object").length;
     $("lnZones").textContent = A.zones.length; const ev = [...marks, ...CM.list.filter(c => c.walk === E.walk).map(c => ({ f: Math.round(c.t * E.data.fps), k: "bookmark", t: c.text || "Note" }))].sort((a, b) => a.f - b.f);
     $("lnEvents").textContent = ev.length;

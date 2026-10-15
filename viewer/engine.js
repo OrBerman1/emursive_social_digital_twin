@@ -173,16 +173,23 @@
 
     // person id of a track (link_persons.py, tracks_fields "person"): a person split into several tracks counts once
     E.personOf = (d, id) => (d.tracks[id] || [])[7] ?? id;
+    // distance limit (Layers & filters "Show up to ... m"): ground distance of people (feet) and of objects standing on
+    // the ground (bottom of the box + camera height). Signs, food displays and pictured people sit above the ground, so
+    // one camera cannot measure their distance: they are not limited. Unknown (bottom at/above the horizon) = far.
+    E.maxDist = Infinity;
+    const groundD = (pb, d) => pb < -1 ? (d.camera_height_m || 1.4) / Math.tan(-pb * Math.PI / 180) : Infinity;
+    E.distOf = (key, e, d) => key === "p" || key === "l2" ? (e[7] ?? groundD(e[6], d)) : key === "o" || key === "w" ? groundD(e[6], d) : null;
+    E.near = (key, e, d) => { if (!isFinite(E.maxDist)) return true; const x = E.distOf(key, e, d); return x == null || x <= E.maxDist; };
     // ---- totals over the whole walk (unique persons whose tracks pass the same filters) ----
     let totKey = "", totVal = null;
     function totals(d) {
-      const key = `${E.walk}|${E.conf}|${E.minLen}`;
+      const key = `${E.walk}|${E.conf}|${E.minLen}|${E.maxDist}`;
       if (key === totKey) return totVal;
       const best = { p: new Map(), o: new Map(), l2: new Map(), fd: new Map() };
       for (const F of d.frames) {
-        for (const e of F.p) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
-        for (const e of F.o) best.o.set(e[7], e[0]);
-        for (const e of F.l2) best.l2.set(e[8], e[0]);
+        for (const e of F.p) if (E.near("p", e, d)) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
+        for (const e of F.o) if (E.near("o", e, d)) best.o.set(e[7], e[0]);
+        for (const e of F.l2) if (E.near("l2", e, d)) best.l2.set(e[8], e[0]);
         for (const e of (F.fd || [])) best.fd.set(e[7], e[0]);
       }
       const ps = new Set(); for (const [id, c] of best.p) if (c >= E.conf && ((d.tracks[id] || [])[2] || 0) >= E.minLen) ps.add(E.personOf(d, id));
@@ -219,7 +226,7 @@
         for (const [e, al] of pairs) {
           const kind = KIND[key], conf = key === "s" ? 1 : e[1];
           const thr = key === "l2" ? Math.max(0.15, E.conf - 0.2) : key === "p" ? E.conf : key === "o" ? E.conf : 0;
-          if (conf < thr) continue;
+          if (conf < thr || !E.near(key, e, d)) continue;
           let cls, id = e[ii], extra = {};
           if (key === "p") { cls = "person"; const t = d.tracks[id] || []; extra = { age: t[6] || "uncertain", sex: t[5] || "uncertain", dist: e[7] }; }
           else if (key === "s") { const info = (d.signs || {})[id]; if (!info) continue; cls = "sign"; extra = { text: info[0], lang: info[1], readable: !!info[3] }; }
