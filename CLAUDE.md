@@ -1,6 +1,8 @@
 # CLAUDE.md — Shuk HaTikvah 360° Social Immersive Digital Twin (Hackathon)
 
 ## Current state — read this first (updated 13 Oct 2026, evening)
+- **System name: Cliff** (logos in `logos/`; header logo `viewer/img/cliff_logo.png` + `_dark.png`, user 15 Oct). Projects:
+  `shuk_hatikvah_v2` is named "Shuk HaTikvah" (the default, restitched); the original `shuk_hatikvah` is "Shuk HaTikvah Legacy".
 - **Read next:** PLAN.md "Progress log" (v0.1–v0.12) and METHODS.txt (sections 1–30: the method,
   numbers and validation for every stage). Git: one branch per feature; `main` holds everything up to
   the design variants (merged 14 Oct); current branch `advanced_features`. Push only when the user asks, with

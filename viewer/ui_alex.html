@@ -26,7 +26,10 @@ svg { display: block; }
 
 /* ---- top bar ---- */
 header { height: 54px; flex: none; background: #fff; display: flex; align-items: center; padding: 0 18px; gap: 18px; border-bottom: 1px solid var(--line); z-index: 20; }
-.logo { width: 32px; height: 32px; }
+.logo { display: inline-flex; align-items: center; height: 30px; flex: none; }
+.logo img { height: 30px; width: auto; display: block; }
+.logo .lg-d { display: none; }
+:root[data-theme="dark"] .logo .lg-l { display: none; } :root[data-theme="dark"] .logo .lg-d { display: block; }
 .place { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; border: 0; background: none; cursor: pointer; border-left: 1px solid var(--line); padding: 6px 8px 6px 18px; }
 .place small { font-weight: 500; color: var(--soft); font-size: 13px; }
 .place:hover small { color: var(--ink); }
@@ -465,7 +468,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
 <body>
 <script>try { const t = localStorage.getItem("ui_alex.theme") || "light"; document.documentElement.dataset.theme = t === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : t; } catch (e) {}</script>
 <header>
-  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
+  <span class="logo" role="img" aria-label="Cliff"><img class="lg-l" src="img/cliff_logo.png" alt=""><img class="lg-d" src="img/cliff_logo_dark.png" alt=""></span>
   <button class="place" id="placeBtn" aria-haspopup="menu" aria-expanded="false"><span id="projName">Shuk HaTikvah</span> <small id="walkName">· Hatikvah St</small>
     <svg width="16" height="16" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   <nav class="tabs" role="tablist">

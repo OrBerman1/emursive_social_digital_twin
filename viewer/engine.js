@@ -128,7 +128,7 @@
     // ---- project (?project=<id>; projects.html / pipeline/projects_api.py): data paths, walks and their labels ----
     const J = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return r.json(); };
     const urlProject = new URLSearchParams(location.search).get("project");     // none -> the server's default (config/viewer.json)
-    E.project = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah",
+    E.project = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah Legacy",
                   processed: "/data/processed", interim: "/data/interim",
                   walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback: the original project
     async function loadProject() {
