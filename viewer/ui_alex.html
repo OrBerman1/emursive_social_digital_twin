@@ -1408,7 +1408,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
   // distance limit: the view and counters follow while dragging; markers, map and Analysis are rebuilt on release
   const distLbl = () => { $("distLbl").textContent = isFinite(E.maxDist) ? `${E.maxDist} m` : "any distance"; };
   $("maxDist").addEventListener("input", () => { const v = +$("maxDist").value; E.maxDist = v >= 31 ? Infinity : v; distLbl(); autoAt = 0; statsAt = 0; if (E.data) buildTrends(E.data); });
-  $("maxDist").addEventListener("change", () => { if (!E.data) return; buildMarks(E.data); buildMet(E.data, E.geo.walks[E.walk]); buildAnalysis(E.data); });
+  $("maxDist").addEventListener("change", () => { if (!E.data) return; buildMarks(E.data); buildMet(E.data, E.geo.walks[E.walk]); buildAnalysis(E.data); mxApply(); });
 
   // ---- full map (click the round map): stores from the team's GIS table, crowds, routes, people's paths, speed map,
   //      frontage materials, segment summary (ported from the base viewer; same data, same rules) ----
@@ -1559,26 +1559,30 @@ svg.pr { display: block; width: 100%; height: 30px; }
   document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("mapx").hidden) { if (SEG.on) segMode(false); else mxClose(); } });
 
   // ---- people's paths and the speed map (motion.py positions, camera motion removed) ----
-  let mxPathsDone = false;
+  // distance limit (Layers & filters): a path point counts only while the person is within the limit of the camera
+  const nearCam = (w, f, la, lo) => { if (!isFinite(E.maxDist)) return true; const g = E.geo.walks[w]; if (!g || g.lat[f] == null) return true;
+    return Math.hypot((la - g.lat[f]) * 110574, (lo - g.lon[f]) * 111320 * Math.cos(la * D2R)) <= E.maxDist; };
+  let mxPathsKey = null;
   async function mxPaths() {
-    if (mxPathsDone) return; mxPathsDone = true;
+    if (mxPathsKey === E.maxDist) return; mxPathsKey = E.maxDist; MX.layers.paths.clearLayers();
     for (const w of Object.keys(E.geo.walks)) {
       const { mo } = await walkData(w); if (!mo || !mo.tracks) continue;
-      for (const m of Object.values(mo.tracks)) { const pts = []; m.lat.forEach((a, i) => { if (a != null) pts.push([a, m.lon[i]]); });
-        if (pts.length > 1) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(MX.layers.paths); }
+      for (const m of Object.values(mo.tracks)) { const runs = [[]];                     // split where the person leaves the limit
+        m.lat.forEach((a, i) => { if (a != null && nearCam(w, m.f0 + i, a, m.lon[i])) runs[runs.length - 1].push([a, m.lon[i]]); else if (runs[runs.length - 1].length) runs.push([]); });
+        for (const pts of runs) if (pts.length > 1) L.polyline(pts, { color: "#0072B2", weight: 2, opacity: .35, interactive: false }).addTo(MX.layers.paths); }
     }
   }
   const SPEED_RAMP = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];   // viridis: slow -> fast
   const SP = { cell: 3, minPeople: 3, max: 1.5 };
   let mxSpeedKey = "", mxSpeedInfo = "";
   async function mxSpeed() {
-    const key = `${SP.cell}|${SP.minPeople}`; if (key === mxSpeedKey && MX.layers.speed.getLayers().length) return; mxSpeedKey = key;
+    const key = `${SP.cell}|${SP.minPeople}|${E.maxDist}`; if (key === mxSpeedKey && MX.layers.speed.getLayers().length) return; mxSpeedKey = key;
     const g0 = Object.values(E.geo.walks)[0]; if (!g0) return;
     const lat0 = g0.lat.find(x => x != null), lon0 = g0.lon.find(x => x != null), kx = 111320 * Math.cos(lat0 * D2R), ky = 110574, people = [];
     for (const w of Object.keys(E.geo.walks)) {
       const { mo } = await walkData(w); if (!mo || !mo.tracks) continue;
       for (const m of Object.values(mo.tracks)) { const pts = []; let lx = 1e9, ly = 1e9;
-        m.lat.forEach((a, i) => { const v = m.spd[i]; if (a == null || v == null) return; const x = (m.lon[i] - lon0) * kx, y = (a - lat0) * ky; if (Math.hypot(x - lx, y - ly) < 1) return; lx = x; ly = y; pts.push([x, y, v]); });
+        m.lat.forEach((a, i) => { const v = m.spd[i]; if (a == null || v == null || !nearCam(w, m.f0 + i, a, m.lon[i])) return; const x = (m.lon[i] - lon0) * kx, y = (a - lat0) * ky; if (Math.hypot(x - lx, y - ly) < 1) return; lx = x; ly = y; pts.push([x, y, v]); });
         if (pts.length) people.push(pts); }
     }
     MX.layers.speed.clearLayers(); if (!people.length) { mxSpeedInfo = "no motion data"; mxLegend(mxColourMap()); return; }

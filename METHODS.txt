@@ -569,5 +569,6 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      above the horizon has no ground contact -> treated as far. Signs, food displays and pictured people sit above the
      ground; one camera cannot measure their distance, so they are not limited (said in the control).
    - Applies to everything that counts: 360 view, counters, whole-walk totals, statistics, timeline markers, round map,
-     segment summary, Analysis (lists, totals, zones, walk profile). E.g. walk 1 restitched at 8 m: people 526 -> 340,
+     segment summary, Analysis (lists, totals, zones, walk profile, map trajectories), full map people's paths and speed
+     map (a path point counts only while the person is within the limit of the camera at that frame; paths split there). E.g. walk 1 restitched at 8 m: people 526 -> 340,
      objects 1,242 -> 940.
