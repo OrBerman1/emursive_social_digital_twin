@@ -84,6 +84,8 @@ echo === 6/8  Model weights ===
 if not exist "models\yolo11x.pt" curl.exe -L -f -o "models\yolo11x.pt" https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11x.pt || goto :error
 if not exist "models\yolov8x-worldv2.pt" curl.exe -L -f -o "models\yolov8x-worldv2.pt" https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8x-worldv2.pt || goto :error
 if not exist "models\yolov8x-oiv7.pt" curl.exe -L -f -o "models\yolov8x-oiv7.pt" https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8x-oiv7.pt || goto :error
+rem OSNet-AIN x1.0 trained on MSMT17 (person ReID for reid_embed.py; torchreid model zoo, Google Drive)
+if not exist "models\osnet_ain_x1_0_msmt17.pth" curl.exe -L -f -o "models\osnet_ain_x1_0_msmt17.pth" "https://drive.usercontent.google.com/download?id=1SigwBE6mPdqiJMqhuIY4aqC7--5CsMal&export=download&confirm=t" || goto :error
 if not exist "models\segformer-b2-ade" mkdir "models\segformer-b2-ade"
 for %%F in (config.json preprocessor_config.json pytorch_model.bin) do if not exist "models\segformer-b2-ade\%%F" curl.exe -L -f -o "models\segformer-b2-ade\%%F" https://huggingface.co/nvidia/segformer-b2-finetuned-ade-512-512/resolve/main/%%F || goto :error
 rem CLIP ViT-B/32 + ViT-L/14 and the docTR text detector download themselves on first use.

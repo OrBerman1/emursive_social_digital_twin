@@ -561,6 +561,63 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
    - ui_alex counts persons, not tracks (engine.js E.personOf): walk totals, "unique so far", statistics cumulative,
      segment summary and Analysis zones.
 
+32. PEOPLE RE-IDENTIFICATION (APPEARANCE) FOR PERSON LINKING  (reid_embed.py; link_persons.py --reid)  - the default (15 Oct)
+   - Problem: link_persons.py (section 31) links broken tracks only where a vision review said "same"; every gated
+     candidate within 2 s is already reviewed, so nothing new can be linked without another manual review.
+   - Model: OSNet-AIN x1.0 trained on MSMT17 (torchreid model zoo; models/osnet_ain_x1_0_msmt17.pth, downloaded by
+     setup.bat with curl). A person-ReID network (2.2 M parameters; the AIN variant is torchreid's model for footage it
+     was not trained on). torchreid itself is not installed: the network is defined in reid_embed.py (copy of
+     torchreid's osnet_ain.py) and the weights load strictly (weights_only). 512-d feature after the fc layer.
+     Compared with CLIP ViT-L/14 image features on the same crops (walk 1): AUC same-track halves vs co-occurring
+     people 0.86 / near (within 15 deg) 0.77 for CLIP, 0.90 / 0.81 for OSNet (both centred, see below) -> OSNet.
+   - Crops (stage reid_embed, cached with manifest, ~1 min per walk): per track the best box in each of 8 equal time
+     bins + up to 3 in the first and 3 in the last 2 s (track ends are where links and tracker ID switches happen).
+     Boxes: not interpolated, conf >= 0.4, >= 4 deg tall, feet above -60 deg, top below +60 deg; score = height x conf x
+     (1 - share covered by another person box in that frame). Undistorted perspective crop 256 x 128 (box height x 1.1),
+     everything outside the person's own box greyed out (as attributes.py). Crops are never stored; only embeddings:
+     data/interim/<walk>/reid_stab/crops.parquet (per crop) and tracks.parquet (per track: mean, start, end).
+   - Speed: the cost is decoding 4K JPEGs (42 ms per frame single-threaded). Crops are grouped by frame (each frame
+     decoded once), 18 threads decode + cut crops (cv2 releases the GIL), the GPU runs OSNet in fp16 batches of 128 in the
+     main thread (uint8 upload, normalised on the GPU) while the pool keeps decoding (bounded queue). Walk 1: 1,032 frames,
+     6,968 crops in 26-28 s wall (decode + crop 380-450 thread-s spread over 18 threads; the GPU never waited more than
+     1 s; pure OSNet time 0.66 ms per crop = ~5 s); walk 2: 616-651 frames, ~2,700 crops in 10-15 s. Whole stage incl.
+     model load and box selection: ~45 s (walk 1) + ~25 s (walk 2) per project.
+   - Centring (cheap step, always rebuilt): OSNet features are non-negative (after ReLU), so unrelated people already
+     have cosine ~0.7. Crop embeddings are centred on the walk's mean crop embedding before normalising and averaging.
+     Self-supervised check (no labels needed): positives = first vs second half of the same long track, negatives =
+     tracks visible at the same time (cannot be the same person): AUC 0.79 -> 0.90 (all) and 0.67 -> 0.81 (negatives
+     within 15 deg of each other), similar in both projects and walks.
+   - Linking (link_persons.py --reid; output persons_linked_reid_stab/, same schema + candidates.parquet with every
+     candidate's scores; the reviewed persons_linked_stab/ is not touched):
+       - same candidates and gates as section 31, plus "wide" gap bridges: gap up to 10 s, geometric cost <= 3 (instead
+         of 2 s / cost <= 1), no geometric ambiguity test (appearance resolves it: mutual best junction similarity).
+       - linked when cos(A's last-2 s mean, B's first-2 s mean) >= 0.50 AND cos(whole-track means) >= 0.30 (centred),
+         and neither track looks like the camera operator (cosine to the mean of depicted.py's operator tracks >= 0.30;
+         persons' 95th percentile 0.29, the operator's arm tracks 0.31-0.51: without this the arm linked to itself).
+       - the review still wins: "same" links, "different" / "unclear" never link. Overlap and confident man/woman
+         refusals as before.
+   - Validation:
+       - reviewed pairs (both projects, 32 pairs, used to set the thresholds): same: junction cosine median 0.58 (range
+         -0.05..0.74); different: median 0.04 (max 0.49, whose track cosine is 0.03). The rule passes 5 of 7 "same",
+         0 of 13 "different", 0 of 12 "unclear".
+       - every automatic link (not in the reviews) checked on contact sheets (4 crops end of A | 4 start of B, scratch
+         folder only): 17 links: 10 same person, 0 different, 5 unclear (dark / blurred / the track switches at its end),
+         2 the same hanging bag tracked as a "person" (both pieces are the same false detection). 12 of the 17 were
+         first seen only after the thresholds were fixed (gap widened from 5 s to 10 s as a held-out test): 6 same,
+         0 different, 4 unclear, 2 bag.
+       - a first version (raw cosines, threshold 0.75, gap 5 s) was rejected: 4 same, 4 wrong (incl. the operator's arm),
+         4 unclear of 12.
+   - Numbers (persons from person tracks, stab): original project walk 1 617 -> 611 (6 ReID links), walk 2 234 -> 233
+     (1); restitched project walk 1 638 -> 633 (5), walk 2 234 -> 229 (5). Small: most candidates fail the appearance
+     rule (187 / 20 / 150 / 16 refused as "reid_low"); appearance on this footage (small, blurred people, crowds, track
+     ends that switch person) separates same / different only moderately (AUC 0.81 against nearby people), so the
+     thresholds are strict on purpose (wrong merges are worse than missed links).
+   - Default since 15 Oct (user approved after checking): run_all.py runs reid_embed.py and link_persons.py --reid after
+     link_persons.py; crowds.py and export_overlays.py read common.PERSON_LINKS = persons_linked_reid (falls back to
+     persons_linked for a walk without ReID links, e.g. OSNet weights missing). SHUK_PERSON_LINKS=persons_linked forces
+     the geometry + review links. Regular run: Shuk HaTikvah 633 / 229 persons, Legacy 611 / 233. Overlays before the
+     switch are backed up in <project>/data/backup/before_reid_switch_20261015 and data/backup/before_reid_default_20261015.
+
 33. DISTANCE LIMIT IN THE VIEWER  (viewer/engine.js E.maxDist / E.distOf / E.near; ui_alex Layers & filters "Show up to ... m")
    - Far detections are the least reliable (small boxes). The user can limit what is shown and counted to 3-30 m ("any
      distance" = no limit). Default 12 m (user, 15 Oct); not remembered between visits.

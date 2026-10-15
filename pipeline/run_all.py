@@ -81,6 +81,10 @@ def plan(walks: list[str], C) -> list[dict]:
     add("flow", "Optical flow of people", ["person_flow.py", *have, *v], 2, novideo)
     add("motion", "People on the map + motion", ["motion.py", *mapped, *v], 0.3, no_map or novideo, walks_=mapped)
     add("link_persons", "Link broken tracks into persons", ["link_persons.py", *have, *v], 0.2, novideo)
+    # people ReID (user, 15 Oct: the default links): appearance per track (GPU, cached), then appearance-decided links
+    reid_skip = novideo or (None if (MODELS / "osnet_ain_x1_0_msmt17.pth").exists() else "OSNet weights missing (run setup.bat)")
+    add("reid", "People ReID: appearance per track", ["reid_embed.py", *have, *v], 1, reid_skip)
+    add("link_reid", "People ReID: link persons by appearance", ["link_persons.py", *have, *v, "--reid"], 0.2, reid_skip)
     add("crowds", "Crowds", ["crowds.py", *mapped, *v], 0.2, no_map or novideo, walks_=mapped)
     add("export", "Export overlays for the viewer", ["export_overlays.py", *have, *v], 0.3, novideo)
     add("sign_names", "Clean place names for the viewer", ["sign_names.py", *have], 0.05, novideo)      # ui_alex "Passed on the walk"
