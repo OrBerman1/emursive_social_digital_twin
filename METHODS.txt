@@ -572,3 +572,17 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      segment summary, Analysis (lists, totals, zones, walk profile, map trajectories), full map people's paths and speed
      map (a path point counts only while the person is within the limit of the camera at that frame; paths split there). E.g. walk 1 restitched at 8 m: people 526 -> 340,
      objects 1,242 -> 940.
+
+34. VIDEO PLAYBACK RESET AFTER ~1 MINUTE (viewer/engine.js; pipeline/serve.py)
+   - Symptom (user, 15 Oct): playing from the start, the video jumped back to the start after about a minute.
+   - Measured in Chrome (restitched walk 1): after 68.4 s of continuous play from 0, Chrome itself declared the video
+     ended (no page code involved: currentTime setter trapped, no call); with loop on it restarted at 0. Buffered data
+     reached 86 s; the request for the next part failed inside Chrome (reported 503; the server never received it).
+     Starting playback mid-file (seek to 55 or 60 s) did not trigger it.
+   - Fix 1 (player): the browser's loop is off; the engine keeps the last good playing position and, when the time
+     jumps without anyone asking (back or forward, measured against the real elapsed time so background tabs are
+     safe) or "ended" fires early, resumes there; Chrome then fetches that part afresh (about a 2 s pause). Only the
+     real end loops to the start. Tested: from 0 past 68 s (resumed at 68.3 s, went on to 90 s), timeline clicks,
+     loop at the real end.
+   - Fix 2 (server): videos are sent with Last-Modified + ETag on every range and Cache-Control: no-store (no partial
+     cached copy in Chrome). This alone did not stop the early end; kept because it is correct for range serving.
