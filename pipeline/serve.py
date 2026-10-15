@@ -61,8 +61,11 @@ class RangeHandler(SimpleHTTPRequestHandler):
                       ".md": "text/plain; charset=utf-8", ".csv": "text/csv; charset=utf-8"}
 
     def end_headers(self):
-        # the viewer and its data change often during development: always revalidate, never serve stale copies
-        self.send_header("Cache-Control", "no-cache")
+        # the viewer and its data change often during development: always revalidate, never serve stale copies.
+        # Videos: no-store. Chrome otherwise keeps a partial copy in its cache and, when playback later needs the next
+        # part, the cached-range read could fail; the player then took the video as ended and (loop) restarted at 0.
+        media = urlparse(self.path).path.lower().endswith((".mp4", ".webm", ".mov"))
+        self.send_header("Cache-Control", "no-store" if media else "no-cache")
         self.send_header("X-Content-Type-Options", "nosniff")         # attached files are shown as what they are
         super().end_headers()
 
@@ -179,9 +182,12 @@ class RangeHandler(SimpleHTTPRequestHandler):
             return None
         f = open(path, "rb")
         f.seek(start)
+        st = os.fstat(f.fileno())
         self.send_response(206)
         self.send_header("Content-Type", self.guess_type(path))
         self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Last-Modified", self.date_time_string(int(st.st_mtime)))     # same version for every range
+        self.send_header("ETag", f'"{st.st_size:x}-{int(st.st_mtime):x}"')
         self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
         self.send_header("Content-Length", str(end - start + 1))
         self.end_headers()

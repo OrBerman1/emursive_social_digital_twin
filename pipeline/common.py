@@ -21,7 +21,7 @@ DEFAULT_PROJECT = "shuk_hatikvah"
 
 # The original project keeps its data where it always was (data/, config/); new projects live in projects/<id>/.
 LEGACY = {
-    "id": DEFAULT_PROJECT, "name": "Shuk HaTikvah",
+    "id": DEFAULT_PROJECT, "name": "Shuk HaTikvah Legacy",
     "paths": {"raw": "data/raw/LABAI", "interim": "data/interim", "processed": "data/processed", "config": "config", "osm": "data/raw/osm"},
     "walks": {"walk1": {"file": "1_Hatikvah St.insv", "label": "Hatikvah St"},
               "walk2": {"file": "2_Hamevasser St.insv", "label": "Hamevasser St"}},

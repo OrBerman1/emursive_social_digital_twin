@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shuk Twin · Projects</title>
+<title>Cliff · Projects</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
@@ -18,7 +18,10 @@
 * { box-sizing: border-box; } [hidden] { display: none !important; }
 html, body { margin: 0; } body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
 header { height: 54px; background: var(--surf); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding: 0 18px; position: sticky; top: 0; z-index: 5; }
-header .logo { width: 32px; height: 32px; }
+.logo { display: inline-flex; align-items: center; height: 30px; flex: none; }
+.logo img { height: 30px; width: auto; display: block; }
+.logo .lg-d { display: none; }
+:root[data-theme="dark"] .logo .lg-l { display: none; } :root[data-theme="dark"] .logo .lg-d { display: block; }
 header h1 { margin: 0; font-size: 16px; font-weight: 600; border-left: 1px solid var(--line); padding-left: 16px; }
 header h1 small { font-weight: 500; color: var(--soft); font-size: 13px; margin-left: 6px; }
 .grow { flex: 1; }
@@ -85,7 +88,7 @@ label.f { display: grid; gap: 5px; font-size: 12.5px; font-weight: 600; color: v
 </head>
 <body>
 <header>
-  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14l-12 7L4 23V9z" fill="#2f7cf6"/><path d="M16 2 28 9l-12 7L4 9z" fill="#7fb0ff"/><path d="M16 16v14l12-7V9z" fill="#1d5fd0"/><path d="M16 9.5 22 13v6l-6 3.5L10 19v-6z" fill="#fff" opacity=".9"/></svg>
+  <span class="logo" role="img" aria-label="Cliff"><img class="lg-l" src="img/cliff_logo.png" alt=""><img class="lg-d" src="img/cliff_logo_dark.png" alt=""></span>
   <h1>Projects <small>market walks, analysed once, explored in the viewer</small></h1>
   <div class="grow"></div>
   <div class="tseg" id="themeSeg" aria-label="Theme"><button data-th="light">Light</button><button data-th="dark">Dark</button><button data-th="system">System</button></div>
@@ -274,7 +277,7 @@ label.f { display: grid; gap: 5px; font-size: 12.5px; font-weight: 600; color: v
   sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
   applyTheme(theme);
 
-  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer_ui_alex.bat.</div>`; });
+  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer.bat.</div>`; });
 })();
 </script>
 </body>

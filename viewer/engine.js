@@ -45,13 +45,33 @@
     const ctx = ov.getContext("2d");
     E.ctx = ctx; E.overlay = ov;
     const video = document.createElement("video");
-    video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = true; video.preload = "auto";
+    video.crossOrigin = "anonymous"; video.playsInline = true; video.muted = true; video.loop = false; video.preload = "auto";
     video.style.display = "none"; document.body.appendChild(video);
     E.video = video;
     const still = new Image(); let stillFi = -1, stillReady = false, stillBusy = false, vt = 0, lastNow = performance.now();
     still.onload = () => { stillReady = true; stillBusy = false; }; still.onerror = () => { stillBusy = false; };
     const videoOk = () => video.readyState >= 2;
     E.time = () => (videoOk() ? video.currentTime : vt);
+    // Looping is done here, not by the browser. Chrome sometimes takes a long video as ended early: after about a
+    // minute of playing from the start its stream read stopped and it jumped to the end (with loop on: to 0). We keep
+    // the last good playing position; a jump that no one asked for (back, or forward past it) or an early "ended"
+    // resumes there, which makes Chrome fetch that part afresh. Only the real end loops to the start.
+    let goodT = 0, ownSeek = false, goodAt = performance.now();
+    const setT = t => { ownSeek = true; video.currentTime = t; };
+    setInterval(() => {
+      const now = performance.now();
+      if (video.readyState < 3) { goodAt = now; return; }                  // loading / buffering: the clock is not running
+      const c = video.currentTime, expect = video.paused ? 0 : (now - goodAt) / 1000 * video.playbackRate;
+      if (ownSeek) { if (!video.seeking) { ownSeek = false; goodT = c; goodAt = now; } return; }
+      const jump = Math.abs(c - goodT - expect) > 3;                      // compared with the real elapsed time (timers slow down in background tabs)
+      if (E.playing && jump && goodT < E.duration() - 1) { setT(goodT); video.play().catch(() => {}); return; }
+      if (!jump || !E.playing) { goodT = c; goodAt = now; }
+    }, 200);
+    video.addEventListener("ended", () => {
+      if (!E.playing) return;
+      if (goodT >= E.duration() - 1.5) { setT(0); goodT = 0; } else setT(goodT);        // real end: loop; early: resume
+      video.play().catch(() => {});
+    });
     E.duration = () => (video.duration && isFinite(video.duration)) ? video.duration : (E.data ? E.data.n_frames / E.data.fps : 0);
 
     // ---- WebGL equirect renderer ----
@@ -108,7 +128,7 @@
     // ---- project (?project=<id>; projects.html / pipeline/projects_api.py): data paths, walks and their labels ----
     const J = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return r.json(); };
     const urlProject = new URLSearchParams(location.search).get("project");     // none -> the server's default (config/viewer.json)
-    E.project = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah",
+    E.project = { id: urlProject || "shuk_hatikvah", name: "Shuk HaTikvah Legacy",
                   processed: "/data/processed", interim: "/data/interim",
                   walks: { walk1: { label: "Hatikvah St" }, walk2: { label: "Hamevasser St" } } };      // fallback: the original project
     async function loadProject() {
@@ -139,14 +159,15 @@
       try { E.motion = await J(`${P}/${walk}/motion_stab.json`); } catch (e) { E.motion = null; }
       video.src = `${P}/${walk}/${d.video || "video/equirect.mp4"}`; video.load();
       vt = keepT; stillFi = -1; stillBusy = false;
-      video.addEventListener("loadedmetadata", () => { if (vt) video.currentTime = vt; video.playbackRate = E.speed; }, { once: true });
+      goodT = vt;
+      video.addEventListener("loadedmetadata", () => { if (vt) setT(vt); video.playbackRate = E.speed; }, { once: true });
       if (E.onWalk) E.onWalk(walk);
       return d;
     };
 
     // ---- playback ----
     E.play = (on = !E.playing) => { E.playing = on; if (on) video.play().catch(() => {}); else video.pause(); return on; };
-    E.seek = t => { vt = Math.max(0, Math.min(E.duration(), t)); if (videoOk()) video.currentTime = vt; };
+    E.seek = t => { vt = Math.max(0, Math.min(E.duration(), t)); goodT = vt; if (videoOk()) setT(vt); };
     E.seekFrame = f => E.seek(f / (E.data ? E.data.fps : 5));
     E.setSpeed = s => { E.speed = s; video.playbackRate = s; };
     E.look = (yaw, pitch) => { E.yaw = ((yaw + 540) % 360) - 180; if (pitch != null) E.pitch = Math.max(-85, Math.min(85, pitch)); };
@@ -173,16 +194,23 @@
 
     // person id of a track (link_persons.py, tracks_fields "person"): a person split into several tracks counts once
     E.personOf = (d, id) => (d.tracks[id] || [])[7] ?? id;
+    // distance limit (Layers & filters "Show up to ... m"): ground distance of people (feet) and of objects standing on
+    // the ground (bottom of the box + camera height). Signs, food displays and pictured people sit above the ground, so
+    // one camera cannot measure their distance: they are not limited. Unknown (bottom at/above the horizon) = far.
+    E.maxDist = Infinity;
+    const groundD = (pb, d) => pb < -1 ? (d.camera_height_m || 1.4) / Math.tan(-pb * Math.PI / 180) : Infinity;
+    E.distOf = (key, e, d) => key === "p" || key === "l2" ? (e[7] ?? groundD(e[6], d)) : key === "o" || key === "w" ? groundD(e[6], d) : null;
+    E.near = (key, e, d) => { if (!isFinite(E.maxDist)) return true; const x = E.distOf(key, e, d); return x == null || x <= E.maxDist; };
     // ---- totals over the whole walk (unique persons whose tracks pass the same filters) ----
     let totKey = "", totVal = null;
     function totals(d) {
-      const key = `${E.walk}|${E.conf}|${E.minLen}`;
+      const key = `${E.walk}|${E.conf}|${E.minLen}|${E.maxDist}`;
       if (key === totKey) return totVal;
       const best = { p: new Map(), o: new Map(), l2: new Map(), fd: new Map() };
       for (const F of d.frames) {
-        for (const e of F.p) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
-        for (const e of F.o) best.o.set(e[7], e[0]);
-        for (const e of F.l2) best.l2.set(e[8], e[0]);
+        for (const e of F.p) if (E.near("p", e, d)) best.p.set(e[0], Math.max(best.p.get(e[0]) || 0, e[1]));
+        for (const e of F.o) if (E.near("o", e, d)) best.o.set(e[7], e[0]);
+        for (const e of F.l2) if (E.near("l2", e, d)) best.l2.set(e[8], e[0]);
         for (const e of (F.fd || [])) best.fd.set(e[7], e[0]);
       }
       const ps = new Set(); for (const [id, c] of best.p) if (c >= E.conf && ((d.tracks[id] || [])[2] || 0) >= E.minLen) ps.add(E.personOf(d, id));
@@ -219,7 +247,7 @@
         for (const [e, al] of pairs) {
           const kind = KIND[key], conf = key === "s" ? 1 : e[1];
           const thr = key === "l2" ? Math.max(0.15, E.conf - 0.2) : key === "p" ? E.conf : key === "o" ? E.conf : 0;
-          if (conf < thr) continue;
+          if (conf < thr || !E.near(key, e, d)) continue;
           let cls, id = e[ii], extra = {};
           if (key === "p") { cls = "person"; const t = d.tracks[id] || []; extra = { age: t[6] || "uncertain", sex: t[5] || "uncertain", dist: e[7] }; }
           else if (key === "s") { const info = (d.signs || {})[id]; if (!info) continue; cls = "sign"; extra = { text: info[0], lang: info[1], readable: !!info[3] }; }
