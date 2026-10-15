@@ -274,7 +274,7 @@ label.f { display: grid; gap: 5px; font-size: 12.5px; font-weight: 600; color: v
   sysDark.addEventListener("change", () => { if (theme === "system") applyTheme("system"); });
   applyTheme(theme);
 
-  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer_ui_alex.bat.</div>`; });
+  keyState(); refresh().catch(e => { $("plist").innerHTML = `<div class="msg bad">Cannot reach the local server API (${esc(e.message)}). Start the viewer with start_viewer.bat.</div>`; });
 })();
 </script>
 </body>

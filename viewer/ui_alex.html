@@ -154,6 +154,11 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .track .mk.file { top: 1px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
 .track .mk:hover { transform: scale(1.35); }
 .rail #tCards .off { display: none; } .rail #tCards[aria-pressed="false"] .off { display: inline; }
+/* off = grey (also on hover), so the state is clear right after the click */
+.rail #tCards[aria-pressed="false"] { color: var(--soft); background: none; }
+.rail #tCards[aria-pressed="false"]:hover { background: #f1f2f5; color: var(--ink); }
+:root[data-theme="dark"] .rail #tCards[aria-pressed="false"] { color: #7d8597; background: none; }
+:root[data-theme="dark"] .rail #tCards[aria-pressed="false"]:hover { background: rgba(255,255,255,.08); color: #c9cfdb; }
 .track .thumb { position: absolute; top: 9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #fff; border: 2px solid #c6cbd6; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; }
 .track .tip { position: absolute; bottom: 34px; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
 .tbtn { height: 38px; min-width: 38px; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; font-weight: 600; font-variant-numeric: tabular-nums; }

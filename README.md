@@ -108,8 +108,8 @@ To force a stage to recompute, run it alone with `--force`.
 
 ## 5. Open the viewer
 
-**Main viewer (design `ui_alex`):** double-click **`start_viewer.bat`** (same as `start_viewer_ui_alex.bat`;
-Mac: `start_viewer_mac.command`) → http://localhost:8006/viewer/ui_alex.html (http://localhost:8006/viewer/ opens it too).
+**Main viewer (design `ui_alex`):** double-click **`start_viewer.bat`**
+(Mac: `start_viewer_mac.command`) → http://localhost:8006/viewer/ui_alex.html (http://localhost:8006/viewer/ opens it too).
 It opens the restitched project (`config/viewer.json`); the original results stay at `?project=shuk_hatikvah`.
 Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at the top.
 
@@ -119,7 +119,8 @@ Click a dot for its card, the round map for the full map, 🎩 Ask Jeeves at the
 
 The viewer must be opened through this server; opening the html file directly does not work.
 **Earlier viewers** (the original viewer and the five design variants) are kept in `viewer/old_viewer/` with their
-launchers (`viewer\old_viewer\start_viewer_original.bat`, port 8000; `start_viewer_1..5_*.bat`, ports 8001–8005).
+launchers: the first version by **`old_viewer.bat`** in the main folder (Mac: `old_viewer_mac.command`, port 8000); the five
+designs by `viewer\old_viewer\start_viewer_1..5_*.bat` (ports 8001–8005).
 The controls below describe the original viewer.
 
 **Controls**
