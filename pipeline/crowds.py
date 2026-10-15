@@ -36,7 +36,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from common import INTERIM, PROCESSED, WALKS
+from common import INTERIM, PERSON_LINKS, PROCESSED, WALKS
 
 CONF, MIN_TRACK_F = 0.6, 5
 GAP_FRAC = 0.25            # boxes may be apart by up to 25% of their mean width and still touch
@@ -129,7 +129,7 @@ def run(walk: str, variant: str, min_people: int) -> dict:
     tr = tr[tr.track.isin(keep) & (tr.dist_m <= MAX_DIST_M)]
     attr_p = INTERIM / walk / f"attributes{sfx}" / "attributes.parquet"
     attr = pd.read_parquet(attr_p).set_index("track") if attr_p.exists() else None
-    link_p = INTERIM / walk / f"persons_linked{sfx}" / "links.parquet"           # linked persons: smoothed labels, person ids
+    link_p = INTERIM / walk / f"{PERSON_LINKS}{sfx}" / "links.parquet"           # linked persons (SHUK_PERSON_LINKS): smoothed labels, person ids
     if link_p.exists():
         attr = pd.read_parquet(link_p).set_index("track")
     person = (lambda t: int(attr.at[t, "person"])) if attr is not None and "person" in attr.columns else (lambda t: t)

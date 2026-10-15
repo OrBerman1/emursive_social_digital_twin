@@ -13,7 +13,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from common import INTERIM, PROCESSED, WALKS
+from common import INTERIM, PERSON_LINKS, PROCESSED, WALKS
 
 FPS_ANALYSIS = 5.0
 R = lambda v, n=1: None if v is None or (isinstance(v, float) and np.isnan(v)) else round(float(v), n)
@@ -29,7 +29,7 @@ def run(walk: str, pace: float, level2: str | None, variant: str = "") -> dict:
     attr_p = INTERIM / walk / f"attributes{variant}" / "attributes.parquet"
     attrs = pd.read_parquet(attr_p).set_index("track") if attr_p.exists() else None
     # linked persons (link_persons.py): one person id per track, sex/age smoothed over the person; per-track labels kept
-    link_p = INTERIM / walk / f"persons_linked{variant}" / "links.parquet"
+    link_p = INTERIM / walk / f"{PERSON_LINKS}{variant}" / "links.parquet"   # SHUK_PERSON_LINKS (common.py)
     links = pd.read_parquet(link_p).set_index("track") if link_p.exists() else None
     ocr_dir = INTERIM / walk / f"ocr_vlm{variant}"                      # vision-model readings if available ...
     if not (ocr_dir / "signs.parquet").exists():
