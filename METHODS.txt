@@ -560,3 +560,15 @@ Code: pipeline\*.py (Python 3.13, PyTorch 2.6 + CUDA 12.4, RTX 4060). Viewer: vi
      operator's arm, 6 unclear) -> 638 persons from 639 tracks; walk 2 2 of 3 "same" -> 234 persons from 236 tracks.
    - ui_alex counts persons, not tracks (engine.js E.personOf): walk totals, "unique so far", statistics cumulative,
      segment summary and Analysis zones.
+
+33. DISTANCE LIMIT IN THE VIEWER  (viewer/engine.js E.maxDist / E.distOf / E.near; ui_alex Layers & filters "Show up to ... m")
+   - Far detections are the least reliable (small boxes). The user can limit what is shown and counted to 3-30 m ("any
+     distance" = no limit). Default 12 m (user, 15 Oct); not remembered between visits.
+   - Distance: people = their ground distance (feet + camera height, as in tracks.py); objects standing on the ground =
+     camera height / tan(-bottom pitch), market items use their stored distance if present. A box whose bottom is at or
+     above the horizon has no ground contact -> treated as far. Signs, food displays and pictured people sit above the
+     ground; one camera cannot measure their distance, so they are not limited (said in the control).
+   - Applies to everything that counts: 360 view, counters, whole-walk totals, statistics, timeline markers, round map,
+     segment summary, Analysis (lists, totals, zones, walk profile, map trajectories), full map people's paths and speed
+     map (a path point counts only while the person is within the limit of the camera at that frame; paths split there). E.g. walk 1 restitched at 8 m: people 526 -> 340,
+     objects 1,242 -> 940.
