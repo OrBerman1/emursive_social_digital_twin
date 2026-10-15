@@ -256,6 +256,14 @@ header { height: 54px; flex: none; background: #fff; display: flex; align-items:
 .pop input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
 .pop .hint { color: var(--soft); font-size: 12px; padding-top: 8px; }
 .pop.layers-pop { max-height: calc(100% - 150px); overflow-y: auto; }
+/* statistics: whole-walk total above the donuts */
+.stats .wt { display: flex; flex-direction: column; align-items: center; gap: 1px; margin: 10px 0 2px; font-size: 13px; color: var(--soft); text-align: center; }
+.stats .wt b { font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stats .wt small { font-size: 11.5px; }
+/* Analysis: totals table */
+.ltable td.num, .ltable th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ltable tr.sub td:first-child { padding-left: 26px; color: var(--soft); }
+.ltable tr.grp td { font-weight: 700; color: var(--ink); }
 .pcolrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink) !important; font-size: 13.5px !important; }
 .plegend { position: absolute; right: 16px; top: 76px; z-index: 7; border-radius: 999px; padding: 6px 14px; display: flex; gap: 12px; font-size: 12.5px; font-weight: 600; align-items: center; }
 .plegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
@@ -611,6 +619,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
       <button role="tab" data-l="objects" aria-selected="false">Objects <b id="lnObjects">0</b></button>
       <button role="tab" data-l="zones" aria-selected="false">Zones <b id="lnZones">0</b></button>
       <button role="tab" data-l="events" aria-selected="false">Events <b id="lnEvents">0</b></button>
+      <button role="tab" data-l="totals" aria-selected="false">Totals</button>
     </div>
     <div class="ltable" id="ltable"></div>
   </section>
@@ -1077,8 +1086,32 @@ svg.pr { display: block; width: 100%; height: 30px; }
   setTimeout(() => { $("pcolSeg").addEventListener("click", ev => { const b = ev.target.closest("button[data-pc]"); if (b) { PCOLBY = b.dataset.pc; pcolUI(); } }); pcolUI(); }, 0);
   const AGEC = [["child", "Child", "#86b6ef"], ["young adult 18-35", "Young adult", "#3987e5"], ["middle adult 36-60", "Adult", "#1c5cab"], ["older adult 61+", "Older adult", "#0d366b"], ["uncertain", "Uncertain", GREY]];
   const LANG = [["he", "Hebrew", SL[0]], ["en", "English", SL[1]], ["ar", "Arabic", SL[2]], ["other", "Other", GREY]];
+  let WT = null;     // whole-walk totals (wholeTotals), rebuilt with the trends
   let tab = "person", TOPOBJ = [], TREND = null, statsAt = 0, donutH = 200, twoCol = false, PASSED = [], rotI = -1, NAMES = null;   // donutH (+ side-by-side people) fitted so the panel never scrolls
   const tween = {};                                   // displayed (eased) segment values, so the donuts glide
+  // whole walk: unique persons (linked tracks count once) and objects passing the same filters as the view
+  function wholeTotals(d) {
+    const persons = new Map(), obj = new Map(), food = new Map();
+    for (const F of d.frames) {
+      for (const e of F.p) if (e[1] >= E.conf && ((d.tracks[e[0]] || [])[2] || 0) >= E.minLen) { const pk = E.personOf(d, e[0]); if (!persons.has(pk)) persons.set(pk, e[0]); }
+      for (const e of F.o) if (e[1] >= E.conf && !hidden(e[0])) obj.set(`o${e[7]}`, e[0]);
+      for (const e of F.l2) if (e[1] >= Math.max(.15, E.conf - .2) && !hidden(e[0])) obj.set(`l${e[8]}`, e[0]);
+      for (const e of F.fd || []) if (e[0] !== "Food picture (menu/sign)" && ((d.food_len || {})[e[7]] || 0) >= E.minLen) food.set(e[7], e[0]);
+    }
+    const tally = vals => { const o = {}; for (const v of vals) o[v] = (o[v] || 0) + 1; return Object.entries(o).sort((a, b) => b[1] - a[1]); };
+    const tr = [...persons.values()].map(t => d.tracks[t] || []);
+    return { people: persons.size, sex: Object.fromEntries(tally(tr.map(t => t[5] || "uncertain"))), age: Object.fromEntries(tally(tr.map(t => t[6] || "uncertain"))),
+             objects: obj.size, objCls: tally(obj.values()), food: food.size,
+             signs: Object.values(d.signs || {}).filter(x => x[3]).length, signAreas: Object.keys(d.signs || {}).length,
+             pictured: Object.keys(d.dp_tracks || {}).length };
+  }
+  const n0 = v => Number(v || 0).toLocaleString("en-US");
+  function wtLine() {
+    if (!WT) return "";
+    if (tab === "person") return `<div class="wt"><b>${n0(WT.people)}</b> people on the whole walk<small>${GENDER.map(([k, lab]) => `${lab} ${n0(WT.sex[k])}`).join(" · ")}</small></div>`;
+    if (tab === "object") return `<div class="wt"><b>${n0(WT.objects)}</b> objects on the whole walk<small>${WT.objCls.slice(0, 4).map(([c, n]) => `${esc(cap(c))} ${n0(n)}`).join(" · ")}${WT.food ? ` · food displays ${n0(WT.food)}` : ""}</small></div>`;
+    return `<div class="wt"><b>${n0(WT.signs)}</b> readable signs on the whole walk<small>of ${n0(WT.signAreas)} text areas found</small></div>`;
+  }
   function buildTrends(d) {
     const len = d.n_frames, mk = () => ({ view: new Array(len).fill(0), cum: new Array(len).fill(0) });
     const T = { person: mk(), object: mk(), space: mk() }, cls = new Map(), seenP = new Set(), seenO = new Set(), seenS = new Set();
@@ -1096,6 +1129,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
     const bin = Math.round(d.fps), bins = a => { const o = []; for (let i = 0; i < a.length; i += bin) { const sl = a.slice(i, i + bin); o.push(sl.reduce((x, y) => x + y, 0) / sl.length); } return o; };
     const last = a => { const o = []; for (let i = 0; i < a.length; i += bin) o.push(a[Math.min(a.length - 1, i + bin - 1)]); return o; };
     TREND = {}; for (const k in T) TREND[k] = { view: bins(T[k].view), cum: last(T[k].cum) };
+    WT = wholeTotals(d);
     for (const k in tween) delete tween[k];
     drawTrend();
   }
@@ -1147,7 +1181,7 @@ svg.pr { display: block; width: 100%; height: 30px; }
                      : read.filter(r => (d.signs[r.id] || [])[2] >= 85 && (r.text.match(/[\p{L}]/gu) || []).length >= 4);
       note = "Readable signs (OCR), counted as the walk goes.";
     }
-    $("statsBody").innerHTML = html; $("statsNote").textContent = note; $("signRot").hidden = tab !== "space";
+    $("statsBody").innerHTML = wtLine() + html; $("statsNote").textContent = note; $("signRot").hidden = tab !== "space";
     // fit: shrink/grow the donuts until the whole panel fits the window (no scrolling)
     const pop = $("statsPop"), nD = $("statsBody").querySelectorAll(".donut").length || 1, over = pop.scrollHeight - pop.clientHeight;
     if (over > 0 || over < -24) { donutH = Math.max(90, Math.min(210, donutH - (over + 8) / (twoCol ? 1 : nD))); for (const d of $("statsBody").querySelectorAll(".donut")) d.style.height = donutH + "px"; }
@@ -2076,6 +2110,23 @@ svg.pr { display: block; width: 100%; height: 30px; }
       html = `<table><tr><th>Zone</th><th>Along the walk</th><th>Time</th><th>People</th><th>Objects</th><th>Signs</th></tr>` + A.zones.map(Z =>
         `<tr class="row ${fi >= Z.f0 && fi <= Z.f1 ? "now" : fi < Z.f0 ? "dim" : ""}" data-f="${Z.f0}"><td>Z${Z.z + 1}</td><td>${Z.z * ZONE_M}–${(Z.z + 1) * ZONE_M} m</td><td>${fmt(Z.f0 / d.fps)}–${fmt(Z.f1 / d.fps)}</td><td>${Z.people.size}</td><td>${Z.objects.size}</td><td>${Z.signs.size}</td></tr>`).join("") + "</table>" +
         `<div style="color:var(--soft);font-size:11.5px;padding:6px">Zones are 20 m stretches of the approximate path.</div>`;
+    } else if (ltab === "totals") {
+      const W = WT || wholeTotals(d), now = {}; let nowObj = 0, nowFood = 0, nowSign = 0;
+      for (const e of st.entities) { if (e.alpha < .5) continue; const g = groupOf(e);
+        if (g === "object") { nowObj++; now[e.cls] = (now[e.cls] || 0) + 1; } else if (g === "food") nowFood++; else if (g === "space" && e.kind === "sign") nowSign++; }
+      const row = (lab, a, b, cls = "") => `<tr class="${cls}"><td>${lab}</td><td class="num">${a}</td><td class="num">${b}</td></tr>`;
+      html = `<table><tr><th>What</th><th class="num">In view now</th><th class="num">Whole walk</th></tr>` +
+        row(`${sh("person")}People`, st.counts.people.view, n0(W.people), "grp") +
+        GENDER.map(([k, lab]) => row(lab, "", n0(W.sex[k]), "sub")).join("") +
+        AGEC.map(([k, lab]) => row(lab, "", n0(W.age[k]), "sub")).join("") +
+        row(`${sh("object")}Objects`, nowObj, n0(W.objects), "grp") +
+        W.objCls.slice(0, 10).map(([c, n]) => row(esc(cap(c)), now[c] || "", n0(n), "sub")).join("") +
+        (W.objCls.length > 10 ? row(`Other (${W.objCls.length - 10} types)`, "", n0(W.objCls.slice(10).reduce((a, [, n]) => a + n, 0)), "sub") : "") +
+        row(`<span class="sh" style="color:var(--food)">◆</span> Food displays`, nowFood, n0(W.food), "grp") +
+        row(`${sh("space")}Readable signs`, nowSign, n0(W.signs), "grp") +
+        row("Text areas found", "", n0(W.signAreas), "sub") +
+        row("Pictured people on signs (not counted)", "", n0(W.pictured), "sub") + "</table>" +
+        `<div style="color:var(--soft);font-size:11.5px;padding:6px">Whole walk = different people (a person split into several tracks counts once) and objects that pass the current filters (confidence, hide tracks under 1 s). Gender and age are perceived estimates.</div>`;
     } else {
       html = `<table><tr><th>Event</th><th>Time</th><th></th></tr>` + ev.map(m =>
         `<tr class="row ${m.f <= fi ? "" : "dim"}" data-f="${m.f}"${m.sign != null ? ` data-s="${m.sign}"` : ""}><td>${m.k === "bookmark" ? "🔖 " : sh(m.k)}${esc(m.t)}</td><td>${fmt(m.f / d.fps)}</td><td>${m.f <= fi ? "passed" : "ahead"}</td></tr>`).join("") + "</table>";
