@@ -1,0 +1,98 @@
+{
+"S01360": {
+"text": "חד פעמי",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01361": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01362": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01363": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01364": {
+"text": "עמי",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01365": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01366": {
+"text": "ירק / תאומים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01367": {
+"text": "חד פעמי / אימפריית",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01368": {
+"text": "חד פעמי / אימפריית / כלים למסיבות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01369": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01370": {
+"text": "כלים למסיבות / אירועים ואפייה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01371": {
+"text": "כלים למסיבות / אירועים ואפייה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01372": {
+"text": "אפייה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01373": {
+"text": "למסיבו",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01374": {
+"text": "התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01375": {
+"text": "אירוע",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+}
+}

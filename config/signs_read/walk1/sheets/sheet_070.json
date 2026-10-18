@@ -1,0 +1,98 @@
+{
+"S01120": {
+"text": "מתמחים במוצרי קדושה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01121": {
+"text": "פמוטים - כוסות קידוש / מוצרי יהדות מארץ הקודש / מוכרות לתיירות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01122": {
+"text": "Бокал для кидуша с блюдцем - Декоративная мезуза / Ермолки (кипы) - Еврейский молитвенник (сидур) / Керамическая посуда ручной росписи / Сувениры - Товары еврейской атрибутики",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01123": {
+"text": "молитвенник (сидур) / ручной росписи / атрибутика",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01124": {
+"text": "Декоративная / молитвенник / ручной росписи",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01125": {
+"text": "Бокал для кидуша с блюдцем - Декоративная мезуза / Ермолки (кипы) - Еврейский молитвенник (сидур) / Керамическая посуда ручной росписи / Сувениры - Товары еврейской атрибутики",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01126": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01127": {
+"text": "Бокал для / Ермолки",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01128": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01129": {
+"text": "המפעל",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01130": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01131": {
+"text": "Декоративная мезуза / еврейский молитвенник (сидур) / посуда ручной росписи / еврейской атрибутики",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01132": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01133": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01134": {
+"text": "для кидуша / (кипы)",
+"lang": "ru",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01135": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+}
+}

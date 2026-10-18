@@ -1,0 +1,98 @@
+{
+"S01424": {
+"text": "בראשי",
+"lang": "he",
+"legible": false,
+"kind": "product_packaging"
+},
+"S01425": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01426": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "other_text"
+},
+"S01427": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01428": {
+"text": "החלה של",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01429": {
+"text": "עלים ירוקים ועשבי תיבול / מבחר עשיר של חסות, פטריות / שורשים, נבטים, אספרגוס ועוד",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01430": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01431": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01432": {
+"text": "החלה",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01433": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01434": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01435": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01436": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01437": {
+"text": "החלה",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01438": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01439": {
+"text": "גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

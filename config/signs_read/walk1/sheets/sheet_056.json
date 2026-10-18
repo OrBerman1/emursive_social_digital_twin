@@ -1,0 +1,98 @@
+{
+"S00896": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00897": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00898": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00899": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00900": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00901": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00902": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00903": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00904": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00905": {
+"text": "vegetables",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S00906": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00907": {
+"text": "ירקות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00908": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00909": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00910": {
+"text": "מסעדת",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00911": {
+"text": "רק דברים טובים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

@@ -1,0 +1,98 @@
+{
+"S01712": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01713": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01714": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01715": {
+"text": "הבננה / 30",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01716": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01717": {
+"text": "הבננה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01718": {
+"text": "22",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01719": {
+"text": "18",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01720": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01721": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01722": {
+"text": "ייאוש בעולם",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01723": {
+"text": "רבי נחמן / ייאוש בעולם / נחמן מאומן",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01724": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01725": {
+"text": "בראשית",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01726": {
+"text": "35 / ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01727": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

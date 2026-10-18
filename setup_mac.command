@@ -39,7 +39,7 @@ for d in data/raw/LABAI/Photos data/raw/LABAI/Sketches data/interim data/process
   if [ -d "$d" ]; then echo "  exists  $d"; else mkdir -p "$d" && echo "  created $d"; fi
 done
 # If the LABAI files sit in the folder above the repo, link them in instead of copying 5 GB.
-for f in "1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops with Icons.pdf" "shuk_360_frame_coding_v01.docx"; do
+for f in "1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops_In_hatikva_30_7_26.xlsx" "Shops with Icons.pdf" "shuk_360_frame_coding_v01.docx"; do
   [ ! -e "data/raw/LABAI/$f" ] && [ -f "../$f" ] && ln -s "$(cd .. && pwd)/$f" "data/raw/LABAI/$f" && echo "  linked  data/raw/LABAI/$f"
 done
 for sub in Photos Sketches; do
@@ -68,6 +68,13 @@ echo
 echo "=== 6/8  Model weights ==="
 [ -f models/yolo11x.pt ] || curl -L -f -o models/yolo11x.pt https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11x.pt || error
 [ -f models/yolov8x-worldv2.pt ] || curl -L -f -o models/yolov8x-worldv2.pt https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8x-worldv2.pt || error
+[ -f models/yolov8x-oiv7.pt ] || curl -L -f -o models/yolov8x-oiv7.pt https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8x-oiv7.pt || error
+# OSNet-AIN x1.0 trained on MSMT17 (person ReID for reid_embed.py; torchreid model zoo, Google Drive)
+[ -f models/osnet_ain_x1_0_msmt17.pth ] || curl -L -f -o models/osnet_ain_x1_0_msmt17.pth "https://drive.usercontent.google.com/download?id=1SigwBE6mPdqiJMqhuIY4aqC7--5CsMal&export=download&confirm=t" || error
+mkdir -p models/segformer-b2-ade
+for f in config.json preprocessor_config.json pytorch_model.bin; do
+  [ -f "models/segformer-b2-ade/$f" ] || curl -L -f -o "models/segformer-b2-ade/$f" "https://huggingface.co/nvidia/segformer-b2-finetuned-ade-512-512/resolve/main/$f" || error
+done
 # CLIP ViT-B/32 + ViT-L/14 and the docTR text detector download themselves on first use.
 
 echo
@@ -87,7 +94,7 @@ echo "=== 8/8  Checking the installation and the data ==="
 .venv/bin/python -c "import torch, ultralytics, clip, cv2, py360convert, pytesseract, symspellpy, doctr; print('torch', torch.__version__, '| MPS', torch.backends.mps.is_available()); print('ultralytics', ultralytics.__version__, '| opencv', cv2.__version__)" || error
 .venv/bin/python -c "import telemetry_parser; print('telemetry-parser OK')"
 DATAOK=1
-for f in "1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops with Icons.pdf" "shuk_360_frame_coding_v01.docx"; do
+for f in "1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops_In_hatikva_30_7_26.xlsx"; do
   if [ -e "data/raw/LABAI/$f" ]; then echo "  [data OK]      $f"; else echo "  [data MISSING] data/raw/LABAI/$f"; DATAOK=0; fi
 done
 
@@ -95,9 +102,9 @@ echo
 echo "Setup complete."
 if [ "$DATAOK" = 0 ]; then
   echo "  The raw data is not complete yet: download it as described in README.md, section 2,"
-  echo "  into data/raw/LABAI/  - the folders were created above - then run the pipeline."
+  echo "  into data/raw/LABAI/  - the folders were created above."
 fi
-echo "  Run the pipeline:  .venv/bin/python pipeline/run_all.py"
+echo "  Next: put the data in data/raw/LABAI/, then double-click process_data_mac.command"
 echo "  Open the viewer:   start_viewer_mac.command"
 echo
 read -r -p "Press Enter to close..."

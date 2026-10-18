@@ -109,7 +109,7 @@ echo === 8/8  Checking the installation and the data ===
 ".venv\Scripts\python.exe" -c "import torch, ultralytics, clip, cv2, py360convert, pytesseract, symspellpy, doctr; print('torch', torch.__version__, '| CUDA', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '(no GPU)'); print('ultralytics', ultralytics.__version__, '| opencv', cv2.__version__)" || goto :error
 if exist ".venv-imu\Scripts\python.exe" ".venv-imu\Scripts\python.exe" -c "import telemetry_parser; print('telemetry-parser OK')"
 set "DATAOK=1"
-for %%F in ("1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops with Icons.pdf" "shuk_360_frame_coding_v01.docx") do (
+for %%F in ("1_Hatikvah St.insv" "2_Hamevasser St.insv" "Shops_In_hatikva_30_7_26.xlsx") do (
   if exist "data\raw\LABAI\%%~F" (echo   [data OK]      %%~F) else (echo   [data MISSING] data\raw\LABAI\%%~F & set "DATAOK=0")
 )
 
@@ -117,9 +117,9 @@ echo.
 echo Setup complete.
 if "%DATAOK%"=="0" (
   echo   The raw data is not complete yet: download it as described in README.md, section 2,
-  echo   into data\raw\LABAI\  - the folders were created above - then run the pipeline.
+  echo   into data\raw\LABAI\  - the folders were created above.
 )
-echo   Run the pipeline:  .venv\Scripts\python pipeline\run_all.py
+echo   Next: put the data in data\raw\LABAI\, then double-click process_data.bat
 echo   Open the viewer:   start_viewer.bat
 goto :end
 

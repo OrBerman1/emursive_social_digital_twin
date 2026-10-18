@@ -1,0 +1,98 @@
+{
+"S01056": {
+"text": "HaTikva St.",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S01057": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01058": {
+"text": "ניתן להשיג / ליאל 050-212-1640",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01059": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01060": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01061": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01062": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01063": {
+"text": "HaTikva St.",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S01064": {
+"text": "HaTikva St.",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S01065": {
+"text": "התקוה / HaTikva St.",
+"lang": "mixed",
+"legible": true,
+"kind": "other_text"
+},
+"S01066": {
+"text": "גם בשר חלק / 052-682-1313 / ליאל",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01067": {
+"text": "17",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S01068": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01069": {
+"text": "17",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S01070": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01071": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+}
+}

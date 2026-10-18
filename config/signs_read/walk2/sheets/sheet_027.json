@@ -1,0 +1,98 @@
+{
+"S00432": {
+"text": "20461",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S00433": {
+"text": "20461",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S00434": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00435": {
+"text": "20460",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S00436": {
+"text": "20460",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S00437": {
+"text": "0460",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00438": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00439": {
+"text": "אופניים",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00440": {
+"text": "587417 / Wolt",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S00441": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00442": {
+"text": "כולל אופניים / קורקינט",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00443": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00444": {
+"text": "1920",
+"lang": "none",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00445": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00446": {
+"text": "Wolt / PARTNER",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S00447": {
+"text": "587417 / Wolt / PARTNER",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+}
+}

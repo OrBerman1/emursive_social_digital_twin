@@ -1,0 +1,98 @@
+{
+"S01760": {
+"text": "הבננה / עמק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01761": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01762": {
+"text": "כול - ה תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01763": {
+"text": "כוסית",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01764": {
+"text": "כוסית",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01765": {
+"text": "תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01766": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01767": {
+"text": "כול - ה תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01768": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01769": {
+"text": "=3",
+"lang": "none",
+"legible": false,
+"kind": "price_sign"
+},
+"S01770": {
+"text": "בראשית / כול - ה תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01771": {
+"text": "עמק 9.90 / הבננה / תפוחים / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01772": {
+"text": "=3",
+"lang": "none",
+"legible": false,
+"kind": "price_sign"
+},
+"S01773": {
+"text": "4=10",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01774": {
+"text": "4=10",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01775": {
+"text": "תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+}
+}

@@ -1,0 +1,98 @@
+{
+"S01600": {
+"text": "אופניים",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01601": {
+"text": "הקלה / התנועה",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01602": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "banner"
+},
+"S01603": {
+"text": "תקו",
+"lang": "he",
+"legible": false,
+"kind": "other_text"
+},
+"S01604": {
+"text": "הקלה",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01605": {
+"text": "שבילי",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01606": {
+"text": "שבילי",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01607": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01608": {
+"text": "שבילי",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01609": {
+"text": "סמבוסק / המיץ הירוק / כל סוגי הפסטלים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01610": {
+"text": "סמבוסק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01611": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S01612": {
+"text": "הקלה / התנוע",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01613": {
+"text": "שבילי",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01614": {
+"text": "אופניים",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01615": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

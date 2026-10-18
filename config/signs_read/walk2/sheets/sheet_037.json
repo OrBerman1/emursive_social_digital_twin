@@ -1,0 +1,98 @@
+{
+"S00592": {
+"text": "של מורשת",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00593": {
+"text": "הבירה / בתשלום",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00594": {
+"text": "1920",
+"lang": "none",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00595": {
+"text": "הבירה / בתשלום",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00596": {
+"text": "הבירה",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00597": {
+"text": "לא לגעת",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00598": {
+"text": "הבירה",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00599": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00600": {
+"text": "חביב עולם האוכל העירקי",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00601": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00602": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S00603": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00604": {
+"text": "לא לגעת",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00605": {
+"text": "בס״ד / לא לגעת",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00606": {
+"text": "בס״ד",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S00607": {
+"text": "חביב עולם האוכל העירקי",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

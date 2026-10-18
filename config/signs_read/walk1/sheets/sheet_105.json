@@ -1,0 +1,98 @@
+{
+"S01680": {
+"text": "Wolt / PARTNER",
+"lang": "en",
+"legible": true,
+"kind": "other_text"
+},
+"S01681": {
+"text": "824996",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S01682": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01683": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01684": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01685": {
+"text": "משי",
+"lang": "he",
+"legible": false,
+"kind": "banner"
+},
+"S01686": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01687": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01688": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01689": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01690": {
+"text": "50",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01691": {
+"text": "50",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01692": {
+"text": "50",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01693": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01694": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01695": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

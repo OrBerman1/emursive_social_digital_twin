@@ -1,0 +1,98 @@
+{
+"S01776": {
+"text": "",
+"lang": "en",
+"legible": false,
+"kind": "product_packaging"
+},
+"S01777": {
+"text": "עמק / 9.90 / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01778": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01779": {
+"text": "עמק / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01780": {
+"text": "עמק / 9.90 / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01781": {
+"text": "משלוחים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01782": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01783": {
+"text": "הלקוח ולרכב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01784": {
+"text": "משלוחים / לבית הלקוח ולרכב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01785": {
+"text": "משלוחים / לבית הלקוח ולרכב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01786": {
+"text": "כול - ה תפוחים / תוצרת - הארץ",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01787": {
+"text": "כול - ה תפוחים / תוצרת - הארץ",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01788": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01789": {
+"text": "וחים",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01790": {
+"text": "תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01791": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+}
+}

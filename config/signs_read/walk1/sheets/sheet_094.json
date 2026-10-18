@@ -1,0 +1,98 @@
+{
+"S01504": {
+"text": "התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01505": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01506": {
+"text": "יחי המלך המשיח",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01507": {
+"text": "שעשוע ז\"ל / קידוש השם / 202",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01508": {
+"text": "בצלאל דוד שעשוע / גיבור ישראל נפל על קידוש השם / חטיבת צנחנים, גדוד צפע 202 / 15.05.24",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01509": {
+"text": "קטיף",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01510": {
+"text": "אומים / גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01511": {
+"text": "יחי המלך המשיח",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01512": {
+"text": "בצלאל דוד שעשוע / נפל על קידוש / גדוד צפע 202 / 15.05.24",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01513": {
+"text": "בראשית",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01514": {
+"text": "חטיבת צנחנים, גדוד צפע / ד' באייר תשפ\"ד 15.05.24",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01515": {
+"text": "יחי המלך המשיח",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01516": {
+"text": "סמ\"ר בצלאל דוד שעשוע ז\"ל / גיבור ישראל נפל על קידוש השם / 202",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01517": {
+"text": "חטיבת צנחנים, גדוד צפע / באייר תשפ\"ד 15.05.24",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01518": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "product_packaging"
+},
+"S01519": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

@@ -1,0 +1,98 @@
+{
+"S01152": {
+"text": "רחוב התקוה 22",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01153": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01154": {
+"text": "מסעדת",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01155": {
+"text": "ZITUNE / חומוס ובישולים ביתיים / רחוב התקוה 22",
+"lang": "mixed",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01156": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01157": {
+"text": "רחוב התקוה 22",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01158": {
+"text": "חומוס / רחוב התקוה 22",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01159": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01160": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01161": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01162": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01163": {
+"text": "חומוס",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01164": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01165": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01166": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01167": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+}
+}

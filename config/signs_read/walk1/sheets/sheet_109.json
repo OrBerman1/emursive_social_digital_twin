@@ -1,0 +1,98 @@
+{
+"S01744": {
+"text": "בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01745": {
+"text": "כול",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01746": {
+"text": "תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01747": {
+"text": "כול",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01748": {
+"text": "בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01749": {
+"text": "בראשית",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01750": {
+"text": "הבננה / עמק / בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01751": {
+"text": "הבננה / עמק / בראשית / תפוחים / תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01752": {
+"text": "",
+"lang": "en",
+"legible": false,
+"kind": "product_packaging"
+},
+"S01753": {
+"text": "תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01754": {
+"text": "עמק / 9.90",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01755": {
+"text": "=3",
+"lang": "none",
+"legible": false,
+"kind": "price_sign"
+},
+"S01756": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01757": {
+"text": "תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01758": {
+"text": "תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01759": {
+"text": "עמק / 9.90",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+}
+}

@@ -1,0 +1,98 @@
+{
+"S01264": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01265": {
+"text": "מקלט ציבורי",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01266": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01267": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01268": {
+"text": "BNEI",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01269": {
+"text": "בוסתן הדרום",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01270": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01271": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01272": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01273": {
+"text": "מקלט",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01274": {
+"text": "בוסתן",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01275": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01276": {
+"text": "מבחר ירק / חדש!",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01277": {
+"text": "מובחרים / התרומות והמעשרות / מבחר ירק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01278": {
+"text": "כי אש",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01279": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+}
+}

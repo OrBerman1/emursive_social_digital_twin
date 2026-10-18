@@ -1,0 +1,98 @@
+{
+"S01248": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01249": {
+"text": "יום הולדת / גדולה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01250": {
+"text": "גלידות / בטעמים / חדשים!",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01251": {
+"text": "יום הולדת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01252": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01253": {
+"text": "80 ₪ / קפה ומאפה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01254": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01255": {
+"text": "שרותים / ציבוריים",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01256": {
+"text": "עוגת יום הולדת / גדולה / 120 ₪",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01257": {
+"text": "עוגת יום / גדולה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01258": {
+"text": "שאשא לחמים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01259": {
+"text": "80 ₪ / קפה ומאפה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01260": {
+"text": "שרותים / ציבוריים",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01261": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01262": {
+"text": "שרותים / ציבוריים",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01263": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

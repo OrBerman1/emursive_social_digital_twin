@@ -1,0 +1,98 @@
+{
+"S01440": {
+"text": "גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01441": {
+"text": "יחי המלך המשיח",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01442": {
+"text": "יחי המלך המשיח",
+"lang": "he",
+"legible": true,
+"kind": "other_text"
+},
+"S01443": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01444": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01445": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01446": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01447": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01448": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01449": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01450": {
+"text": "הפרדסן",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01451": {
+"text": "הפרדסן",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01452": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01453": {
+"text": "התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01454": {
+"text": "התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01455": {
+"text": "ירק / התאומים / ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

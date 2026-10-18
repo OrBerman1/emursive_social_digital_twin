@@ -1,0 +1,98 @@
+{
+"S01792": {
+"text": "משלוחים / הלקוח",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01793": {
+"text": "בעולם / תוצרת - הארץ / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01794": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01795": {
+"text": "תוצרת - הארץ",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01796": {
+"text": "PREMIUM",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01797": {
+"text": "398260",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01798": {
+"text": "בראשית / כול - ה תפוחים / הארץ",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01799": {
+"text": "מנות 8260",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01800": {
+"text": "8",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01801": {
+"text": "ק גוש קטיף / משלוחים / הלקוח",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01802": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01803": {
+"text": "משלו",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01804": {
+"text": "הזמנות 03-6398260",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01805": {
+"text": "הזמנות 03-6398260",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01806": {
+"text": "תוצרת - הארץ / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01807": {
+"text": "ירק גוש קטיף / משלוחים / הלקוח",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

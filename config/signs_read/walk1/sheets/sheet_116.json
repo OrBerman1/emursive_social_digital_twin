@@ -1,0 +1,98 @@
+{
+"S01856": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01857": {
+"text": "חזקאל",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01858": {
+"text": "פירות אביב / להזמנות 03-6398260 / אספקה / מוסדות / הופרשו תרומות ומעשרות בהשגחת הרב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01859": {
+"text": "בנות / אביב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01860": {
+"text": "הראשית תל אביב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01861": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01862": {
+"text": "מוסדות, שירות / בהשגחת הרבנות / הראשית תל אביב",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01863": {
+"text": "פירות אביב / להזמנות 03-6398260 / משלוחים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01864": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01865": {
+"text": "בהשגחת הרבנות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01866": {
+"text": "משלוחים / הלקוח",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01867": {
+"text": "הלקוח",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01868": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01869": {
+"text": "לחנויות / ללא",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01870": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01871": {
+"text": "אספקה לחנויות, מסעדות / מוסדות, שירות ללא",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

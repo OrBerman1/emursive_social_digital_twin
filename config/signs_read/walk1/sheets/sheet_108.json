@@ -1,0 +1,98 @@
+{
+"S01728": {
+"text": "אין ייאוש בעולם כלל",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01729": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01730": {
+"text": "עולם כלל",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S01731": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01732": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "other_text"
+},
+"S01733": {
+"text": "הבננה / עמק / בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01734": {
+"text": "הבננה / עמק / בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01735": {
+"text": "אשית",
+"lang": "he",
+"legible": false,
+"kind": "price_sign"
+},
+"S01736": {
+"text": "4=10",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01737": {
+"text": "4=10",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01738": {
+"text": "הבננה / עמק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01739": {
+"text": "אבטיח",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01740": {
+"text": "הבננה / עמק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01741": {
+"text": "תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01742": {
+"text": "תוצרת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01743": {
+"text": "בראשית / תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+}
+}

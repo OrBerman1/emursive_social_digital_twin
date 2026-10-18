@@ -1,0 +1,98 @@
+{
+"S01232": {
+"text": "רפאל / בר משקאות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01233": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01234": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01235": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "other_text"
+},
+"S01236": {
+"text": "משקאות / קפה ומאפה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01237": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01238": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01239": {
+"text": "בר משקאות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01240": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01241": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01242": {
+"text": "עוגת",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01243": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01244": {
+"text": "משקאות / קפה ומאפה 10 ₪",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01245": {
+"text": "יום / קטנה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01246": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01247": {
+"text": "משקאות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+}
+}

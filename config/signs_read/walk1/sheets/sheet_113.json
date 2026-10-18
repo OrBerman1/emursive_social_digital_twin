@@ -1,0 +1,98 @@
+{
+"S01808": {
+"text": "ירק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01809": {
+"text": "בראשית",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01810": {
+"text": "הארץ",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01811": {
+"text": "12",
+"lang": "none",
+"legible": true,
+"kind": "price_sign"
+},
+"S01812": {
+"text": "כול / תוצרת - הארץ / 12",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01813": {
+"text": "כול - ה תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01814": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01815": {
+"text": "כול - ה תפוחים",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01816": {
+"text": "ירק גוש / משלוחים / הלקוח / כרטיסי",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01817": {
+"text": "משלוחים",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01818": {
+"text": "ירק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01819": {
+"text": "גוש",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01820": {
+"text": "כול - ה",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+},
+"S01821": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01822": {
+"text": "פירות אביב / להזמנות 03-6398260",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01823": {
+"text": "ב30",
+"lang": "he",
+"legible": true,
+"kind": "price_sign"
+}
+}

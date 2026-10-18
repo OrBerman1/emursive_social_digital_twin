@@ -1,0 +1,98 @@
+{
+"S01168": {
+"text": "המסעדה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01169": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01170": {
+"text": "ZITUNE / חומוס ובישולים ביתיים",
+"lang": "mixed",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01171": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01172": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01173": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01174": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01175": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01176": {
+"text": "35",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S01177": {
+"text": "35",
+"lang": "none",
+"legible": true,
+"kind": "other_text"
+},
+"S01178": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01179": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01180": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01181": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01182": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01183": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+}
+}

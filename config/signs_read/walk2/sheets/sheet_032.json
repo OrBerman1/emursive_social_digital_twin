@@ -1,0 +1,98 @@
+{
+"S00512": {
+"text": "1920",
+"lang": "none",
+"legible": true,
+"kind": "shop_sign"
+},
+"S00513": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "banner"
+},
+"S00514": {
+"text": "1920",
+"lang": "none",
+"legible": true,
+"kind": "banner"
+},
+"S00515": {
+"text": "רית עירקית / 1960",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00516": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "other_text"
+},
+"S00517": {
+"text": "מבצע \"עזרא ונחמיה\"",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00518": {
+"text": "מאז 1920 -",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00519": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00520": {
+"text": "מאז 1920 - מעל 100 שנים של מורשת קולינרית עירקית",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00521": {
+"text": "",
+"lang": "he",
+"legible": false,
+"kind": "other_text"
+},
+"S00522": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00523": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S00524": {
+"text": "1920 / \"חביב\"",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00525": {
+"text": "רית עירקית",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00526": {
+"text": "1920 - מעל 100 שנים של מורשת קולינרית עירקית / מבצע \"עזרא ונחמיה\" (עליית יהודי עירק)",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+},
+"S00527": {
+"text": "- מעל 100 שנים",
+"lang": "he",
+"legible": true,
+"kind": "banner"
+}
+}

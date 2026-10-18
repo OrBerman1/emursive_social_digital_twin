@@ -1,0 +1,98 @@
+{
+"S01408": {
+"text": "FROM WASHINGTON",
+"lang": "en",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01409": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01410": {
+"text": "התא",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01411": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01412": {
+"text": "עלים ירוקים ועשבי תיבול / מבחר עשיר של חסות, פטריות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01413": {
+"text": "ירק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01414": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01415": {
+"text": "כלים למסיבות / אירועים ואפייה",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01416": {
+"text": "ירק גוש קטיף",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01417": {
+"text": "מבחר עשיר של חסות, פטריות / שורשים, נבטים, אספרגוס",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01418": {
+"text": "טרי יום יום",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01419": {
+"text": "עלים ירוקים ועשבי תיבול / מבחר עשיר של חסות, פטריות, / שורשים, נבטים, אספרגוס ועוד / 5",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01420": {
+"text": "טרי יום יום",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01421": {
+"text": "ירק",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01422": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01423": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+}
+}

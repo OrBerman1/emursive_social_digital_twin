@@ -1,0 +1,98 @@
+{
+"S01888": {
+"text": "03-",
+"lang": "none",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01889": {
+"text": "אב",
+"lang": "he",
+"legible": false,
+"kind": "shop_sign"
+},
+"S01890": {
+"text": "אספקה / מוסדות, שירות ללא תחרות / בהשגחת הרבנות / הראשית תל אביב. / 03-63",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01891": {
+"text": "03-6398260",
+"lang": "none",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01892": {
+"text": "03-6398260",
+"lang": "none",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01893": {
+"text": "לחנויות, מסעדות, / שירות ללא תחרות.",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01894": {
+"text": "אספקה / מוסדות, שירות הרבנות / בהשגחת תל אביב / הראשית",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01895": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01896": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "no_text"
+},
+"S01897": {
+"text": "03-6398260 להזמנות",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01898": {
+"text": "מוסדות, שירות / בהשגחת הרבנות / הראשית תל אביב.",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01899": {
+"text": "שירות ללא / בהשגחת הרבנות / הראשית תל אביב.",
+"lang": "he",
+"legible": true,
+"kind": "shop_sign"
+},
+"S01900": {
+"text": "תלמה / קורנפלקס",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+},
+"S01901": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01902": {
+"text": "",
+"lang": "none",
+"legible": false,
+"kind": "operator_shirt"
+},
+"S01903": {
+"text": "תלמה / קורנפלקס",
+"lang": "he",
+"legible": true,
+"kind": "product_packaging"
+}
+}

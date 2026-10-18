@@ -199,6 +199,8 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"unknown walks {unknown} (project {C.PROJECT_ID}: {list(C.WALKS)})")
     MODELS.mkdir(exist_ok=True)
+    import prepare_data                                              # saved sign readings (git) -> cache, if the cache has none
+    prepare_data.restore_signs(C.PROJECT_ID)
     stages = plan(walks, C)
     job = Job(C.PROCESSED / "job.json", stages, C.PROJECT_ID)
     with open(C.PROCESSED / "job.log", "w", encoding="utf-8") as log:
