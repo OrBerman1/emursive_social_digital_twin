@@ -41,7 +41,7 @@
   per track (track ids unchanged) and smooths gender/age over the person; links only where the vision review
   `config/person_links_review.json` says "same" (4 of 15 candidates; track ends are where the tracker switches
   people). Overlays: `tracks_fields` += person, sex_track, age_track. Undo: `pipeline/restore_person_linking_backup.py`. METHODS 31.
-- **People ReID (15 Oct, branch `ReID`, not shown yet):** `pipeline/reid_embed.py` (OSNet-AIN embeddings per person track, cached) + `link_persons.py --reid` (appearance-decided links → `persons_linked_reid_stab/`; the reviewed `persons_linked_stab/` stays the default). Switch: `SHUK_PERSON_LINKS=persons_linked_reid`, rerun crowds.py + export_overlays.py. METHODS 32.
+- **People ReID (15 Oct, the default since 15 Oct, merged into main):** `pipeline/reid_embed.py` (OSNet-AIN embeddings per person track, cached) + `link_persons.py --reid` (appearance-decided links → `persons_linked_reid_stab/`), both run by `run_all.py` (stages `reid`, `link_reid`; skipped without the OSNet weights, then the reviewed `persons_linked_stab/` is used). Undo: `SHUK_PERSON_LINKS=persons_linked`, rerun crowds.py + export_overlays.py, or restore `data/backup/before_reid_*`. METHODS 32.
 - **User UX rules:** uncluttered; settings separate from information; layouts must not jump; few boxes;
   distinct colour-blind-safe hues (Okabe–Ito); light themes; little text; cards open by clicking the
   emoji. Show only results that pass a visual check; keep weak ones hidden but saved.
