@@ -39,8 +39,11 @@ You only double-click files; no Python knowledge is needed. Three files do every
    - **1 = Shuk HaTikvah only** (recommended: this is the project the viewer opens), or
    - **2 = Shuk HaTikvah and Shuk HaTikvah Legacy** (the original stitch, for comparison; twice as long).
 
-   Keep the computer plugged in and awake. You can close the window at any time; run `process_data.bat` again
-   and it continues from the last finished step.
+   Keep the computer plugged in and awake. You can close the window at any time (or it may stop on an error); run
+   `process_data.bat` again and it continues where it stopped: finished steps are kept, and the long steps (detection,
+   floor masks) save their progress every few minutes, so at most a few minutes of work are repeated.
+   - **Without an NVIDIA graphics card** everything runs on the processor: it works, but takes **days** instead of
+     hours (`process_data.bat` says so at the start). Stopping and continuing later is safe.
 5. **Double-click `start_viewer.bat`.** The viewer opens in your browser. Keep the black window open while you use it.
 
 **Mac (Apple Silicon):** the same three steps with `setup_mac.command`, `process_data_mac.command` and
@@ -155,6 +158,12 @@ The same by hand, in a terminal in the program folder:
   **cached** (`data\interim\`, or `projects\<id>\data\interim\`) with a `manifest.json` and is skipped next time,
   so later runs, updates and parameter changes take seconds to minutes. Stopping half-way is safe: the next run
   continues from the last finished step.
+- Resuming: each step saves its result per walk with a `manifest.json`; a rerun skips everything finished. Inside a
+  step, `detect.py` saves the boxes so far every 5 minutes (`partial.parquet` + `partial.json`, same cache key) and
+  `waste.py` keeps the floor masks already written, so an interrupted step continues instead of starting again.
+- Without an NVIDIA GPU every step runs on the CPU (or Apple MPS); the viewer video is then encoded with libx264
+  (the NVIDIA encoder is tested with a short clip, not just looked up), and a video already finished with either
+  encoder is kept.
 - Progress and the full log: `job.json` / `job.log` in the project's processed folder (the projects page shows them too).
 - After people tracking, `reid_embed.py` + `link_persons.py --reid` (people ReID, OSNet-AIN) decide which track
   pieces are one person; it is skipped, falling back to the reviewed links, when `models\osnet_ain_x1_0_msmt17.pth`

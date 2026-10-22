@@ -17,8 +17,14 @@ VERSION = 1
 
 
 def has_nvenc() -> bool:
-    out = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
-    return "h264_nvenc" in out
+    """NVIDIA encoder usable? ffmpeg builds list h264_nvenc even on computers without an NVIDIA card or driver,
+    so encode a 0.2 s test clip with it instead of reading the list."""
+    try:
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-v", "error", "-f", "lavfi", "-i", "color=s=256x256:d=0.2",
+                            "-c:v", "h264_nvenc", "-f", "null", "-"], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return r.returncode == 0
 
 
 def run(walk: str, width: int, lens_fov: float, force: bool) -> None:
@@ -31,8 +37,10 @@ def run(walk: str, width: int, lens_fov: float, force: bool) -> None:
     if cal:
         params = {"width": width, "height": width // 2, "stitch": "calibrated", "stitch_params": {k: cal[k] for k in ("f", "c", "rot1", "G", "r_max", "blend_deg")},
                   "codec": params["codec"]}
-    st = Stage("video", VERSION, out_dir / "video", params, {"video": src.name, "fingerprint": file_fingerprint(src)})
-    if st.done() and not force:
+    inputs = {"video": src.name, "fingerprint": file_fingerprint(src)}
+    st = Stage("video", VERSION, out_dir / "video", params, inputs)
+    other = Stage("video", VERSION, out_dir / "video", {**params, "codec": "libx264" if nvenc else "h264_nvenc"}, inputs)
+    if (st.done() or other.done()) and not force:                    # a finished video counts whichever encoder made it
         print(f"[video] {walk}: cached")
         return
     st.start()

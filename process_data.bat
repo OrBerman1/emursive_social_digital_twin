@@ -17,6 +17,11 @@ echo.
 echo === 1/2  Preparing the data ===
 ".venv\Scripts\python.exe" pipeline\prepare_data.py || goto :end
 
+where nvidia-smi >nul 2>nul || (
+  echo.
+  echo [NOTE] No NVIDIA graphics card found: the analysis runs on the processor and takes days instead of hours.
+  echo        That is fine - you can stop at any time and run process_data.bat again; it continues where it stopped.
+)
 echo.
 echo Which project should be processed?
 echo   1 = Shuk HaTikvah only          (recommended - the one the viewer opens; about 2-3 hours the first time)
@@ -28,7 +33,8 @@ if errorlevel 2 set "BOTH=1"
 echo.
 echo === 2/2  Analysis ===
 echo Keep the computer plugged in and do not let it sleep. You can close this window to stop;
-echo run process_data.bat again later and it continues from the last finished step.
+echo run process_data.bat again later and it continues where it stopped (finished steps are kept,
+echo and the long detection steps save their progress every 5 minutes).
 echo.
 echo --- Shuk HaTikvah ---
 ".venv\Scripts\python.exe" pipeline\run_all.py --project shuk_hatikvah_v2 || goto :failed

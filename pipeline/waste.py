@@ -25,6 +25,7 @@ from pathlib import Path
 import argparse
 import hashlib
 import json
+import os
 import sys
 
 import cv2
@@ -88,23 +89,37 @@ def floor_masks(walk: str, sfx: str, force: bool) -> Path:
         return out
     st.start()
     from transformers import SegformerForSemanticSegmentation
-    m = SegformerForSemanticSegmentation.from_pretrained(str(SEG_DIR)).cuda().eval().half()
-    mean = torch.tensor([0.485, 0.456, 0.406], device="cuda")[:, None, None]
-    std = torch.tensor([0.229, 0.224, 0.225], device="cuda")[:, None, None]
+    # GPU when there is one (fp16 on NVIDIA); otherwise Apple MPS or the CPU in fp32 (a computer without an NVIDIA driver)
+    dev = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+    dt = torch.float16 if dev == "cuda" else torch.float32
+    m = SegformerForSemanticSegmentation.from_pretrained(str(SEG_DIR)).to(dev).eval().to(dt)
+    mean = torch.tensor([0.485, 0.456, 0.406], device=dev)[:, None, None]
+    std = torch.tensor([0.229, 0.224, 0.225], device=dev)[:, None, None]
     files = sorted(fdir.glob("*.jpg"))
+    # an interrupted run of the same stage (same cache key, partial.json) keeps the masks it already wrote
+    ck = out / "partial.json"
+    try:
+        resume = json.loads(ck.read_text(encoding="utf-8")).get("key") == st.key and not force
+    except (OSError, ValueError):
+        resume = False
+    ck.write_text(json.dumps({"key": st.key}), encoding="utf-8")
     for i, p in enumerate(files):
+        if resume and (out / f"{p.stem}.png").exists():
+            continue
         im = cv2.imread(str(p)); H, W = im.shape[:2]
         r0, r1 = band_rows(H)
         band = cv2.resize(im[r0:r1], (BAND_W, int(BAND_W * (r1 - r0) / W)))
-        x = torch.from_numpy(cv2.cvtColor(band, cv2.COLOR_BGR2RGB)).cuda().permute(2, 0, 1).float() / 255
+        x = torch.from_numpy(cv2.cvtColor(band, cv2.COLOR_BGR2RGB)).to(dev).permute(2, 0, 1).float() / 255
         with torch.no_grad():
-            lg = m(pixel_values=((x - mean) / std)[None].half()).logits
+            lg = m(pixel_values=((x - mean) / std)[None].to(dt)).logits
             lg = torch.nn.functional.interpolate(lg.float(), size=band.shape[:2], mode="bilinear")
-        fl = torch.isin(lg.argmax(1)[0], torch.tensor(FLOOR_IDS, device="cuda")).cpu().numpy()
-        cv2.imwrite(str(out / f"{p.stem}.png"), (fl * 255).astype(np.uint8))
+        fl = np.isin(lg.argmax(1)[0].cpu().numpy(), FLOOR_IDS)
+        cv2.imwrite(str(out / f"{p.stem}.tmp.png"), (fl * 255).astype(np.uint8))
+        os.replace(out / f"{p.stem}.tmp.png", out / f"{p.stem}.png")      # never a half-written mask
         if i % 200 == 0:
             print(f"[waste] {walk}{sfx}: floor {i}/{len(files)}", flush=True)
     st.finish({"frames": len(files)})
+    ck.unlink(missing_ok=True)
     return out
 
 

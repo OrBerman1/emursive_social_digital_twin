@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -42,6 +43,9 @@ PROMPT_SETS = {
 }
 
 
+CHECKPOINT_S = 300         # save the boxes so far every 5 minutes (resume after an interruption)
+
+
 def run(walk: str, model_name: str, prompts: str | None, conf: float, imgsz: int, batch_frames: int,
         limit: int | None, force: bool, frames: str = "frames") -> None:
     frames_dir = INTERIM / walk / frames
@@ -72,8 +76,20 @@ def run(walk: str, model_name: str, prompts: str | None, conf: float, imgsz: int
 
     first = cv2.imread(str(frames_dir / index[0]["file"]))
     sampler = TileSampler(tiles, first.shape[1], first.shape[0])
-    rows, t0 = [], time.time()
-    for b in range(0, len(index), batch_frames):
+    # checkpoint (CPU-only computers take many hours per walk): every few minutes the boxes so far are saved, and an
+    # interrupted run of the same stage (same cache key) continues after the last saved frame instead of from frame 0
+    ck_rows, ck_meta = out_dir / "partial.parquet", out_dir / "partial.json"
+    rows, start = [], 0
+    try:
+        ck = json.loads(ck_meta.read_text(encoding="utf-8"))
+        if ck.get("key") == st.key and not force:
+            start = int(ck["frames_done"])
+            rows = pd.read_parquet(ck_rows).to_dict("records") if ck_rows.exists() else []
+            print(f"[detect] {walk} {tag}: continuing after frame {start}/{len(index)} (saved by an interrupted run)", flush=True)
+    except (OSError, ValueError, KeyError):
+        pass
+    t0, t_ck = time.time(), time.time()
+    for b in range(start, len(index), batch_frames):
         chunk = index[b:b + batch_frames]
         imgs, meta = [], []
         for fr in chunk:
@@ -93,13 +109,20 @@ def run(walk: str, model_name: str, prompts: str | None, conf: float, imgsz: int
                              "conf": float(p), "x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2),
                              **box_to_sphere(tile, x1, y1, x2, y2)})
         done = min(b + batch_frames, len(index))
-        rate = done / max(time.time() - t0, 1e-6)
+        if time.time() - t_ck > CHECKPOINT_S and done < len(index):
+            pd.DataFrame(rows).to_parquet(ck_rows.with_suffix(".tmp"), index=False)
+            os.replace(ck_rows.with_suffix(".tmp"), ck_rows)
+            ck_meta.write_text(json.dumps({"key": st.key, "frames_done": done}), encoding="utf-8")
+            t_ck = time.time()
+        rate = (done - start) / max(time.time() - t0, 1e-6)
         print(f"\r[detect] {walk} {tag}: {done}/{len(index)} frames  {rate:.1f} fps  {len(rows)} boxes", end="", flush=True)
     print()
     df = pd.DataFrame(rows)
     df.to_parquet(out_dir / "detections.parquet", index=False)
     st.finish({"n_frames": len(index), "n_boxes": len(df),
                "class_counts": df["cls"].value_counts().head(30).to_dict() if len(df) else {}})
+    for f in (ck_meta, ck_rows):
+        f.unlink(missing_ok=True)
     print(f"[detect] {walk} {tag}: {len(df)} boxes -> {out_dir / 'detections.parquet'}")
 
 
