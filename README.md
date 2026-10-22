@@ -329,6 +329,8 @@ so the map needs internet.
 | Viewer opens but is empty / "Could not load" | The data was not processed yet: run `process_data.bat` (choice 1 for the default project). |
 | Processing stopped with `[ERROR]` | Read the last lines above the error; the full log is `job.log` in `projects\shuk_hatikvah_v2\data\processed\` (Legacy: `data\processed\`). Fix it and run `process_data.bat` again; it continues where it stopped. |
 | Setup: "winget not found" | Update "App Installer" from the Microsoft Store, or install the programs in section 1 by hand, then run `setup.bat` again. |
+| `No Python at '…\python.exe'`, or "The gyro helper (.venv-imu) does not work on this computer" | A Python environment from another computer or an old version. Run `setup.bat` again: it rebuilds any environment that does not start (copies before 22 Oct 2026 had `.venv-imu` in git by mistake). |
+| `git pull` refuses because of local changes in `.venv-imu` | Run `git checkout -- .venv-imu` (or `git stash`), then `git pull`, then `setup.bat`. |
 | Setup: "nvidia-smi not found" | Install the NVIDIA driver from nvidia.com (setup does not install it). |
 | Certificate / SSL errors during downloads | Some networks intercept HTTPS. `setup.bat` uses curl, which works; if a pip install fails, rerun on another network. |
 | Viewer shows "Could not load overlays.json" | The pipeline has not been run for that walk, or the page was opened without `start_viewer.bat`. |

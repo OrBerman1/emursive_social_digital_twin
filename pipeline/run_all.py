@@ -199,6 +199,14 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"unknown walks {unknown} (project {C.PROJECT_ID}: {list(C.WALKS)})")
     MODELS.mkdir(exist_ok=True)
+    if any(s["key"] == "imu" and not s["skip"] for s in plan(walks, C)) and IMU_PY.exists():
+        try:                                                         # a helper environment from another computer does not start
+            ok = subprocess.run([str(IMU_PY), "-c", "import telemetry_parser"], capture_output=True, timeout=120).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            ok = False
+        if not ok:
+            raise SystemExit("The gyro helper (.venv-imu) does not work on this computer. Run setup.bat again "
+                             "(it rebuilds it), then run this again.")
     import prepare_data                                              # saved sign readings (git) -> cache, if the cache has none
     prepare_data.restore_signs(C.PROJECT_ID)
     stages = plan(walks, C)

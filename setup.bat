@@ -66,7 +66,13 @@ for %%D in ("data\raw\LABAI\Photos" "data\raw\LABAI\Sketches" "data\interim" "da
 
 echo.
 echo === 3/8  Main environment .venv (Python 3.13) ===
-if not exist ".venv\Scripts\python.exe" py -3.13 -m venv .venv || goto :error
+rem An environment copied from another computer (or left by an old version) does not start: rebuild it.
+set "VOK=0"
+if exist ".venv\Scripts\python.exe" ( ".venv\Scripts\python.exe" -c "import sys" >nul 2>nul && set "VOK=1" )
+if "%VOK%"=="0" (
+  if exist ".venv" echo   .venv does not start on this computer - rebuilding it
+  py -3.13 -m venv --clear .venv || goto :error
+)
 ".venv\Scripts\python.exe" -m pip install --upgrade pip || goto :error
 
 echo.
@@ -93,7 +99,12 @@ rem CLIP ViT-B/32 + ViT-L/14 and the docTR text detector download themselves on 
 echo.
 echo === 7/8  Gyro helper .venv-imu (Python 3.9) ===
 py -3.9 --version >nul 2>nul || goto :skipimu
-if not exist ".venv-imu\Scripts\python.exe" py -3.9 -m venv .venv-imu || goto :error
+set "IOK=0"
+if exist ".venv-imu\Scripts\python.exe" ( ".venv-imu\Scripts\python.exe" -c "import sys" >nul 2>nul && set "IOK=1" )
+if "%IOK%"=="0" (
+  if exist ".venv-imu" echo   .venv-imu does not start on this computer - rebuilding it
+  py -3.9 -m venv --clear .venv-imu || goto :error
+)
 if not exist "models\telemetry_parser-0.3.0-cp39-none-win_amd64.whl" (
   curl.exe -L -f -o "models\telemetry_parser-0.3.0-cp39-none-win_amd64.whl" https://files.pythonhosted.org/packages/7e/89/7d86d1bd0823c35bd82482629ad1330ec9845f114c9e6696fd6c779f200c/telemetry_parser-0.3.0-cp39-none-win_amd64.whl || (
     echo [WARN] Could not download the telemetry-parser wheel. Get telemetry_parser-0.3.0-cp39-none-win_amd64.whl from
